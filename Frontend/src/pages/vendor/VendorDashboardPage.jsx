@@ -1,11 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiActivity } from "react-icons/fi";
+import { FiActivity, FiArrowRight, FiBell, FiClock, FiMapPin, FiShield } from "react-icons/fi";
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import PageTitle from "../../components/common/PageTitle";
+import { useAuth } from "../../context/AuthContext";
+
+function formatDateLabel(dateString) {
+  if (!dateString) return "Unknown";
+  const date = new Date(dateString);
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default function VendorDashboardPage() {
+  const { user } = useAuth();
   const [data, setData] = useState({
     profile: null,
     documents: [],
@@ -29,100 +41,314 @@ export default function VendorDashboardPage() {
     load();
   }, []);
 
+  const profileCompletion = useMemo(() => {
+    const fields = [
+      "first_name",
+      "last_name",
+      "phone",
+      "address",
+      "business_name",
+      "business_type",
+      "vending_zone",
+    ];
+    const filled = fields.filter((key) => data.profile?.[key]).length;
+    return Math.round((filled / fields.length) * 100);
+  }, [data.profile]);
+
+  const licenseStatus = useMemo(() => {
+    const statuses = data.applications.map((app) => app.status?.toLowerCase());
+    if (statuses.includes("approved")) return "Active";
+    if (statuses.includes("pending")) return "Pending";
+    return "Expired";
+  }, [data.applications]);
+
+  const renewalInfo = useMemo(() => {
+    const approvedApp = data.applications.find((app) => app.status?.toLowerCase() === "approved");
+    if (!approvedApp?.reviewed_at) return null;
+
+    const reviewedAt = new Date(approvedApp.reviewed_at);
+    const nextRenewal = new Date(reviewedAt);
+    nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
+
+    const now = new Date();
+    const diffDays = Math.ceil((nextRenewal - now) / (1000 * 60 * 60 * 24));
+
+    return {
+      nextRenewal,
+      daysLeft: diffDays,
+      label: formatDateLabel(nextRenewal.toISOString()),
+    };
+  }, [data.applications]);
+
+  const notifications = useMemo(() => {
+    const items = [
+      ...data.applications.map((app) => ({
+        id: `app-${app.id}`,
+        date: app.reviewed_at || app.submitted_at,
+        title: `Application ${app.application_ref}`,
+        message:
+          app.status?.toLowerCase() === "approved"
+            ? `Your license application for ${app.desired_zone} was approved.`
+            : app.status?.toLowerCase() === "pending"
+            ? `Your application is pending review.`
+            : `Application status updated to ${app.status}.`,
+      })),
+      ...data.documents.map((doc) => ({
+        id: `doc-${doc.id}`,
+        date: doc.uploaded_at,
+        title: `Document uploaded`,
+        message: `${doc.document_type} was uploaded successfully.`,
+      })),
+    ];
+
+    return items
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5);
+  }, [data.applications, data.documents]);
+
+  const reminders = [];
+  if (renewalInfo?.daysLeft !== null && renewalInfo?.daysLeft <= 30 && licenseStatus === "Active") {
+    reminders.push(`License renewal due in ${renewalInfo.daysLeft} days.`);
+  }
+  if (profileCompletion < 100) {
+    reminders.push("Complete your profile to speed up approvals.");
+  }
+
+  const dueMessage =
+    licenseStatus === "Expired"
+      ? "Your license has expired. Renew now to stay compliant."
+      : licenseStatus === "Pending"
+      ? "A pending application needs your attention to complete payment and verification."
+      : "Your account is in good standing. Keep documents current.";
+
+  const vendorName =
+    data.profile?.first_name || data.profile?.business_name || user?.name || "Vendor";
+
   return (
     <div className="container py-4">
       <PageTitle
         title="Vendor Dashboard"
-        subtitle="Track profile progress and licensing activity"
+        subtitle="Welcome back — manage your license, payments, and zone details from one place."
         icon={FiActivity}
         className="mb-4"
       />
+
       {error && <div className="alert alert-danger">{error}</div>}
       {loading ? <LoadingState label="Loading dashboard insights..." /> : null}
 
       {!loading ? (
         <>
+          <div className="dashboard-hero card border-0 shadow-sm mb-4">
+            <div className="card-body p-4 p-lg-5">
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+                <div>
+                  <h4 className="mb-2">Welcome back, {vendorName} 👋</h4>
+                  <p className="text-muted mb-3">
+                    Here’s what’s happening with your vending license and zone allocation.
+                  </p>
+                  <div className="d-flex flex-wrap gap-2 align-items-center">
+                    <span className="status-pill text-capitalize">{licenseStatus}</span>
+                    <span className="stat-pill">
+                      {profileCompletion}% profile complete
+                    </span>
+                    <span className="stat-pill">{data.documents.length} documents</span>
+                  </div>
+                </div>
+                <div className="text-end">
+                  <Link className="btn btn-warning btn-lg" to="/vendor/apply">
+                    Apply License <FiArrowRight className="ms-1" />
+                  </Link>
+                </div>
+              </div>
+              {renewalInfo?.daysLeft !== null && renewalInfo.daysLeft <= 15 && (
+                <div className="renewal-banner mt-4 p-3 rounded-3">
+                  <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                    <div>
+                      <strong>License Renewal Due Soon</strong>
+                      <p className="mb-0 text-muted">
+                        Your license is due for renewal on {renewalInfo.label}.
+                      </p>
+                    </div>
+                    <Link className="btn btn-light btn-sm" to="/vendor/applications">
+                      Renew Now
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="row g-4 mb-4">
-            <div className="col-md-4">
-              <div className="metric-card">
-                <span>Profile Status</span>
-                <h3>{data.profile ? "Completed" : "Pending"}</h3>
+            <div className="col-md-6 col-xl-3">
+              <div className="dashboard-summary-card p-4 h-100">
+                <div className="mb-2 text-uppercase text-muted small">License status</div>
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h3 className="mb-1">{licenseStatus}</h3>
+                    <p className="text-muted mb-0">Current permit standing</p>
+                  </div>
+                  <FiShield className="text-warning fs-3" />
+                </div>
               </div>
             </div>
-            <div className="col-md-4">
-              <div className="metric-card">
-                <span>Documents Uploaded</span>
-                <h3>{data.documents.length}</h3>
+            <div className="col-md-6 col-xl-3">
+              <div className="dashboard-summary-card p-4 h-100">
+                <div className="mb-2 text-uppercase text-muted small">Upcoming renewal</div>
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h3 className="mb-1">
+                      {renewalInfo?.daysLeft !== null ? `${renewalInfo.daysLeft} days` : "--"}
+                    </h3>
+                    <p className="text-muted mb-0">Next renewal date</p>
+                  </div>
+                  <FiClock className="text-info fs-3" />
+                </div>
               </div>
             </div>
-            <div className="col-md-4">
-              <div className="metric-card">
-                <span>License Applications</span>
-                <h3>{data.applications.length}</h3>
+            <div className="col-md-6 col-xl-3">
+              <div className="dashboard-summary-card p-4 h-100">
+                <div className="mb-2 text-uppercase text-muted small">Applications</div>
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h3 className="mb-1">{data.applications.length}</h3>
+                    <p className="text-muted mb-0">Recent requests</p>
+                  </div>
+                  <FiBell className="text-primary fs-3" />
+                </div>
+              </div>
+            </div>
+            <div className="col-md-6 col-xl-3">
+              <div className="dashboard-summary-card p-4 h-100">
+                <div className="mb-2 text-uppercase text-muted small">Profile progress</div>
+                <div className="mb-3">
+                  <div className="progress dashboard-progress">
+                    <div
+                      className="progress-bar"
+                      role="progressbar"
+                      style={{ width: `${profileCompletion}%` }}
+                      aria-valuenow={profileCompletion}
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                    />
+                  </div>
+                </div>
+                <p className="mb-0 text-muted">{profileCompletion}% complete</p>
               </div>
             </div>
           </div>
 
           <div className="row g-4">
-            <div className="col-lg-7">
-              <div className="card border-0 shadow-sm app-surface-card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="mb-0">Latest Applications</h5>
-                    <Link to="/vendor/applications">View all</Link>
+            <div className="col-xl-5">
+              <div className="card border-0 shadow-sm app-surface-card h-100">
+                <div className="card-body p-4">
+                  <div className="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                      <h5 className="mb-1">Quick Actions</h5>
+                      <p className="text-muted mb-0">
+                        Start the next step for licensing, payments, or support.
+                      </p>
+                    </div>
+                    <FiArrowRight className="fs-4 text-secondary" />
                   </div>
-                  <div className="table-responsive">
-                    <table className="table align-middle">
-                      <thead>
-                        <tr>
-                          <th>Ref</th>
-                          <th>Zone</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.applications.slice(0, 5).map((item) => (
-                          <tr key={item.id}>
-                            <td>{item.application_ref}</td>
-                            <td>{item.desired_zone}</td>
-                            <td>
-                              <span className="badge text-bg-secondary text-capitalize">
-                                {item.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                        {data.applications.length === 0 && (
-                          <tr>
-                            <td colSpan="3" className="text-muted">
-                              No applications yet
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                  <div className="row g-3 mt-3">
+                    <div className="col-6">
+                      <Link className="dashboard-action-card" to="/vendor/apply">
+                        <strong>Apply License</strong>
+                        <span>New application</span>
+                      </Link>
+                    </div>
+                    <div className="col-6">
+                      <Link className="dashboard-action-card" to="/vendor/applications">
+                        <strong>Renew License</strong>
+                        <span>Extend validity</span>
+                      </Link>
+                    </div>
+                    <div className="col-6">
+                      <Link className="dashboard-action-card" to="/vendor/applications">
+                        <strong>Pay Fees</strong>
+                        <span>Make payment</span>
+                      </Link>
+                    </div>
+                    <div className="col-6">
+                      <Link className="dashboard-action-card" to="/faq">
+                        <strong>File Complaint</strong>
+                        <span>Report issue</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="col-lg-5">
-              <div className="card border-0 shadow-sm h-100 app-surface-card">
-                <div className="card-body">
-                  <h5>Quick Actions</h5>
-                  <div className="d-grid gap-2 mt-3">
-                    <Link className="btn btn-outline-dark" to="/vendor/profile">
-                      Update Profile
-                    </Link>
-                    <Link
-                      className="btn btn-outline-dark"
-                      to="/vendor/documents"
-                    >
-                      Upload Documents
-                    </Link>
-                    <Link className="btn btn-warning" to="/vendor/apply">
-                      Apply for New License
-                    </Link>
+            <div className="col-xl-7">
+              <div className="card border-0 shadow-sm app-surface-card h-100">
+                <div className="card-body p-4">
+                  <div className="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                      <h5 className="mb-1">Recent Notifications</h5>
+                      <p className="text-muted mb-0">Last 5 updates for your account</p>
+                    </div>
+                    <span className="badge rounded-pill bg-secondary">
+                      {notifications.length}
+                    </span>
+                  </div>
+
+                  <div className="notification-list">
+                    {notifications.map((note) => (
+                      <div key={note.id} className="notification-item">
+                        <div>
+                          <h6 className="mb-1">{note.title}</h6>
+                          <p className="mb-1 text-muted">{note.message}</p>
+                        </div>
+                        <small className="text-muted">
+                          {formatDateLabel(note.date)}
+                        </small>
+                      </div>
+                    ))}
+                    {notifications.length === 0 && (
+                      <div className="text-center text-muted py-4">
+                        No recent notifications yet.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="alert alert-info mt-4 mb-0">
+                    <strong>Payment & renewal alert:</strong> {dueMessage}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card border-0 shadow-sm app-surface-card mt-4">
+            <div className="card-body p-4 p-xl-5">
+              <div className="d-flex flex-column flex-xl-row gap-4">
+                <div className="dashboard-map-info flex-fill">
+                  <h5 className="mb-3">My Vending Zone</h5>
+                  <div className="dashboard-map-details mb-3">
+                    <div>
+                      <span className="text-muted d-block">Zone</span>
+                      <strong>{data.profile?.vending_zone || "Not assigned"}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted d-block">Location</span>
+                      <strong>{data.profile?.address || "Mirpur 10, Dhaka"}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted d-block">Hours</span>
+                      <strong>10 AM to 7:30 PM</strong>
+                    </div>
+                  </div>
+                  <Link className="btn btn-success" to="/zones">
+                    View Full Map
+                  </Link>
+                </div>
+                <div className="dashboard-map-preview flex-fill">
+                  <div className="dashboard-map-shell">
+                    <div className="dashboard-map-placeholder">
+                      <FiMapPin className="fs-1" />
+                      <p className="mb-0 mt-2">Zone map preview</p>
+                    </div>
                   </div>
                 </div>
               </div>

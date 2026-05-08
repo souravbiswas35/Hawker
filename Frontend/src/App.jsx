@@ -66,6 +66,10 @@ export default function App() {
           }
         />
         <Route
+          path="/vendor/apply-test"
+          element={<VendorApplyPage />}
+        />
+        <Route
           path="/vendor/applications"
           element={
             <ProtectedRoute roles={["vendor"]}>
