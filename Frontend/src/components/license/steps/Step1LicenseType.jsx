@@ -28,7 +28,7 @@ export default function Step1LicenseType({ onSubmit, data, licenseTypes, loading
         <div className="row g-3">
           {licenseTypes.map((license) => {
             const isSelected = selectedLicense === license.id;
-            const totalCost = license.base_price + license.security_deposit + license.processing_fee;
+            const totalCost = parseFloat(license.base_price || 0) + parseFloat(license.security_deposit || 0) + parseFloat(license.processing_fee || 0);
             
             return (
               <div key={license.id} className="col-md-6">
@@ -50,15 +50,15 @@ export default function Step1LicenseType({ onSubmit, data, licenseTypes, loading
                     <div className="mb-3">
                       <div className="d-flex justify-content-between mb-1">
                         <small className="text-muted">Base Price:</small>
-                        <small>৳ {license.base_price.toFixed(2)}</small>
+                        <small>৳ {typeof license.base_price === 'number' ? license.base_price.toFixed(2) : parseFloat(license.base_price || 0).toFixed(2)}</small>
                       </div>
                       <div className="d-flex justify-content-between mb-1">
                         <small className="text-muted">Security Deposit:</small>
-                        <small>৳ {license.security_deposit.toFixed(2)}</small>
+                        <small>৳ {typeof license.security_deposit === 'number' ? license.security_deposit.toFixed(2) : parseFloat(license.security_deposit || 0).toFixed(2)}</small>
                       </div>
                       <div className="d-flex justify-content-between mb-2">
                         <small className="text-muted">Processing Fee:</small>
-                        <small>৳ {license.processing_fee.toFixed(2)}</small>
+                        <small>৳ {typeof license.processing_fee === 'number' ? license.processing_fee.toFixed(2) : parseFloat(license.processing_fee || 0).toFixed(2)}</small>
                       </div>
                       <hr className="my-2" />
                       <div className="d-flex justify-content-between">
@@ -89,8 +89,8 @@ export default function Step1LicenseType({ onSubmit, data, licenseTypes, loading
                 <p className="mb-1"><strong>Duration:</strong> {selectedLicenseData.duration_days} days</p>
               </div>
               <div className="col-md-6">
-                <p className="mb-1"><strong>Total Cost:</strong> ৳ {(selectedLicenseData.base_price + selectedLicenseData.security_deposit + selectedLicenseData.processing_fee).toFixed(2)}</p>
-                <p className="mb-1"><strong>Refundable Deposit:</strong> ৳ {selectedLicenseData.security_deposit.toFixed(2)}</p>
+                <p className="mb-1"><strong>Total Cost:</strong> ৳ {(parseFloat(selectedLicenseData.base_price || 0) + parseFloat(selectedLicenseData.security_deposit || 0) + parseFloat(selectedLicenseData.processing_fee || 0)).toFixed(2)}</p>
+                <p className="mb-1"><strong>Refundable Deposit:</strong> ৳ {typeof selectedLicenseData.security_deposit === 'number' ? selectedLicenseData.security_deposit.toFixed(2) : parseFloat(selectedLicenseData.security_deposit || 0).toFixed(2)}</p>
               </div>
             </div>
           </div>

@@ -72,6 +72,34 @@ async function listApplications(req, res, next) {
   }
 }
 
+async function getApplicationDetails(req, res, next) {
+  try {
+    const applicationId = Number(req.params.id);
+    
+    const [[application]] = await pool.query(
+      `SELECT la.*, u.email, vp.first_name, vp.last_name, vp.phone, vp.address,
+              lt.name as license_type_name, lt.base_price, lt.security_deposit, lt.processing_fee,
+              pz.name as primary_zone_name, pz2.name as alternate_zone_name
+       FROM license_applications la
+       JOIN users u ON u.id = la.user_id
+       LEFT JOIN vendor_profiles vp ON vp.user_id = la.user_id
+       LEFT JOIN license_types lt ON lt.id = la.license_type_id
+       LEFT JOIN vending_zones pz ON pz.id = la.primary_zone_id
+       LEFT JOIN vending_zones pz2 ON pz2.id = la.alternate_zone_id
+       WHERE la.id = ?`,
+      [applicationId]
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    res.json({ application });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function reviewApplication(req, res, next) {
   try {
     const applicationId = Number(req.params.id);
@@ -117,5 +145,6 @@ module.exports = {
   getDashboard,
   listVendors,
   listApplications,
+  getApplicationDetails,
   reviewApplication,
 };

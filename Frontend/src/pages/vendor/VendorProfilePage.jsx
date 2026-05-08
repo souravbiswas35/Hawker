@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FiUser } from "react-icons/fi";
 import api from "../../api/client";
 import PageTitle from "../../components/common/PageTitle";
+import VendorLayout from "../../components/layout/VendorLayout";
 
 const initialForm = {
   firstName: "",
@@ -36,10 +37,10 @@ export default function VendorProfilePage() {
   };
 
   return (
-    <div className="container py-4">
+    <VendorLayout>
       <PageTitle
-        title="Vendor Profile"
-        subtitle="Keep your personal and business details updated"
+        title="My Profile"
+        subtitle="Update your personal and business information"
         icon={FiUser}
         className="mb-4"
       />
@@ -140,6 +141,6 @@ export default function VendorProfilePage() {
           </form>
         </div>
       </div>
-    </div>
+    </VendorLayout>
   );
 }

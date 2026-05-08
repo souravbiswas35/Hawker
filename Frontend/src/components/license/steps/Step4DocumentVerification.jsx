@@ -21,8 +21,8 @@ export default function Step4DocumentVerification({ onSubmit, data, loading }) {
 
   const fetchExistingDocuments = async () => {
     try {
-      const { data: response } = await api.get("/vendor/documents");
-      setExistingDocs(response.documents || []);
+      // For license application, use existing documents from the application data
+      setExistingDocs(data.documentVerification ? Object.keys(data.documentVerification) : []);
     } catch (err) {
       console.error("Failed to fetch existing documents");
     }
@@ -35,28 +35,26 @@ export default function Step4DocumentVerification({ onSubmit, data, loading }) {
     setUploading(prev => ({ ...prev, [documentType]: true }));
 
     try {
-      const formData = new FormData();
-      formData.append('document', file);
-      formData.append('documentType', documentType);
-
-      const { data: response } = await api.post("/vendor/documents", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // For license application, store file metadata only (not full base64 data)
+      const fileData = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+        uploadedAt: new Date().toISOString()
+      };
 
       setDocuments(prev => ({
         ...prev,
         [documentType]: {
+          ...prev[documentType],
+          file: fileData,
           uploaded: true,
-          fileName: file.name,
-          fileId: response.document.id,
           uploadedAt: new Date().toISOString()
         }
       }));
 
-      // Refresh existing documents
-      fetchExistingDocuments();
+      setExistingDocs(prev => [...prev, documentType]);
     } catch (err) {
       console.error("Upload failed:", err);
     } finally {
@@ -112,19 +110,23 @@ export default function Step4DocumentVerification({ onSubmit, data, loading }) {
           <div className="card-body">
             <h6 className="mb-3">Documents from Profile</h6>
             <div className="row g-2">
-              {existingDocs.map(doc => (
-                <div key={doc.id} className="col-md-6">
-                  <div className="d-flex align-items-center p-2 border rounded">
-                    <FiFile className="me-2 text-success" />
-                    <div className="flex-grow-1">
-                      <small className="fw-bold">{doc.document_type.replace('_', ' ').toUpperCase()}</small>
-                      <br />
-                      <small className="text-muted">{doc.original_name}</small>
+              {existingDocs.map(docId => {
+                const doc = requiredDocuments.find(d => d.id === docId);
+                if (!doc) return null;
+                return (
+                  <div key={doc.id} className="col-md-6">
+                    <div className="d-flex align-items-center p-2 border rounded">
+                      <FiFile className="me-2 text-success" />
+                      <div className="flex-grow-1">
+                        <small className="fw-bold">{doc.name.toUpperCase()}</small>
+                        <br />
+                        <small className="text-muted">{doc.description}</small>
+                      </div>
+                      <FiCheck className="text-success" />
                     </div>
-                    <FiCheck className="text-success" />
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

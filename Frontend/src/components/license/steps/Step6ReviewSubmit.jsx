@@ -26,13 +26,14 @@ export default function Step6ReviewSubmit({ onSubmit, data, trackingNumber, load
   const [declaration, setDeclaration] = useState(false);
   const [digitalSignature, setDigitalSignature] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   // Real data from previous steps
   const applicationSummary = {
     licenseType: data.licenseType ? {
       name: data.licenseType.name,
       duration: `${data.licenseType.duration_days} days`,
-      totalCost: `৳ ${(data.licenseType.base_price + data.licenseType.security_deposit + data.licenseType.processing_fee).toFixed(2)}`
+      totalCost: `৳ ${(parseFloat(data.licenseType.base_price || 0) + parseFloat(data.licenseType.security_deposit || 0) + parseFloat(data.licenseType.processing_fee || 0)).toFixed(2)}`
     } : {
       name: "Monthly License",
       duration: "30 days", 
@@ -80,6 +81,11 @@ export default function Step6ReviewSubmit({ onSubmit, data, trackingNumber, load
       declaration: true,
       digitalSignature,
       finalSubmission: true
+    }).then(() => {
+      setSubmitted(true);
+    }).catch((error) => {
+      console.error("Submission failed:", error);
+      alert("Failed to submit application. Please try again.");
     });
   };
 
@@ -284,6 +290,30 @@ export default function Step6ReviewSubmit({ onSubmit, data, trackingNumber, load
           </button>
         </div>
       </form>
+
+      {/* Success Message */}
+      {submitted && (
+        <div className="alert alert-success mt-4">
+          <div className="text-center">
+            <h5 className="mb-3">🎉 Application Submitted Successfully!</h5>
+            <p className="mb-2">
+              Your license application has been submitted successfully.
+            </p>
+            <p className="mb-3">
+              <strong>Tracking Number:</strong> {trackingNumber}
+            </p>
+            <p className="text-muted mb-4">
+              You can track your application status using the tracking number above.
+            </p>
+            <button 
+              className="btn btn-success"
+              onClick={() => window.location.href = '/vendor/dashboard'}
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -68,9 +68,9 @@ async function createApplication(req, res, next) {
 
     const [result] = await pool.query(
       `INSERT INTO license_applications 
-      (tracking_number, user_id, license_type_id, current_step, completed_steps, status)
-      VALUES (?, ?, ?, 1, JSON_ARRAY('license_type'), 'draft')`,
-      [trackingNumber, userId, licenseTypeId]
+      (application_ref, tracking_number, user_id, desired_zone, stall_type, business_category, license_type_id, current_step, completed_steps, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1, JSON_ARRAY('license_type'), 'draft')`,
+      [trackingNumber, trackingNumber, userId, 'To be selected', 'To be selected', 'To be selected', licenseTypeId]
     );
 
     // Initialize step progress
@@ -104,7 +104,11 @@ async function updateApplicationStep(req, res, next) {
   try {
     const userId = req.user.id;
     const { applicationId } = req.params;
-    const { step, data } = req.body;
+    const { step } = req.params;
+    const data = req.body;
+    
+    // Convert step to number
+    const stepNumber = parseInt(step, 10);
 
     // Verify application belongs to user
     const [[application]] = await pool.query(
@@ -121,7 +125,7 @@ async function updateApplicationStep(req, res, next) {
 
     try {
       // Update step-specific data
-      switch (step) {
+      switch (stepNumber) {
         case 2: // Zone Selection
           await connection.query(
             `UPDATE license_applications 
@@ -160,16 +164,6 @@ async function updateApplicationStep(req, res, next) {
             WHERE id = ?`,
             [JSON.stringify(data), applicationId]
           );
-
-          // Create payment record if payment is made
-          if (data.paymentMethod !== 'pay_later') {
-            await connection.query(
-              `INSERT INTO application_payments 
-              (application_id, payment_method, amount, payment_status, paid_at)
-              VALUES (?, ?, ?, 'completed', NOW())`,
-              [applicationId, data.paymentMethod, data.totalAmount]
-            );
-          }
           break;
 
         case 6: // Final Submission
@@ -184,12 +178,12 @@ async function updateApplicationStep(req, res, next) {
       }
 
       // Update step progress
-      if (step < 6) {
+      if (stepNumber < 6) {
         await connection.query(
           `UPDATE application_step_progress 
           SET step_status = 'completed', completed_at = NOW()
           WHERE application_id = ? AND step_number = ?`,
-          [applicationId, step]
+          [applicationId, stepNumber]
         );
 
         await connection.query(
@@ -197,15 +191,15 @@ async function updateApplicationStep(req, res, next) {
           (application_id, step_number, step_status, started_at)
           VALUES (?, ?, 'in_progress', NOW())
           ON DUPLICATE KEY UPDATE step_status = 'in_progress', started_at = NOW()`,
-          [applicationId, step + 1]
+          [applicationId, stepNumber + 1]
         );
       }
 
       await connection.commit();
 
       res.json({
-        message: `Step ${step} updated successfully`,
-        currentStep: step < 6 ? step + 1 : 6
+        message: `Step ${stepNumber} updated successfully`,
+        currentStep: stepNumber < 6 ? stepNumber + 1 : 6
       });
     } catch (err) {
       await connection.rollback();
