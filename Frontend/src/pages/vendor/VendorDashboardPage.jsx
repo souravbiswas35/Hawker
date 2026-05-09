@@ -137,7 +137,7 @@ export default function VendorDashboardPage() {
       {error && <div className="alert alert-danger">{error}</div>}
       {loading ? <LoadingState label="Loading dashboard insights..." /> : null}
 
-      {!loading ? (
+      {!loading && (
         <>
           {/* Modern Hero Section */}
           <div className="dashboard-hero-modern mb-4">
@@ -385,7 +385,7 @@ export default function VendorDashboardPage() {
             </div>
           </div>
         </>
-      ) : null}
+      ) }
       </VendorLayout>
-  );
-}
+    );
+  }
