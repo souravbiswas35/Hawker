@@ -97,7 +97,7 @@ async function getDashboard(req, res, next) {
     const userId = req.user.id;
 
     const [[profile]] = await pool.query(
-      `SELECT first_name, last_name, phone, address, business_name, business_type, vending_zone
+      `SELECT first_name, last_name, phone, national_id, date_of_birth, address, business_name, business_type, vending_zone
        FROM vendor_profiles WHERE user_id = ?`,
       [userId],
     );
