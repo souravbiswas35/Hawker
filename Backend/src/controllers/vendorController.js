@@ -4,53 +4,92 @@ const ApiError = require("../utils/apiError");
 async function upsertProfile(req, res, next) {
   try {
     const {
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       phone,
-      nationalId,
-      dateOfBirth,
+      national_id,
+      date_of_birth,
       address,
-      businessName,
-      businessType,
-      vendingZone,
+      business_name,
+      business_type,
+      vending_zone,
     } = req.body;
 
     const userId = req.user.id;
 
-    const payload = [
-      firstName || null,
-      lastName || null,
-      phone || null,
-      nationalId || null,
-      dateOfBirth || null,
-      address || null,
-      businessName || null,
-      businessType || null,
-      vendingZone || null,
-      userId,
-    ];
+    console.log("Received profile data:", req.body);
+    console.log("User ID:", userId);
 
-    await pool.query(
-      `INSERT INTO vendor_profiles (
-        user_id, first_name, last_name, phone, national_id, date_of_birth,
-        address, business_name, business_type, vending_zone
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        first_name = VALUES(first_name),
-        last_name = VALUES(last_name),
-        phone = VALUES(phone),
-        national_id = VALUES(national_id),
-        date_of_birth = VALUES(date_of_birth),
-        address = VALUES(address),
-        business_name = VALUES(business_name),
-        business_type = VALUES(business_type),
-        vending_zone = VALUES(vending_zone),
-        updated_at = CURRENT_TIMESTAMP`,
-      [userId, ...payload.slice(0, 9)],
+    if (!userId) {
+      throw new ApiError(401, "User not authenticated");
+    }
+
+    // First, check if profile exists
+    const [[existingProfile]] = await pool.query(
+      "SELECT id FROM vendor_profiles WHERE user_id = ?",
+      [userId]
     );
+
+    console.log("Existing profile:", existingProfile);
+
+    let result;
+    if (existingProfile) {
+      // Update existing profile
+      console.log("Updating existing profile");
+      result = await pool.query(
+        `UPDATE vendor_profiles SET 
+          first_name = ?,
+          last_name = ?,
+          phone = ?,
+          national_id = ?,
+          date_of_birth = ?,
+          address = ?,
+          business_name = ?,
+          business_type = ?,
+          vending_zone = ?,
+          updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = ?`,
+        [
+          first_name || null,
+          last_name || null,
+          phone || null,
+          national_id || null,
+          date_of_birth || null,
+          address || null,
+          business_name || null,
+          business_type || null,
+          vending_zone || null,
+          userId,
+        ]
+      );
+    } else {
+      // Insert new profile
+      console.log("Inserting new profile");
+      result = await pool.query(
+        `INSERT INTO vendor_profiles (
+          user_id, first_name, last_name, phone, national_id, date_of_birth,
+          address, business_name, business_type, vending_zone
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          userId,
+          first_name || null,
+          last_name || null,
+          phone || null,
+          national_id || null,
+          date_of_birth || null,
+          address || null,
+          business_name || null,
+          business_type || null,
+          vending_zone || null,
+        ]
+      );
+    }
+
+    console.log("Query result:", result);
 
     res.json({ message: "Vendor profile updated successfully" });
   } catch (err) {
+    console.error("Error in upsertProfile:", err);
     next(err);
   }
 }
