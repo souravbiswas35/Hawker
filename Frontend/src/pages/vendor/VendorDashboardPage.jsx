@@ -137,7 +137,7 @@ export default function VendorDashboardPage() {
       {error && <div className="alert alert-danger">{error}</div>}
       {loading ? <LoadingState label="Loading dashboard insights..." /> : null}
 
-      {!loading ? (
+      {!loading && (
         <>
           {/* Modern Hero Section */}
           <div className="dashboard-hero-modern mb-4">
@@ -289,6 +289,12 @@ export default function VendorDashboardPage() {
                     </div>
                     <div className="col-6">
                       <Link className="dashboard-action-card" to="/vendor/applications">
+                        <strong>Track Application</strong>
+                        <span>View status</span>
+                      </Link>
+                    </div>
+                    <div className="col-6">
+                      <Link className="dashboard-action-card" to="/vendor/applications">
                         <strong>Pay Fees</strong>
                         <span>Make payment</span>
                       </Link>
@@ -369,9 +375,34 @@ export default function VendorDashboardPage() {
                 </div>
                 <div className="dashboard-map-preview flex-fill">
                   <div className="dashboard-map-shell">
-                    <div className="dashboard-map-placeholder">
-                      <FiMapPin className="fs-1" />
-                      <p className="mb-0 mt-2">Zone map preview</p>
+                    <div className="dashboard-map-container">
+                      <div className="map-header">
+                        <h6 className="mb-1">Your Assigned Zone</h6>
+                        <p className="text-muted small mb-0">{data.profile?.vending_zone || "Not assigned"}</p>
+                      </div>
+                      <div className="map-preview">
+                        <iframe
+                          src="https://www.google.com/maps?q=Dhaka,Bangladesh&output=embed"
+                          style={{ 
+                            width: '100%', 
+                            height: '300px', 
+                            border: 'none', 
+                            borderRadius: '8px' 
+                          }}
+                          allowFullScreen=""
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                        ></iframe>
+                        <div className="map-actions mt-3">
+                          <button 
+                            className="btn btn-success btn-sm"
+                            onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(data.profile?.vending_zone + ', Dhaka, Bangladesh' || 'Dhaka, Bangladesh')}`, '_blank')}
+                          >
+                            <FiMapPin className="me-1" />
+                            Get Directions
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -379,7 +410,131 @@ export default function VendorDashboardPage() {
             </div>
           </div>
         </>
-      ) : null}
+      ) }
       </VendorLayout>
-  );
-}
+    );
+  }
+
+  // Add styles for map preview
+  const mapStyles = `
+    .dashboard-map-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .map-header {
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .map-preview {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1.5rem;
+      min-height: 300px;
+    }
+    
+    .map-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .map-zones {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+    
+    .map-zone {
+      background: #e8f5e8;
+      border: 1px solid #28a745;
+      border-radius: 6px;
+      padding: 0.75rem;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .map-zone.assigned {
+      background: #d4edda;
+      border-color: #155724;
+      color: #155724;
+      font-weight: 600;
+      box-shadow: 0 0 0 2px rgba(21, 87, 36, 0.2);
+    }
+    
+    .map-zone.available {
+      background: #e8f5e8;
+      border-color: #28a745;
+      color: #155724;
+    }
+    
+    .map-zone.occupied {
+      background: #f8d7da;
+      border-color: #dc3545;
+      color: #721c24;
+    }
+    
+    .map-zone:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .map-legend {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      border: 1px solid #dee2e6;
+    }
+    
+    .legend-color.assigned {
+      background: #d4edda;
+      border-color: #155724;
+    }
+    
+    .legend-color.available {
+      background: #e8f5e8;
+      border-color: #28a745;
+    }
+    
+    .legend-color.occupied {
+      background: #f8d7da;
+      border-color: #dc3545;
+    }
+    
+    .map-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #f0f0f0;
+    }
+  `;
+
+  // Inject styles into document
+  if (typeof document !== 'undefined') {
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = mapStyles;
+    document.head.appendChild(styleSheet);
+  }
