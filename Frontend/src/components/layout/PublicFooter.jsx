@@ -51,7 +51,7 @@ export default function PublicFooter() {
           <div className="col-md-4">
             <h5 className="footer-title">Contact Us</h5>
             <p className="mb-2 footer-contact">
-              <FiMail /> support@streetvendorsystem.gov
+              <FiMail /> hawkersystem@gmail.com
             </p>
             <p className="mb-2 footer-contact">
               <FiPhone /> 01775234795

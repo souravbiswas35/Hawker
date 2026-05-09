@@ -16,6 +16,9 @@ import VendorSidebar from "./VendorSidebar";
 export default function AppNavbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = isAuthenticated && user?.role === "admin";
+  const showPublicLinks = !isAdmin;
+  const brandLink = isAdmin ? "/admin/dashboard" : "/";
 
   const handleLogout = () => {
     logout();
@@ -27,7 +30,7 @@ export default function AppNavbar() {
       <div className="container">
         <Link
           className="navbar-brand fw-bold text-light d-flex align-items-center gap-2"
-          to="/"
+          to={brandLink}
         >
           <span className="brand-badge">
             <i className="bi bi-shop" />
@@ -46,38 +49,40 @@ export default function AppNavbar() {
         </button>
 
         <div className="collapse navbar-collapse" id="hawkerNav">
-          <ul className="navbar-nav me-auto align-items-lg-center gap-lg-1">
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/">
-                <HiOutlineHome />
-                Home
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/about">
-                <HiOutlineInformationCircle />
-                About Us
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/features">
-                <FiGrid />
-                Features
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/zones">
-                <FiMapPin />
-                Zones
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/faq">
-                <FiHelpCircle />
-                FAQ
-              </NavLink>
-            </li>
-          </ul>
+          {showPublicLinks && (
+            <ul className="navbar-nav me-auto align-items-lg-center gap-lg-1">
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/">
+                  <HiOutlineHome />
+                  Home
+                </NavLink>
+              </li>
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/about">
+                  <HiOutlineInformationCircle />
+                  About Us
+                </NavLink>
+              </li>
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/features">
+                  <FiGrid />
+                  Features
+                </NavLink>
+              </li>
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/zones">
+                  <FiMapPin />
+                  Zones
+                </NavLink>
+              </li>
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/faq">
+                  <FiHelpCircle />
+                  FAQ
+                </NavLink>
+              </li>
+            </ul>
+          )}
 
           <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-2">
             {!isAuthenticated && (
@@ -131,7 +136,7 @@ export default function AppNavbar() {
               </>
             )}
 
-            {isAuthenticated && user?.role === "admin" && (
+            {isAdmin && (
               <>
                 <li className="nav-item">
                   <NavLink className="nav-link" to="/admin/dashboard">
