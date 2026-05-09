@@ -1,5 +1,5 @@
 # Database Setup Script for Hawker License Application System
-# This script will run the SQL schema updates
+# This script runs SQL schema/data updates in sequence.
 
 Write-Host "Setting up database for enhanced license application system..."
 
@@ -7,27 +7,37 @@ Write-Host "Setting up database for enhanced license application system..."
 try {
     $mysqlVersion = mysql --version
     Write-Host "Found MySQL: $mysqlVersion"
-} catch {
+}
+catch {
     Write-Host "Error: MySQL is not installed or not in PATH" -ForegroundColor Red
     exit 1
 }
 
-# Run schema updates
-Write-Host "Running schema update 03_license_application_schema.sql..."
-try {
-    Get-Content sql/03_license_application_schema.sql | mysql -u root -p
-    Write-Host "✓ Schema update completed successfully" -ForegroundColor Green
-} catch {
-    Write-Host "Error running schema update: $_" -ForegroundColor Red
-}
+# Run schema/data scripts in order
+$scripts = @(
+    "sql/01_hawker_schema.sql",
+    "sql/02_hawker_demo_data.sql",
+    "sql/03_license_application_schema.sql",
+    "sql/04_demo_data_license_app.sql",
+    "sql/05_fix_license_application_status.sql",
+    "sql/06_backfill_application_audit_logs.sql",
+    "sql/07_admin_feature_schema.sql",
+    "sql/08_final_admin_setup.sql"
+)
 
-# Run demo data
-Write-Host "Running demo data 04_demo_data_license_app.sql..."
-try {
-    Get-Content sql/04_demo_data_license_app.sql | mysql -u root -p
-    Write-Host "✓ Demo data inserted successfully" -ForegroundColor Green
-} catch {
-    Write-Host "Error inserting demo data: $_" -ForegroundColor Red
+foreach ($script in $scripts) {
+    Write-Host "Running $script..."
+    try {
+        Get-Content $script | mysql -u root -p
+        if ($LASTEXITCODE -ne 0) {
+            throw "MySQL returned exit code $LASTEXITCODE"
+        }
+        Write-Host "Completed $script" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Error running $script : $_" -ForegroundColor Red
+        exit 1
+    }
 }
 
 Write-Host "Database setup completed!" -ForegroundColor Green

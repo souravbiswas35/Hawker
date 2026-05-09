@@ -3,6 +3,7 @@ import { FiUsers } from "react-icons/fi";
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import PageTitle from "../../components/common/PageTitle";
+import AdminLayout from "../../components/layout/AdminLayout";
 
 export default function AdminVendorsPage() {
   const [vendors, setVendors] = useState([]);
@@ -25,7 +26,7 @@ export default function AdminVendorsPage() {
   }, []);
 
   return (
-    <div className="container py-4">
+    <AdminLayout>
       <PageTitle
         title="Registered Vendors"
         subtitle="Browse all vendors and profile compliance status"
@@ -73,6 +74,6 @@ export default function AdminVendorsPage() {
           </div>
         </div>
       ) : null}
-    </div>
+    </AdminLayout>
   );
 }

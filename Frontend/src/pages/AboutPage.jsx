@@ -1,5 +1,14 @@
-import { FiLayers, FiPhoneCall } from "react-icons/fi";
+import { FiTarget, FiLayers, FiPhoneCall } from "react-icons/fi";
 import PageTitle from "../components/common/PageTitle";
+
+const techStack = [
+  { icon: "bi-braces", label: "React + Bootstrap" },
+  { icon: "bi-server", label: "Node.js + Express" },
+  { icon: "bi-database", label: "MySQL Database" },
+  { icon: "bi-shield-check", label: "JWT + Email OTP" },
+  { icon: "bi-cloud", label: "REST API Driven" },
+  { icon: "bi-map", label: "Map Integration" },
+];
 
 export default function AboutPage() {
   return (
@@ -60,6 +69,24 @@ export default function AboutPage() {
                 and accountable governance.
               </p>
             </div>
+          </div>
+        </div>
+
+        <div className="panel-box mt-4">
+          <PageTitle
+            title="Technology Stack Showcase"
+            subtitle="Built with reliable modern web technologies"
+            icon={FiTarget}
+          />
+          <div className="row g-3 mt-1">
+            {techStack.map((item) => (
+              <div className="col-md-4" key={item.label}>
+                <div className="tech-item">
+                  <i className={`bi ${item.icon}`} />
+                  <span>{item.label}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
