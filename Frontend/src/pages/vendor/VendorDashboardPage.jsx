@@ -289,6 +289,12 @@ export default function VendorDashboardPage() {
                     </div>
                     <div className="col-6">
                       <Link className="dashboard-action-card" to="/vendor/applications">
+                        <strong>Track Application</strong>
+                        <span>View status</span>
+                      </Link>
+                    </div>
+                    <div className="col-6">
+                      <Link className="dashboard-action-card" to="/vendor/applications">
                         <strong>Pay Fees</strong>
                         <span>Make payment</span>
                       </Link>
