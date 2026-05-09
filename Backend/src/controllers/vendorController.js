@@ -92,6 +92,34 @@ async function uploadDocuments(req, res, next) {
   }
 }
 
+async function uploadProfilePicture(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const file = req.file;
+
+    if (!file) {
+      throw new ApiError(400, "Please upload a profile picture");
+    }
+
+    // Save the file path to database
+    const profilePictureUrl = `/uploads/profile-pictures/${file.filename}`;
+    
+    await pool.query(
+      `UPDATE vendor_profiles 
+       SET profile_picture_url = ?, profile_picture_uploaded_at = CURRENT_TIMESTAMP
+       WHERE user_id = ?`,
+      [profilePictureUrl, userId],
+    );
+
+    res.json({
+      message: "Profile picture uploaded successfully",
+      profile_picture_url: profilePictureUrl,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getDashboard(req, res, next) {
   try {
     const userId = req.user.id;
@@ -129,5 +157,6 @@ async function getDashboard(req, res, next) {
 module.exports = {
   upsertProfile,
   uploadDocuments,
+  uploadProfilePicture,
   getDashboard,
 };

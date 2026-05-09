@@ -7,7 +7,13 @@ const vendorController = require("../controllers/vendorController");
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: path.join(__dirname, "../../uploads/documents"),
+  destination: (req, file, cb) => {
+    if (req.path.includes("profile-picture")) {
+      cb(null, path.join(__dirname, "../../uploads/profile-pictures"));
+    } else {
+      cb(null, path.join(__dirname, "../../uploads/documents"));
+    }
+  },
   filename: (req, file, cb) => {
     const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     cb(null, `${unique}-${file.originalname.replace(/\s+/g, "_")}`);
@@ -15,13 +21,20 @@ const storage = multer.diskStorage({
 });
 
 const allowedMimes = ["application/pdf", "image/jpeg", "image/png"];
+const allowedImageMimes = ["image/jpeg", "image/png"];
 
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (!allowedMimes.includes(file.mimetype)) {
-      return cb(new Error("Only PDF, JPG and PNG files are allowed"));
+    if (req.path.includes("profile-picture")) {
+      if (!allowedImageMimes.includes(file.mimetype)) {
+        return cb(new Error("Only JPG and PNG images are allowed for profile picture"));
+      }
+    } else {
+      if (!allowedMimes.includes(file.mimetype)) {
+        return cb(new Error("Only PDF, JPG and PNG files are allowed"));
+      }
     }
     cb(null, true);
   },
@@ -30,7 +43,13 @@ const upload = multer({
 router.use(requireAuth, requireRole("vendor"));
 
 router.get("/dashboard", vendorController.getDashboard);
+router.get("/profile", vendorController.getDashboard);
 router.put("/profile", vendorController.upsertProfile);
+router.post(
+  "/profile-picture",
+  upload.single("profile_picture"),
+  vendorController.uploadProfilePicture,
+);
 router.post(
   "/documents",
   upload.fields([
