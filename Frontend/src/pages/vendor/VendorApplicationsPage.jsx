@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
-import { FiList } from "react-icons/fi";
+import { Link } from "react-router-dom";
+import { FiList, FiPlus } from "react-icons/fi";
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import PageTitle from "../../components/common/PageTitle";
+import { useAuth } from "../../context/AuthContext";
+import VendorLayout from "../../components/layout/VendorLayout";
 
 export default function VendorApplicationsPage() {
+  const { user } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -12,28 +16,28 @@ export default function VendorApplicationsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const { data } = await api.get("/applications/mine");
-        setApplications(data.applications || []);
+        const res = await api.get("/vendor/applications");
+        setApplications(res.data);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load applications");
       } finally {
         setLoading(false);
       }
     }
-
     load();
   }, []);
 
   return (
-    <div className="container py-4">
+    <VendorLayout>
       <PageTitle
         title="My Applications"
-        subtitle="Monitor submission status and admin feedback"
+        subtitle="Track and manage your license applications"
         icon={FiList}
         className="mb-4"
       />
+
       {error && <div className="alert alert-danger">{error}</div>}
-      {loading ? <LoadingState label="Loading your applications..." /> : null}
+      {loading ? <LoadingState label="Loading applications..." /> : null}
       {!loading ? (
         <div className="card border-0 shadow-sm app-surface-card">
           <div className="table-responsive">
@@ -69,6 +73,6 @@ export default function VendorApplicationsPage() {
           </div>
         </div>
       ) : null}
-    </div>
+    </VendorLayout>
   );
 }

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { FiUploadCloud } from "react-icons/fi";
 import api from "../../api/client";
 import PageTitle from "../../components/common/PageTitle";
+import LoadingState from "../../components/common/LoadingState";
+import VendorLayout from "../../components/layout/VendorLayout";
 
 export default function VendorDocumentsPage() {
   const [files, setFiles] = useState({
@@ -49,17 +51,19 @@ export default function VendorDocumentsPage() {
   };
 
   return (
-    <div className="container py-4">
+    <VendorLayout>
       <PageTitle
         title="Upload Documents"
         subtitle="Submit required files for license review"
         icon={FiUploadCloud}
         className="mb-4"
       />
+
       <div className="card border-0 shadow-sm app-surface-card">
         <div className="card-body p-4">
           {message && <div className="alert alert-success">{message}</div>}
           {error && <div className="alert alert-danger">{error}</div>}
+          {loading ? <LoadingState label="Loading documents..." /> : null}
 
           <form onSubmit={onSubmit} className="row g-3">
             <div className="col-md-4">
@@ -103,6 +107,6 @@ export default function VendorDocumentsPage() {
           </small>
         </div>
       </div>
-    </div>
+    </VendorLayout>
   );
 }
