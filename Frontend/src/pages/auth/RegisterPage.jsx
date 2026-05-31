@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FiUserPlus } from "react-icons/fi";
 import api from "../../api/client";
 import PageTitle from "../../components/common/PageTitle";
+import "../../styles/pages/auth/RegisterPage.css";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ email: "", password: "" });

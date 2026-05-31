@@ -1,0 +1,10 @@
+.auth-card {
+  border-radius: 18px;
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(247, 251, 255, 0.94)
+  );
+  border: 1px solid var(--hawker-border);
+  backdrop-filter: blur(8px);
+}

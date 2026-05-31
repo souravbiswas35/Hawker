@@ -3,6 +3,7 @@ import { FiCalendar, FiPlusCircle } from "react-icons/fi";
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import AdminLayout from "../../components/layout/AdminLayout";
+import "../../styles/pages/admin/AdminInspectionsPage.css";
 
 export default function AdminInspectionsPage() {
   const [loading, setLoading] = useState(true);

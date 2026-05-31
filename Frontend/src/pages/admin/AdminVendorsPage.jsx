@@ -4,6 +4,7 @@ import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import PageTitle from "../../components/common/PageTitle";
 import AdminLayout from "../../components/layout/AdminLayout";
+import "../../styles/pages/admin/AdminVendorsPage.css";
 
 export default function AdminVendorsPage() {
   const [vendors, setVendors] = useState([]);

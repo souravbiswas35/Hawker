@@ -4,6 +4,7 @@ import { FiCheckCircle } from "react-icons/fi";
 import api from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import PageTitle from "../../components/common/PageTitle";
+import "../../styles/pages/auth/VerifyEmailPage.css";
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();

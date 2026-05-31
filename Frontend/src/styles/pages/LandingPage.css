@@ -1,0 +1,80 @@
+.benefit-card {
+  display: grid;
+  gap: 0.35rem;
+  place-items: center;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 14px;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.benefit-card i {
+  font-size: 1.2rem;
+}
+
+.highlight-item {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--hawker-border);
+  border-radius: 10px;
+  padding: 0.8rem;
+  transition: all 180ms ease;
+}
+
+.highlight-item i {
+  color: #1f7a9f;
+}
+
+.highlight-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(15, 61, 130, 0.1);
+}
+
+.metric-card {
+  background: linear-gradient(155deg, #ffffff, #eef5ff);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--hawker-border);
+  box-shadow: 0 14px 30px rgba(16, 41, 76, 0.08);
+  transition: transform 180ms ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+}
+
+.metric-card span {
+  color: var(--hawker-muted);
+  font-size: 0.9rem;
+}
+
+.metric-card h3 {
+  margin: 0.35rem 0 0;
+  font-weight: 700;
+}
+
+.process-card {
+  height: 100%;
+  padding: 1.15rem;
+  border-radius: 14px;
+  background: linear-gradient(140deg, #16095d, #2f1a95);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 24px rgba(23, 9, 94, 0.18);
+}
+
+.process-card h5 {
+  font-weight: 700;
+}
+
+.cta-banner {
+  border-radius: 16px;
+  padding: 1.4rem;
+  background: linear-gradient(115deg, #19036f, #28128f 45%, #3f24ad);
+  color: #fff;
+  box-shadow: 0 16px 36px rgba(30, 12, 102, 0.28);
+}

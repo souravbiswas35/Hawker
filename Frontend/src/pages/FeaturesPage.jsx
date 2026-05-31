@@ -1,5 +1,6 @@
 import { FiPlayCircle, FiStar } from "react-icons/fi";
 import PageTitle from "../components/common/PageTitle";
+import "../styles/pages/FeaturesPage.css";
 
 const features = [
   {

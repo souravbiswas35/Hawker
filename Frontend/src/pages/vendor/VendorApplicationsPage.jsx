@@ -6,6 +6,7 @@ import LoadingState from "../../components/common/LoadingState";
 import PageTitle from "../../components/common/PageTitle";
 import { useAuth } from "../../context/AuthContext";
 import VendorLayout from "../../components/layout/VendorLayout";
+import "../../styles/pages/vendor/VendorApplicationsPage.css";
 
 export default function VendorApplicationsPage() {
   const { user } = useAuth();
@@ -61,7 +62,7 @@ export default function VendorApplicationsPage() {
                     <td className="text-capitalize">{app.status}</td>
                     <td>{app.admin_remarks || "-"}</td>
                     <td>
-                      <Link 
+                      <Link
                         to={`/vendor/track/${app.id}`}
                         className="btn btn-sm btn-outline-primary"
                       >

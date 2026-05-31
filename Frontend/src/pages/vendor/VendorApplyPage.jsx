@@ -2,6 +2,7 @@ import { FiFilePlus } from "react-icons/fi";
 import PageTitle from "../../components/common/PageTitle";
 import LicenseApplication from "../../components/license/LicenseApplication";
 import VendorLayout from "../../components/layout/VendorLayout";
+import "../../styles/pages/vendor/VendorApplyPage.css";
 
 export default function VendorApplyPage() {
   return (

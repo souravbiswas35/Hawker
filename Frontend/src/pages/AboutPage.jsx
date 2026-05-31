@@ -9,6 +9,7 @@ import {
   FiClock,
 } from "react-icons/fi";
 import PageTitle from "../components/common/PageTitle";
+import "../styles/pages/AboutPage.css";
 
 const keyObjectives = [
   {

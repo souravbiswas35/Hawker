@@ -6,6 +6,7 @@ import {
   FiPlayCircle,
 } from "react-icons/fi";
 import PageTitle from "../components/common/PageTitle";
+import "../styles/pages/FaqPage.css";
 
 const faqs = [
   {

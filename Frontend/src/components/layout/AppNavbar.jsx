@@ -11,14 +11,18 @@ import {
   FiFileText,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
-import VendorSidebar from "./VendorSidebar";
 
 export default function AppNavbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const isAdmin = isAuthenticated && user?.role === "admin";
-  const showPublicLinks = !isAdmin;
-  const brandLink = isAdmin ? "/admin/dashboard" : "/";
+  const isVendor = isAuthenticated && user?.role === "vendor";
+  const showPublicLinks = !isAuthenticated;
+  const brandLink = isAdmin
+    ? "/admin/dashboard"
+    : isVendor
+      ? "/vendor/dashboard"
+      : "/";
 
   const handleLogout = () => {
     logout();

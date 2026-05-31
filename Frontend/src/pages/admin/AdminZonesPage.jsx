@@ -4,6 +4,7 @@ import { FiMapPin, FiPlusCircle } from "react-icons/fi";
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import AdminLayout from "../../components/layout/AdminLayout";
+import "../../styles/pages/admin/AdminZonesPage.css";
 
 export default function AdminZonesPage() {
   const [loading, setLoading] = useState(true);

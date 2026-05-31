@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiPlusCircle } from "react-icons/fi";
 import api from "../../api/client";
 import AdminLayout from "../../components/layout/AdminLayout";
+import "../../styles/pages/admin/AdminZoneCreatePage.css";
 
 export default function AdminZoneCreatePage() {
   const navigate = useNavigate();

@@ -1,0 +1,42 @@
+.faq-search {
+  max-width: 420px;
+}
+
+.faq-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.faq-item {
+  background: #fff;
+  border: 1px solid var(--hawker-border);
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+}
+
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.live-help-wrap {
+  background: linear-gradient(120deg, #13075a, #1f0b7a);
+}
+
+.support-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  height: 100%;
+  box-shadow: 0 12px 24px rgba(18, 7, 90, 0.15);
+}
+
+.download-row {
+  border: 1px solid var(--hawker-border);
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

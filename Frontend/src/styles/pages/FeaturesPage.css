@@ -1,0 +1,41 @@
+.feature-card-modern {
+  border-radius: 16px;
+  border: 1px solid #d7dff9;
+  background: linear-gradient(165deg, #14055e, #271484 58%, #3a26a0);
+  color: #fff;
+  padding: 1.15rem;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.feature-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px rgba(23, 9, 94, 0.25);
+}
+
+.feature-card-modern i {
+  font-size: 1.4rem;
+  color: var(--hawker-sun);
+}
+
+.video-item {
+  border: 1px solid var(--hawker-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #fff, #f6f9ff);
+  transition: transform 180ms ease;
+}
+
+.video-item:hover {
+  transform: translateY(-4px);
+}
+
+.video-thumb {
+  min-height: 112px;
+  background: linear-gradient(120deg, #1470a8, #2ba5c0);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 1.8rem;
+}

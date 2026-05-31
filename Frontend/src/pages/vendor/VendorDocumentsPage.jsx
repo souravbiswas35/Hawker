@@ -4,6 +4,7 @@ import api from "../../api/client";
 import PageTitle from "../../components/common/PageTitle";
 import LoadingState from "../../components/common/LoadingState";
 import VendorLayout from "../../components/layout/VendorLayout";
+import "../../styles/pages/vendor/VendorDocumentsPage.css";
 
 export default function VendorDocumentsPage() {
   const [files, setFiles] = useState({

@@ -15,6 +15,7 @@ import {
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import AdminLayout from "../../components/layout/AdminLayout";
+import "../../styles/pages/admin/AdminDashboardPage.css";
 
 function timeAgo(dateStr) {
   if (!dateStr) return "";

@@ -3,6 +3,7 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import { FiMap, FiSearch } from "react-icons/fi";
 import PageTitle from "../components/common/PageTitle";
+import "../styles/pages/ZonesPage.css";
 
 // Fix Leaflet's broken default icon path in Vite
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";

@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiActivity, FiArrowRight, FiBell, FiClock, FiMapPin, FiShield } from "react-icons/fi";
+import {
+  FiActivity,
+  FiArrowRight,
+  FiBell,
+  FiClock,
+  FiMapPin,
+  FiShield,
+} from "react-icons/fi";
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import PageTitle from "../../components/common/PageTitle";
 import { useAuth } from "../../context/AuthContext";
 import VendorLayout from "../../components/layout/VendorLayout";
+import "../../styles/pages/vendor/VendorDashboardPage.css";
 
 function formatDateLabel(dateString) {
   if (!dateString) return "Unknown";
@@ -64,7 +72,9 @@ export default function VendorDashboardPage() {
   }, [data.applications]);
 
   const renewalInfo = useMemo(() => {
-    const approvedApp = data.applications.find((app) => app.status?.toLowerCase() === "approved");
+    const approvedApp = data.applications.find(
+      (app) => app.status?.toLowerCase() === "approved",
+    );
     if (!approvedApp?.reviewed_at) return null;
 
     const reviewedAt = new Date(approvedApp.reviewed_at);
@@ -91,8 +101,8 @@ export default function VendorDashboardPage() {
           app.status?.toLowerCase() === "approved"
             ? `Your license application for ${app.desired_zone} was approved.`
             : app.status?.toLowerCase() === "pending"
-            ? `Your application is pending review.`
-            : `Application status updated to ${app.status}.`,
+              ? `Your application is pending review.`
+              : `Application status updated to ${app.status}.`,
       })),
       ...data.documents.map((doc) => ({
         id: `doc-${doc.id}`,
@@ -108,7 +118,11 @@ export default function VendorDashboardPage() {
   }, [data.applications, data.documents]);
 
   const reminders = [];
-  if (renewalInfo?.daysLeft !== null && renewalInfo?.daysLeft <= 30 && licenseStatus === "Active") {
+  if (
+    renewalInfo?.daysLeft !== null &&
+    renewalInfo?.daysLeft <= 30 &&
+    licenseStatus === "Active"
+  ) {
     reminders.push(`License renewal due in ${renewalInfo.daysLeft} days.`);
   }
   if (profileCompletion < 100) {
@@ -119,11 +133,14 @@ export default function VendorDashboardPage() {
     licenseStatus === "Expired"
       ? "Your license has expired. Renew now to stay compliant."
       : licenseStatus === "Pending"
-      ? "A pending application needs your attention to complete payment and verification."
-      : "Your account is in good standing. Keep documents current.";
+        ? "A pending application needs your attention to complete payment and verification."
+        : "Your account is in good standing. Keep documents current.";
 
   const vendorName =
-    data.profile?.first_name || data.profile?.business_name || user?.name || "Vendor";
+    data.profile?.first_name ||
+    data.profile?.business_name ||
+    user?.name ||
+    "Vendor";
 
   return (
     <VendorLayout>
@@ -146,7 +163,8 @@ export default function VendorDashboardPage() {
                 <div className="p-4">
                   <h1 className="mb-3">Welcome back, {vendorName} 👋</h1>
                   <p className="text-muted mb-4 fs-5">
-                    Here's what's happening with your vending license and zone allocation.
+                    Here's what's happening with your vending license and zone
+                    allocation.
                   </p>
                   <div className="d-flex flex-wrap gap-3 mb-4">
                     <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm">
@@ -155,7 +173,9 @@ export default function VendorDashboardPage() {
                       </div>
                       <div>
                         <div className="text-muted small">License Status</div>
-                        <div className="fw-bold text-capitalize">{licenseStatus}</div>
+                        <div className="fw-bold text-capitalize">
+                          {licenseStatus}
+                        </div>
                       </div>
                     </div>
                     <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm">
@@ -177,29 +197,38 @@ export default function VendorDashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <Link className="btn btn-warning btn-lg px-4 rounded-3" to="/vendor/apply">
+                  <Link
+                    className="btn btn-warning btn-lg px-4 rounded-3"
+                    to="/vendor/apply"
+                  >
                     Apply for License <FiArrowRight className="ms-2" />
                   </Link>
                 </div>
               </div>
               <div className="col-lg-4">
                 <div className="p-4">
-                  {renewalInfo && renewalInfo.daysLeft !== null && renewalInfo.daysLeft <= 30 && (
-                    <div className="alert alert-warning border-0 rounded-3 shadow-sm">
-                      <div className="d-flex align-items-center mb-2">
-                        <FiClock className="me-2" />
-                        <strong>License Renewal</strong>
+                  {renewalInfo &&
+                    renewalInfo.daysLeft !== null &&
+                    renewalInfo.daysLeft <= 30 && (
+                      <div className="alert alert-warning border-0 rounded-3 shadow-sm">
+                        <div className="d-flex align-items-center mb-2">
+                          <FiClock className="me-2" />
+                          <strong>License Renewal</strong>
+                        </div>
+                        <div className="small">
+                          Due in {renewalInfo.daysLeft} days (
+                          {renewalInfo.label})
+                        </div>
+                        {renewalInfo.daysLeft <= 15 && (
+                          <Link
+                            className="btn btn-sm btn-warning mt-2 w-100"
+                            to="/vendor/applications"
+                          >
+                            Renew Now
+                          </Link>
+                        )}
                       </div>
-                      <div className="small">
-                        Due in {renewalInfo.daysLeft} days ({renewalInfo.label})
-                      </div>
-                      {renewalInfo.daysLeft <= 15 && (
-                        <Link className="btn btn-sm btn-warning mt-2 w-100" to="/vendor/applications">
-                          Renew Now
-                        </Link>
-                      )}
-                    </div>
-                  )}
+                    )}
                 </div>
               </div>
             </div>
@@ -225,12 +254,18 @@ export default function VendorDashboardPage() {
                   <div className="bg-warning bg-opacity-10 p-3 rounded-3">
                     <FiClock className="text-warning fs-4" />
                   </div>
-                  {renewalInfo && renewalInfo.daysLeft !== null && renewalInfo.daysLeft <= 15 && (
-                    <span className="badge bg-warning text-white">Due Soon</span>
-                  )}
+                  {renewalInfo &&
+                    renewalInfo.daysLeft !== null &&
+                    renewalInfo.daysLeft <= 15 && (
+                      <span className="badge bg-warning text-white">
+                        Due Soon
+                      </span>
+                    )}
                 </div>
                 <h2 className="mb-1">
-                  {renewalInfo && renewalInfo.daysLeft !== null ? `${renewalInfo.daysLeft}` : "--"}
+                  {renewalInfo && renewalInfo.daysLeft !== null
+                    ? `${renewalInfo.daysLeft}`
+                    : "--"}
                 </h2>
                 <p className="text-muted mb-0">Days until renewal</p>
               </div>
@@ -241,7 +276,9 @@ export default function VendorDashboardPage() {
                   <div className="bg-primary bg-opacity-10 p-3 rounded-3">
                     <FiBell className="text-primary fs-4" />
                   </div>
-                  <span className="badge bg-primary text-white">{data.applications.length}</span>
+                  <span className="badge bg-primary text-white">
+                    {data.applications.length}
+                  </span>
                 </div>
                 <h2 className="mb-1">{data.applications.length}</h2>
                 <p className="text-muted mb-0">Total applications</p>
@@ -255,7 +292,9 @@ export default function VendorDashboardPage() {
                   </div>
                   <span className="badge bg-info text-white">Zone</span>
                 </div>
-                <h2 className="mb-1">{data.profile?.vending_zone || "Not Set"}</h2>
+                <h2 className="mb-1">
+                  {data.profile?.vending_zone || "Not Set"}
+                </h2>
                 <p className="text-muted mb-0">Assigned zone</p>
               </div>
             </div>
@@ -276,25 +315,37 @@ export default function VendorDashboardPage() {
                   </div>
                   <div className="row g-3 mt-3">
                     <div className="col-6">
-                      <Link className="dashboard-action-card" to="/vendor/apply">
+                      <Link
+                        className="dashboard-action-card"
+                        to="/vendor/apply"
+                      >
                         <strong>Apply License</strong>
                         <span>New application</span>
                       </Link>
                     </div>
                     <div className="col-6">
-                      <Link className="dashboard-action-card" to="/vendor/applications">
+                      <Link
+                        className="dashboard-action-card"
+                        to="/vendor/applications"
+                      >
                         <strong>Renew License</strong>
                         <span>Extend validity</span>
                       </Link>
                     </div>
                     <div className="col-6">
-                      <Link className="dashboard-action-card" to="/vendor/applications">
+                      <Link
+                        className="dashboard-action-card"
+                        to="/vendor/applications"
+                      >
                         <strong>Track Application</strong>
                         <span>View status</span>
                       </Link>
                     </div>
                     <div className="col-6">
-                      <Link className="dashboard-action-card" to="/vendor/applications">
+                      <Link
+                        className="dashboard-action-card"
+                        to="/vendor/applications"
+                      >
                         <strong>Pay Fees</strong>
                         <span>Make payment</span>
                       </Link>
@@ -316,7 +367,9 @@ export default function VendorDashboardPage() {
                   <div className="d-flex align-items-center justify-content-between mb-3">
                     <div>
                       <h5 className="mb-1">Recent Notifications</h5>
-                      <p className="text-muted mb-0">Last 5 updates for your account</p>
+                      <p className="text-muted mb-0">
+                        Last 5 updates for your account
+                      </p>
                     </div>
                     <span className="badge rounded-pill bg-secondary">
                       {notifications.length}
@@ -358,11 +411,15 @@ export default function VendorDashboardPage() {
                   <div className="dashboard-map-details mb-3">
                     <div>
                       <span className="text-muted d-block">Zone</span>
-                      <strong>{data.profile?.vending_zone || "Not assigned"}</strong>
+                      <strong>
+                        {data.profile?.vending_zone || "Not assigned"}
+                      </strong>
                     </div>
                     <div>
                       <span className="text-muted d-block">Location</span>
-                      <strong>{data.profile?.address || "Mirpur 10, Dhaka"}</strong>
+                      <strong>
+                        {data.profile?.address || "Mirpur 10, Dhaka"}
+                      </strong>
                     </div>
                     <div>
                       <span className="text-muted d-block">Hours</span>
@@ -378,25 +435,32 @@ export default function VendorDashboardPage() {
                     <div className="dashboard-map-container">
                       <div className="map-header">
                         <h6 className="mb-1">Your Assigned Zone</h6>
-                        <p className="text-muted small mb-0">{data.profile?.vending_zone || "Not assigned"}</p>
+                        <p className="text-muted small mb-0">
+                          {data.profile?.vending_zone || "Not assigned"}
+                        </p>
                       </div>
                       <div className="map-preview">
                         <iframe
                           src="https://www.google.com/maps?q=Dhaka,Bangladesh&output=embed"
-                          style={{ 
-                            width: '100%', 
-                            height: '300px', 
-                            border: 'none', 
-                            borderRadius: '8px' 
+                          style={{
+                            width: "100%",
+                            height: "300px",
+                            border: "none",
+                            borderRadius: "8px",
                           }}
                           allowFullScreen=""
                           loading="lazy"
                           referrerPolicy="no-referrer-when-downgrade"
                         ></iframe>
                         <div className="map-actions mt-3">
-                          <button 
+                          <button
                             className="btn btn-success btn-sm"
-                            onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(data.profile?.vending_zone + ', Dhaka, Bangladesh' || 'Dhaka, Bangladesh')}`, '_blank')}
+                            onClick={() =>
+                              window.open(
+                                `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(data.profile?.vending_zone + ", Dhaka, Bangladesh" || "Dhaka, Bangladesh")}`,
+                                "_blank",
+                              )
+                            }
                           >
                             <FiMapPin className="me-1" />
                             Get Directions
@@ -410,13 +474,13 @@ export default function VendorDashboardPage() {
             </div>
           </div>
         </>
-      ) }
-      </VendorLayout>
-    );
-  }
+      )}
+    </VendorLayout>
+  );
+}
 
-  // Add styles for map preview
-  const mapStyles = `
+// Add styles for map preview
+const mapStyles = `
     .dashboard-map-container {
       background: white;
       border-radius: 12px;
@@ -532,9 +596,9 @@ export default function VendorDashboardPage() {
     }
   `;
 
-  // Inject styles into document
-  if (typeof document !== 'undefined') {
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = mapStyles;
-    document.head.appendChild(styleSheet);
-  }
+// Inject styles into document
+if (typeof document !== "undefined") {
+  const styleSheet = document.createElement("style");
+  styleSheet.textContent = mapStyles;
+  document.head.appendChild(styleSheet);
+}

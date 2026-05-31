@@ -3,6 +3,7 @@ import { FiMessageSquare } from "react-icons/fi";
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import AdminLayout from "../../components/layout/AdminLayout";
+import "../../styles/pages/admin/AdminComplaintsPage.css";
 
 const statuses = ["new", "in_progress", "resolved", "closed"];
 

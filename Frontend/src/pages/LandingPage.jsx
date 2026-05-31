@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import PageTitle from "../components/common/PageTitle";
 import { FiArrowRight, FiShield, FiTrendingUp } from "react-icons/fi";
+import "../styles/pages/LandingPage.css";
 
 const benefitCards = [
   { icon: "bi-eye", label: "Transparency" },
