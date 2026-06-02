@@ -100,5 +100,7 @@ router.post(
   },
 );
 router.get("/my-license", vendorController.getMyLicense);
+router.put("/change-password", vendorController.changePassword);
+router.put("/deactivate-account", vendorController.deactivateAccount);
 
 module.exports = router;

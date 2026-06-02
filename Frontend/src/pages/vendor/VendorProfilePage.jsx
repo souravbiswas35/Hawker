@@ -35,6 +35,9 @@ export default function VendorProfilePage() {
   const [profilePicture, setProfilePicture] = useState(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [documentFiles, setDocumentFiles] = useState([]);
+  const [uploadingDocuments, setUploadingDocuments] = useState(false);
+  const [displayDateOfBirth, setDisplayDateOfBirth] = useState("");
 
   useEffect(() => {
     loadProfileData();
@@ -43,21 +46,64 @@ export default function VendorProfilePage() {
   const loadProfileData = async () => {
     try {
       const { data } = await api.get("/vendor/profile");
+      console.log("Full profile data received:", data);
       if (data.profile) {
+        console.log("Profile object:", data.profile);
+        // Format date for HTML date input (YYYY-MM-DD) - avoid timezone issues
+        let formattedDate = "";
+        let displayDate = "";
+        if (data.profile.date_of_birth) {
+          console.log("Raw date_of_birth from backend:", data.profile.date_of_birth);
+          // Parse the date and extract YYYY-MM-DD part, handling both formats
+          const date = new Date(data.profile.date_of_birth);
+          console.log("Parsed date object:", date);
+          if (!isNaN(date.getTime())) {
+            // Use UTC methods to avoid timezone shift
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            formattedDate = `${year}-${month}-${day}`;
+            // Format for display as MM/DD/YYYY
+            displayDate = `${month}/${day}/${year}`;
+            console.log("Formatted date (input):", formattedDate);
+            console.log("Display date:", displayDate);
+          }
+        }
+
         setForm({
           firstName: data.profile.first_name || "",
           lastName: data.profile.last_name || "",
           phone: data.profile.phone || "",
           nationalId: data.profile.national_id || "",
-          dateOfBirth: data.profile.date_of_birth || "",
+          dateOfBirth: formattedDate,
           address: data.profile.address || "",
           businessName: data.profile.business_name || "",
           businessType: data.profile.business_type || "",
           vendingZone: data.profile.vending_zone || "",
         });
+        setDisplayDateOfBirth(displayDate);
+
         if (data.profile.profile_picture_url) {
-          setProfilePicturePreview(data.profile.profile_picture_url);
+          console.log("Profile picture URL from backend:", data.profile.profile_picture_url);
+          // Construct full URL for profile picture if it's a relative path
+          let picUrl = data.profile.profile_picture_url;
+          if (!picUrl.startsWith('http')) {
+            // Backend is on port 8080, construct the full URL
+            picUrl = `http://localhost:8080${picUrl}`;
+          }
+          console.log("Final profile picture URL:", picUrl);
+          setProfilePicturePreview(picUrl);
+          console.log("setProfilePicturePreview called with:", picUrl);
+          // Test if the image loads
+          const img = new Image();
+          img.onload = () => console.log("Profile picture loaded successfully");
+          img.onerror = (e) => console.error("Profile picture failed to load", e);
+          img.src = picUrl;
+        } else {
+          console.log("No profile picture URL found in profile data. Profile keys:", Object.keys(data.profile));
         }
+      } else {
+        console.log("No profile data received");
       }
       if (data.documents) {
         setDocuments(data.documents);
@@ -115,6 +161,116 @@ export default function VendorProfilePage() {
   const removeProfilePicture = () => {
     setProfilePicture(null);
     setProfilePicturePreview(null);
+  };
+
+  const onDocumentChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter((file) => {
+      const validTypes = ["application/pdf", "image/jpeg", "image/png"];
+      if (!validTypes.includes(file.type)) {
+        setError(`Invalid file type: ${file.name}. Only PDF, JPG, PNG allowed.`);
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError(`File too large: ${file.name}. Max 5MB allowed.`);
+        return false;
+      }
+      return true;
+    });
+    setDocumentFiles((prev) => [...prev, ...validFiles]);
+  };
+
+  const uploadDocuments = async () => {
+    if (documentFiles.length === 0) {
+      setError("Please select files to upload");
+      return;
+    }
+
+    setUploadingDocuments(true);
+    setError("");
+    setMessage("");
+
+    const formData = new FormData();
+    documentFiles.forEach((file) => {
+      // Determine document type based on file name or use a default
+      let docType = "other_document";
+      const fileName = file.name.toLowerCase();
+      if (fileName.includes("nid") || fileName.includes("national")) {
+        docType = "national_id_copy";
+      } else if (fileName.includes("trade") || fileName.includes("license")) {
+        docType = "trade_license";
+      } else if (fileName.includes("profile")) {
+        docType = "profile_photo";
+      }
+      formData.append(docType, file);
+    });
+
+    try {
+      const { data } = await api.post("/vendor/documents", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setMessage(data.message || "Documents uploaded successfully!");
+      setDocumentFiles([]);
+      loadProfileData(); // Reload to show uploaded documents
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to upload documents");
+    } finally {
+      setUploadingDocuments(false);
+    }
+  };
+
+  const onChangePassword = async (e) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+
+    const currentPassword = e.target.currentPassword.value;
+    const newPassword = e.target.newPassword.value;
+    const confirmPassword = e.target.confirmPassword.value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError("All password fields are required");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("New password and confirm password do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError("New password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      const { data } = await api.put("/vendor/change-password", {
+        currentPassword,
+        newPassword,
+      });
+      setMessage(data.message || "Password changed successfully!");
+      e.target.reset();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to change password");
+    }
+  };
+
+  const onDeactivateAccount = async () => {
+    if (!window.confirm("Are you sure you want to deactivate your account? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const { data } = await api.put("/vendor/deactivate-account");
+      setMessage(data.message || "Account deactivated successfully");
+      setTimeout(() => {
+        localStorage.removeItem("hawker_token");
+        localStorage.removeItem("hawker_user");
+        window.location.href = "/login";
+      }, 2000);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to deactivate account");
+    }
   };
 
   const onSubmit = async (e) => {
@@ -525,13 +681,68 @@ export default function VendorProfilePage() {
                   marginBottom: "2rem",
                 }}
                 className="document-upload-area"
+                onClick={() => document.getElementById("document-input").click()}
               >
                 <FiUploadCloud size={48} className="text-primary mb-2" />
                 <h6>Drop your documents here or click to upload</h6>
                 <small className="text-muted">
                   Supported formats: PDF, JPG, PNG (Max 5MB)
                 </small>
+                <input
+                  type="file"
+                  id="document-input"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={onDocumentChange}
+                  style={{ display: "none" }}
+                />
               </div>
+
+              {documentFiles.length > 0 && (
+                <div className="mb-4">
+                  <h6 className="mb-3">Selected Files</h6>
+                  <div className="row g-2">
+                    {documentFiles.map((file, idx) => (
+                      <div key={idx} className="col-md-6">
+                        <div
+                          style={{
+                            background: "#f8fbff",
+                            border: "1px solid #d5e3f3",
+                            borderRadius: "8px",
+                            padding: "0.75rem",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <small className="text-truncate" style={{ maxWidth: "200px" }}>
+                            {file.name}
+                          </small>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => {
+                              setDocumentFiles((prev) => prev.filter((_, i) => i !== idx));
+                            }}
+                          >
+                            <FiX size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      onClick={uploadDocuments}
+                      disabled={uploadingDocuments}
+                      className="btn btn-warning px-4 rounded-pill"
+                    >
+                      {uploadingDocuments ? "Uploading..." : "Upload Documents"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <h6 className="mb-3">Uploaded Documents</h6>
               <div className="row g-3">
                 {documents.length > 0 ? (
@@ -581,40 +792,53 @@ export default function VendorProfilePage() {
           {activeTab === "security" && (
             <div>
               <h5 className="mb-4 text-dark">Security Settings</h5>
-              <div className="row g-3">
-                <div className="col-12">
-                  <label className="form-label fw-500">Change Password</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    placeholder="Current password"
-                  />
+              <form onSubmit={onChangePassword}>
+                <div className="row g-3">
+                  <div className="col-12">
+                    <label className="form-label fw-500">Current Password</label>
+                    <input
+                      type="password"
+                      name="currentPassword"
+                      className="form-control"
+                      placeholder="Enter current password"
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-500">New Password</label>
+                    <input
+                      type="password"
+                      name="newPassword"
+                      className="form-control"
+                      placeholder="Enter new password"
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-500">Confirm New Password</label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      className="form-control"
+                      placeholder="Confirm new password"
+                      required
+                    />
+                  </div>
+                  <div className="col-12">
+                    <button type="submit" className="btn btn-warning px-4 rounded-pill">
+                      Update Password
+                    </button>
+                  </div>
                 </div>
-                <div className="col-md-6">
-                  <input
-                    type="password"
-                    className="form-control"
-                    placeholder="New password"
-                  />
-                </div>
-                <div className="col-md-6">
-                  <input
-                    type="password"
-                    className="form-control"
-                    placeholder="Confirm new password"
-                  />
-                </div>
-                <div className="col-12">
-                  <button className="btn btn-warning px-4 rounded-pill">
-                    Update Password
-                  </button>
-                </div>
-                <div className="col-12 mt-4 pt-3 border-top">
-                  <h6 className="mb-3">Danger Zone</h6>
-                  <button className="btn btn-outline-danger px-4 rounded-pill">
-                    Deactivate Account
-                  </button>
-                </div>
+              </form>
+              <div className="col-12 mt-4 pt-3 border-top">
+                <h6 className="mb-3">Danger Zone</h6>
+                <button
+                  onClick={onDeactivateAccount}
+                  className="btn btn-outline-danger px-4 rounded-pill"
+                >
+                  Deactivate Account
+                </button>
               </div>
             </div>
           )}

@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 const ApiError = require("../utils/apiError");
+const bcrypt = require("bcryptjs");
 
 let complaintCommentsTableReady = false;
 
@@ -48,6 +49,17 @@ async function upsertProfile(req, res, next) {
       throw new ApiError(401, "User not authenticated");
     }
 
+    // Convert ISO date string to MySQL DATE format (YYYY-MM-DD)
+    let formattedDateOfBirth = null;
+    if (date_of_birth) {
+      try {
+        const date = new Date(date_of_birth);
+        formattedDateOfBirth = date.toISOString().split('T')[0];
+      } catch (e) {
+        console.error("Error parsing date_of_birth:", e);
+      }
+    }
+
     // First, check if profile exists
     const [[existingProfile]] = await pool.query(
       "SELECT id FROM vendor_profiles WHERE user_id = ?",
@@ -78,7 +90,7 @@ async function upsertProfile(req, res, next) {
           last_name || null,
           phone || null,
           national_id || null,
-          date_of_birth || null,
+          formattedDateOfBirth,
           address || null,
           business_name || null,
           business_type || null,
@@ -100,7 +112,7 @@ async function upsertProfile(req, res, next) {
           last_name || null,
           phone || null,
           national_id || null,
-          date_of_birth || null,
+          formattedDateOfBirth,
           address || null,
           business_name || null,
           business_type || null,
@@ -164,21 +176,43 @@ async function uploadProfilePicture(req, res, next) {
       throw new ApiError(400, "Please upload a profile picture");
     }
 
+    console.log("Uploading profile picture for user:", userId);
+    console.log("File:", file.filename);
+
     // Save the file path to database
     const profilePictureUrl = `/uploads/profile-pictures/${file.filename}`;
-    
-    await pool.query(
-      `UPDATE vendor_profiles 
-       SET profile_picture_url = ?, profile_picture_uploaded_at = CURRENT_TIMESTAMP
-       WHERE user_id = ?`,
-      [profilePictureUrl, userId],
+
+    console.log("Profile picture URL to save:", profilePictureUrl);
+
+    // Check if profile exists, if not create it
+    const [[existingProfile]] = await pool.query(
+      "SELECT id FROM vendor_profiles WHERE user_id = ?",
+      [userId]
     );
+
+    if (existingProfile) {
+      await pool.query(
+        `UPDATE vendor_profiles
+         SET profile_picture_url = ?, profile_picture_uploaded_at = CURRENT_TIMESTAMP
+         WHERE user_id = ?`,
+        [profilePictureUrl, userId],
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO vendor_profiles (user_id, profile_picture_url, profile_picture_uploaded_at)
+         VALUES (?, ?, CURRENT_TIMESTAMP)`,
+        [userId, profilePictureUrl],
+      );
+    }
+
+    console.log("Profile picture saved to database");
 
     res.json({
       message: "Profile picture uploaded successfully",
       profile_picture_url: profilePictureUrl,
     });
   } catch (err) {
+    console.error("Error uploading profile picture:", err);
     next(err);
   }
 }
@@ -188,10 +222,12 @@ async function getDashboard(req, res, next) {
     const userId = req.user.id;
 
     const [[profile]] = await pool.query(
-      `SELECT first_name, last_name, phone, national_id, date_of_birth, address, business_name, business_type, vending_zone
+      `SELECT first_name, last_name, phone, national_id, date_of_birth, address, business_name, business_type, vending_zone, profile_picture_url
        FROM vendor_profiles WHERE user_id = ?`,
       [userId],
     );
+
+    console.log("Profile data for dashboard:", profile);
 
     const [docs] = await pool.query(
       `SELECT id, document_type, original_name, uploaded_at
@@ -659,7 +695,7 @@ async function getMyLicense(req, res, next) {
 
     // Get vendor profile
     const [[profile]] = await pool.query(
-      `SELECT first_name, last_name, phone, address, business_name, business_type, 
+      `SELECT first_name, last_name, phone, address, business_name, business_type,
               vending_zone, profile_picture_url
        FROM vendor_profiles WHERE user_id = ?`,
       [userId],
@@ -667,7 +703,7 @@ async function getMyLicense(req, res, next) {
 
     // Get approved license application
     const [[license]] = await pool.query(
-      `SELECT id, application_ref, license_number, desired_zone, stall_type, 
+      `SELECT id, application_ref, license_number, desired_zone, stall_type,
               business_category, goods_authorized, license_category,
               issued_at, expires_at, qr_code_data, status, reviewed_at
        FROM license_applications
@@ -685,6 +721,66 @@ async function getMyLicense(req, res, next) {
       profile: profile || null,
       license,
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function changePassword(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      throw new ApiError(400, "Current password and new password are required");
+    }
+
+    if (newPassword.length < 6) {
+      throw new ApiError(400, "New password must be at least 6 characters");
+    }
+
+    // Get user's current password hash
+    const [[user]] = await pool.query(
+      "SELECT password_hash FROM users WHERE id = ?",
+      [userId]
+    );
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isMatch) {
+      throw new ApiError(401, "Current password is incorrect");
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await pool.query(
+      "UPDATE users SET password_hash = ? WHERE id = ?",
+      [newPasswordHash, userId]
+    );
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deactivateAccount(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    // Update user account status to suspended
+    await pool.query(
+      "UPDATE users SET account_status = 'suspended' WHERE id = ?",
+      [userId]
+    );
+
+    res.json({ message: "Account deactivated successfully" });
   } catch (err) {
     next(err);
   }
@@ -709,4 +805,6 @@ module.exports = {
   escalateComplaint,
   uploadComplaintEvidence,
   getMyLicense,
+  changePassword,
+  deactivateAccount,
 };
