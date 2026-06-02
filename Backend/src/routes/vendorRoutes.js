@@ -10,6 +10,8 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (req.path.includes("profile-picture")) {
       cb(null, path.join(__dirname, "../../uploads/profile-pictures"));
+    } else if (req.path.includes("complaints") || req.path.includes("evidence")) {
+      cb(null, path.join(__dirname, "../../uploads/complaints"));
     } else {
       cb(null, path.join(__dirname, "../../uploads/documents"));
     }
@@ -20,7 +22,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedMimes = ["application/pdf", "image/jpeg", "image/png"];
+const allowedMimes = ["application/pdf", "image/jpeg", "image/png", "video/mp4", "video/quicktime"];
 const allowedImageMimes = ["image/jpeg", "image/png"];
 
 const upload = multer({
@@ -45,6 +47,12 @@ router.use(requireAuth, requireRole("vendor"));
 router.get("/dashboard", vendorController.getDashboard);
 router.get("/profile", vendorController.getDashboard);
 router.put("/profile", vendorController.upsertProfile);
+router.get("/notifications", vendorController.listNotifications);
+router.get("/notifications/preferences", vendorController.getNotificationPreferences);
+router.put("/notifications/preferences", vendorController.updateNotificationPreferences);
+router.patch("/notifications/:id/read", vendorController.markNotificationRead);
+router.patch("/notifications/:id/unread", vendorController.markNotificationUnread);
+router.delete("/notifications/:id", vendorController.deleteNotification);
 router.post(
   "/profile-picture",
   upload.single("profile_picture"),
@@ -61,6 +69,17 @@ router.post(
   (req, res, next) => {
     req.files = Object.values(req.files || {}).flat();
     vendorController.uploadDocuments(req, res, next);
+  },
+);
+router.post("/complaints", vendorController.createComplaint);
+router.get("/complaints", vendorController.listComplaints);
+router.get("/complaints/:id", vendorController.getComplaintDetails);
+router.post(
+  "/complaints/:complaintId/evidence",
+  upload.array("evidence", 5),
+  (req, res, next) => {
+    req.files = req.files || [];
+    vendorController.uploadComplaintEvidence(req, res, next);
   },
 );
 
