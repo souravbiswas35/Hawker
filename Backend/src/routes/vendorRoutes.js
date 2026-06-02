@@ -99,5 +99,6 @@ router.post(
     vendorController.uploadComplaintEvidence(req, res, next);
   },
 );
+router.get("/my-license", vendorController.getMyLicense);
 
 module.exports = router;

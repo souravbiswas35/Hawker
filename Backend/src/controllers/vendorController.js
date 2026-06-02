@@ -653,6 +653,43 @@ async function uploadComplaintEvidence(req, res, next) {
   }
 }
 
+async function getMyLicense(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    // Get vendor profile
+    const [[profile]] = await pool.query(
+      `SELECT first_name, last_name, phone, address, business_name, business_type, 
+              vending_zone, profile_picture_url
+       FROM vendor_profiles WHERE user_id = ?`,
+      [userId],
+    );
+
+    // Get approved license application
+    const [[license]] = await pool.query(
+      `SELECT id, application_ref, license_number, desired_zone, stall_type, 
+              business_category, goods_authorized, license_category,
+              issued_at, expires_at, qr_code_data, status, reviewed_at
+       FROM license_applications
+       WHERE user_id = ? AND status = 'approved'
+       ORDER BY reviewed_at DESC
+       LIMIT 1`,
+      [userId],
+    );
+
+    if (!license) {
+      throw new ApiError(404, "No approved license found. Please apply for a license first.");
+    }
+
+    res.json({
+      profile: profile || null,
+      license,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   upsertProfile,
   uploadDocuments,
@@ -671,4 +708,5 @@ module.exports = {
   closeComplaint,
   escalateComplaint,
   uploadComplaintEvidence,
+  getMyLicense,
 };
