@@ -175,7 +175,8 @@ export default function AdminPaymentsPage() {
                   <tr>
                     <th>Date</th>
                     <th>Vendor</th>
-                    <th>Application</th>
+                    <th>Reference</th>
+                    <th>Type</th>
                     <th>Method</th>
                     <th>Status</th>
                     <th>Amount</th>
@@ -190,7 +191,19 @@ export default function AdminPaymentsPage() {
                         ).toLocaleDateString()}
                       </td>
                       <td>{p.email || "-"}</td>
-                      <td>{p.application_ref || `#${p.application_id}`}</td>
+                      <td>
+                        {p.source_type === "renewal"
+                          ? p.renewal_ref || `#${p.renewal_id}`
+                          : p.application_ref || `#${p.application_id}`}
+                      </td>
+                      <td>
+                        <span className="text-capitalize">{p.source_type}</span>
+                        {p.is_demo_payment ? (
+                          <span className="badge text-bg-warning ms-2">
+                            Demo Payment
+                          </span>
+                        ) : null}
+                      </td>
                       <td className="text-capitalize">{p.payment_method}</td>
                       <td className="text-capitalize">{p.payment_status}</td>
                       <td>{Number(p.amount).toLocaleString()}</td>
@@ -198,7 +211,7 @@ export default function AdminPaymentsPage() {
                   ))}
                   {data.payments.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="text-muted">
+                      <td colSpan="7" className="text-muted">
                         No transactions found.
                       </td>
                     </tr>

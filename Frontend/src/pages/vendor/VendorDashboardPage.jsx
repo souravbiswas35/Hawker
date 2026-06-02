@@ -222,7 +222,7 @@ export default function VendorDashboardPage() {
                         {renewalInfo.daysLeft <= 15 && (
                           <Link
                             className="btn btn-sm btn-warning mt-2 w-100"
-                            to="/vendor/applications"
+                            to="/vendor/renew-license"
                           >
                             Renew Now
                           </Link>
@@ -326,7 +326,7 @@ export default function VendorDashboardPage() {
                     <div className="col-6">
                       <Link
                         className="dashboard-action-card"
-                        to="/vendor/applications"
+                        to="/vendor/renew-license"
                       >
                         <strong>Renew License</strong>
                         <span>Extend validity</span>

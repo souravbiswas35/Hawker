@@ -23,6 +23,7 @@ $scripts = @(
     "sql/06_backfill_application_audit_logs.sql",
     "sql/07_admin_feature_schema.sql",
     "sql/08_final_admin_setup.sql",
+    "sql/09_vendor_license_renewal_schema.sql"
     "sql/09_vendor_notifications_schema.sql",
     "sql/10_vendor_complaints_evidence.sql"
 )

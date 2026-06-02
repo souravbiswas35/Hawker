@@ -1,0 +1,74 @@
+.renewal-details-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.renewal-details-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid var(--hawker-border);
+  background: #fff;
+}
+
+.renewal-details-list span {
+  color: var(--hawker-muted);
+  font-size: 0.9rem;
+}
+
+.renewal-details-list strong {
+  color: var(--hawker-ink);
+  text-align: right;
+}
+
+.renewal-quote-box {
+  border: 1px solid var(--hawker-border);
+  border-radius: 14px;
+  background: linear-gradient(150deg, #ffffff 0%, #f7faff 100%);
+  padding: 0.95rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.renewal-quote-box > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.renewal-quote-box span {
+  color: var(--hawker-muted);
+}
+
+.renewal-quote-box .total-row {
+  margin-top: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--hawker-border);
+  font-size: 1.05rem;
+}
+
+.renewal-quote-box .total-row strong {
+  color: var(--hawker-deep);
+}
+
+.renewal-upload-box {
+  border: 1px solid #f4d19b;
+  border-radius: 12px;
+  background: #fff8ec;
+  padding: 0.9rem;
+}
+
+@media (max-width: 575px) {
+  .renewal-details-list > div,
+  .renewal-quote-box > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .renewal-details-list strong {
+    text-align: left;
+  }
+}
