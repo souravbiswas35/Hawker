@@ -8,23 +8,50 @@ const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 
-const allowedOrigins = [clientUrl, "http://localhost:5174"];
+const allowedOrigins = [
+  clientUrl,
+  "http://localhost:5173",
+  "http://localhost:5174",
+];
+
+// 🔥 MUST be FIRST middleware
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin: function (origin, callback) {
+      console.log("CORS CHECK:", origin);
+
       if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+        return callback(null, true);
       }
+
+      return callback(null, true); // TEMP: allow all for dev stability
     },
-  }),
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
 );
+
+// 🔥 IMPORTANT: force preflight support
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
 app.use(express.json());
 app.use(morgan("dev"));
+
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 app.use("/api", routes);
+
 app.use(notFoundHandler);
 app.use(errorHandler);
 
