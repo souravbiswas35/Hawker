@@ -16,6 +16,7 @@ import VendorDocumentsPage from "./pages/vendor/VendorDocumentsPage";
 import VendorApplyPage from "./pages/vendor/VendorApplyPage";
 import VendorApplicationsPage from "./pages/vendor/VendorApplicationsPage";
 import VendorComplaintsPage from "./pages/vendor/VendorComplaintsPage";
+import VendorComplaintTrackingPage from "./pages/vendor/VendorComplaintTrackingPage";
 import VendorNotificationsPage from "./pages/vendor/VendorNotificationsPage";
 import TrackLicenseApplicationPage from "./pages/vendor/TrackLicenseApplicationPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
@@ -97,6 +98,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={["vendor"]}>
               <VendorComplaintsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendor/complaint-tracking"
+          element={
+            <ProtectedRoute roles={["vendor"]}>
+              <VendorComplaintTrackingPage />
             </ProtectedRoute>
           }
         />

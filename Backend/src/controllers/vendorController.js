@@ -1,6 +1,30 @@
 const pool = require("../config/db");
 const ApiError = require("../utils/apiError");
 
+let complaintCommentsTableReady = false;
+
+async function ensureComplaintCommentsTable() {
+  if (complaintCommentsTableReady) {
+    return;
+  }
+
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS complaint_comments (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      complaint_id BIGINT UNSIGNED NOT NULL,
+      author_type ENUM('vendor', 'admin') NOT NULL DEFAULT 'vendor',
+      author_id BIGINT UNSIGNED NULL,
+      comment TEXT NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_complaint_comments_complaint (complaint_id),
+      CONSTRAINT fk_complaint_comments_complaint FOREIGN KEY (complaint_id) REFERENCES vendor_complaints (id) ON DELETE CASCADE
+    ) ENGINE = InnoDB;`,
+  );
+
+  complaintCommentsTableReady = true;
+}
+
 async function upsertProfile(req, res, next) {
   try {
     const {
@@ -448,6 +472,8 @@ async function listComplaints(req, res, next) {
 
 async function getComplaintDetails(req, res, next) {
   try {
+    await ensureComplaintCommentsTable();
+
     const userId = req.user.id;
     const { id } = req.params;
 
@@ -471,7 +497,110 @@ async function getComplaintDetails(req, res, next) {
       [id],
     );
 
-    res.json({ complaint, evidence });
+    const [comments] = await pool.query(
+      `SELECT id, author_type, comment, created_at
+       FROM complaint_comments
+       WHERE complaint_id = ?
+       ORDER BY created_at ASC`,
+      [id],
+    );
+
+    res.json({ complaint, evidence, comments });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function addComplaintFollowUp(req, res, next) {
+  try {
+    await ensureComplaintCommentsTable();
+
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { comment } = req.body;
+
+    if (!comment || comment.trim().length === 0) {
+      throw new ApiError(400, "Follow-up comment is required");
+    }
+
+    const [[complaint]] = await pool.query(
+      `SELECT id FROM vendor_complaints WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (!complaint) {
+      throw new ApiError(404, "Complaint not found");
+    }
+
+    await pool.query(
+      `INSERT INTO complaint_comments (complaint_id, author_type, author_id, comment)
+       VALUES (?, 'vendor', ?, ?)`,
+      [id, userId, comment.trim()],
+    );
+
+    res.status(201).json({ message: "Follow-up comment added successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function closeComplaint(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const [[complaint]] = await pool.query(
+      `SELECT id, status FROM vendor_complaints WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (!complaint) {
+      throw new ApiError(404, "Complaint not found");
+    }
+
+    if (complaint.status === "closed") {
+      throw new ApiError(400, "Complaint is already closed");
+    }
+
+    await pool.query(
+      `UPDATE vendor_complaints
+       SET status = 'closed', resolved_at = NOW()
+       WHERE id = ?`,
+      [id],
+    );
+
+    res.json({ message: "Complaint closed successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function escalateComplaint(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const [[complaint]] = await pool.query(
+      `SELECT id, status FROM vendor_complaints WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (!complaint) {
+      throw new ApiError(404, "Complaint not found");
+    }
+
+    if (complaint.status === "closed") {
+      throw new ApiError(400, "Closed complaints cannot be escalated");
+    }
+
+    await pool.query(
+      `UPDATE vendor_complaints
+       SET status = 'in_progress'
+       WHERE id = ?`,
+      [id],
+    );
+
+    res.json({ message: "Complaint has been escalated for review" });
   } catch (err) {
     next(err);
   }
@@ -538,5 +667,8 @@ module.exports = {
   createComplaint,
   listComplaints,
   getComplaintDetails,
+  addComplaintFollowUp,
+  closeComplaint,
+  escalateComplaint,
   uploadComplaintEvidence,
 };
