@@ -27,6 +27,7 @@ coverage/
 
 # Cache and temp
 .cache/
+.vs/
 .tmp/
 tmp/
 temp/

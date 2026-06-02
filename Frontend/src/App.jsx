@@ -92,6 +92,11 @@ export default function App() {
           element={
             <ProtectedRoute roles={["vendor"]}>
               <VendorRenewLicensePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/vendor/notifications"
           element={
             <ProtectedRoute roles={["vendor"]}>
@@ -99,11 +104,17 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/vendor/renew-license/success"
           element={
             <ProtectedRoute roles={["vendor"]}>
               <VendorRenewalSuccessPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/vendor/complaints"
           element={
             <ProtectedRoute roles={["vendor"]}>
