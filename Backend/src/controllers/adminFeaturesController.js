@@ -193,27 +193,87 @@ async function getPaymentsOverview(req, res, next) {
   try {
     const [[stats]] = await pool.query(
       `SELECT
-        (SELECT COALESCE(SUM(amount), 0)
+        (
+          (SELECT COALESCE(SUM(amount), 0)
            FROM application_payments
            WHERE payment_status = 'completed'
              AND MONTH(paid_at) = MONTH(NOW())
-             AND YEAR(paid_at) = YEAR(NOW())) AS revenue_this_month,
-        (SELECT COALESCE(SUM(amount), 0)
+             AND YEAR(paid_at) = YEAR(NOW()))
+          +
+          (SELECT COALESCE(SUM(payable_amount), 0)
+           FROM license_renewals
+           WHERE payment_status = 'paid'
+             AND MONTH(COALESCE(submitted_at, created_at)) = MONTH(NOW())
+             AND YEAR(COALESCE(submitted_at, created_at)) = YEAR(NOW()))
+        ) AS revenue_this_month,
+        (
+          (SELECT COALESCE(SUM(amount), 0)
            FROM application_payments
            WHERE payment_status = 'completed'
-             AND DATE(paid_at) = CURDATE()) AS collected_today,
-        (SELECT COUNT(*) FROM application_payments WHERE payment_status = 'pending') AS pending_count,
-        (SELECT COALESCE(SUM(amount), 0) FROM application_payments WHERE payment_status = 'pending') AS pending_amount`,
+             AND DATE(paid_at) = CURDATE())
+          +
+          (SELECT COALESCE(SUM(payable_amount), 0)
+           FROM license_renewals
+           WHERE payment_status = 'paid'
+             AND DATE(COALESCE(submitted_at, created_at)) = CURDATE())
+        ) AS collected_today,
+        (
+          (SELECT COUNT(*) FROM application_payments WHERE payment_status = 'pending')
+          +
+          (SELECT COUNT(*) FROM license_renewals WHERE payment_status = 'pending')
+        ) AS pending_count,
+        (
+          (SELECT COALESCE(SUM(amount), 0) FROM application_payments WHERE payment_status = 'pending')
+          +
+          (SELECT COALESCE(SUM(payable_amount), 0) FROM license_renewals WHERE payment_status = 'pending')
+        ) AS pending_amount`,
     );
 
     const [payments] = await pool.query(
-      `SELECT ap.id, ap.application_id, ap.payment_method, ap.amount, ap.transaction_id,
-              ap.payment_status, ap.paid_at, ap.created_at,
-              la.application_ref, u.email
-       FROM application_payments ap
-       LEFT JOIN license_applications la ON la.id = ap.application_id
-       LEFT JOIN users u ON u.id = la.user_id
-       ORDER BY COALESCE(ap.paid_at, ap.created_at) DESC
+      `SELECT * FROM (
+         SELECT
+           ap.id,
+           ap.application_id,
+           NULL AS renewal_id,
+           ap.payment_method,
+           ap.amount,
+           ap.transaction_id,
+           ap.payment_status,
+           ap.paid_at,
+           ap.created_at,
+           la.application_ref,
+           NULL AS renewal_ref,
+           u.email,
+           'application' AS source_type,
+           0 AS is_demo_payment
+         FROM application_payments ap
+         LEFT JOIN license_applications la ON la.id = ap.application_id
+         LEFT JOIN users u ON u.id = la.user_id
+
+         UNION ALL
+
+         SELECT
+           lr.id,
+           NULL AS application_id,
+           lr.id AS renewal_id,
+           lr.payment_method,
+           lr.payable_amount AS amount,
+           NULL AS transaction_id,
+           lr.payment_status,
+           CASE
+             WHEN lr.payment_status = 'paid' THEN COALESCE(lr.submitted_at, lr.created_at)
+             ELSE NULL
+           END AS paid_at,
+           lr.created_at,
+           NULL AS application_ref,
+           lr.renewal_ref,
+           u.email,
+           'renewal' AS source_type,
+           1 AS is_demo_payment
+         FROM license_renewals lr
+         LEFT JOIN users u ON u.id = lr.user_id
+       ) unified_payments
+       ORDER BY COALESCE(unified_payments.paid_at, unified_payments.created_at) DESC
        LIMIT 50`,
     );
 

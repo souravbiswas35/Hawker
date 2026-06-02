@@ -22,7 +22,8 @@ $scripts = @(
     "sql/05_fix_license_application_status.sql",
     "sql/06_backfill_application_audit_logs.sql",
     "sql/07_admin_feature_schema.sql",
-    "sql/08_final_admin_setup.sql"
+    "sql/08_final_admin_setup.sql",
+    "sql/09_vendor_license_renewal_schema.sql"
 )
 
 foreach ($script in $scripts) {

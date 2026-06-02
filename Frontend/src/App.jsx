@@ -16,6 +16,8 @@ import VendorDocumentsPage from "./pages/vendor/VendorDocumentsPage";
 import VendorApplyPage from "./pages/vendor/VendorApplyPage";
 import VendorApplicationsPage from "./pages/vendor/VendorApplicationsPage";
 import TrackLicenseApplicationPage from "./pages/vendor/TrackLicenseApplicationPage";
+import VendorRenewLicensePage from "./pages/vendor/VendorRenewLicensePage";
+import VendorRenewalSuccessPage from "./pages/vendor/VendorRenewalSuccessPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage";
 import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
@@ -79,6 +81,22 @@ export default function App() {
           element={
             <ProtectedRoute roles={["vendor"]}>
               <VendorApplicationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendor/renew-license"
+          element={
+            <ProtectedRoute roles={["vendor"]}>
+              <VendorRenewLicensePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendor/renew-license/success"
+          element={
+            <ProtectedRoute roles={["vendor"]}>
+              <VendorRenewalSuccessPage />
             </ProtectedRoute>
           }
         />

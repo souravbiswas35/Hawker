@@ -3,6 +3,7 @@ const path = require("path");
 const multer = require("multer");
 const { requireAuth, requireRole } = require("../middleware/auth");
 const vendorController = require("../controllers/vendorController");
+const licenseRenewalController = require("../controllers/licenseRenewalController");
 
 const router = express.Router();
 
@@ -29,7 +30,9 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     if (req.path.includes("profile-picture")) {
       if (!allowedImageMimes.includes(file.mimetype)) {
-        return cb(new Error("Only JPG and PNG images are allowed for profile picture"));
+        return cb(
+          new Error("Only JPG and PNG images are allowed for profile picture"),
+        );
       }
     } else {
       if (!allowedMimes.includes(file.mimetype)) {
@@ -45,6 +48,17 @@ router.use(requireAuth, requireRole("vendor"));
 router.get("/dashboard", vendorController.getDashboard);
 router.get("/profile", vendorController.getDashboard);
 router.put("/profile", vendorController.upsertProfile);
+router.get("/license-renewal", licenseRenewalController.getRenewalDetails);
+router.post("/license-renewal/quote", licenseRenewalController.getRenewalQuote);
+router.patch(
+  "/license-renewal/auto-renew",
+  licenseRenewalController.toggleAutoRenew,
+);
+router.post(
+  "/license-renewal/submit",
+  upload.single("renewal_document"),
+  licenseRenewalController.submitRenewal,
+);
 router.post(
   "/profile-picture",
   upload.single("profile_picture"),
