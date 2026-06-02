@@ -1,80 +1,213 @@
+/* Landing Page — refreshed to match prototype visuals and dynamics */
+
+.landing-hero {
+  position: relative;
+  padding: 5.5rem 0 4rem;
+  color: #fff;
+  overflow: hidden;
+  background: linear-gradient(135deg, #081022 0%, #0b1b3a 60%, #07203a 100%);
+}
+
+/* decorative blobs */
+.landing-hero::before,
+.landing-hero::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.18;
+  transform: translateZ(0);
+}
+.landing-hero::before {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle at 30% 30%, #2fc4ff, #1f7aff 60%);
+  top: -160px;
+  left: -120px;
+}
+.landing-hero::after {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle at 70% 70%, #ff9a56, #ff5e8e 60%);
+  bottom: -120px;
+  right: -100px;
+}
+
+.landing-hero .container {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-pill {
+  display: inline-flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  color: #eaf6ff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 6px 20px rgba(12,16,30,0.5);
+}
+
+.landing-hero h1 {
+  font-size: clamp(1.8rem, 3.8vw, 3.4rem);
+  line-height: 1.03;
+  margin-top: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.landing-hero p.lead {
+  color: rgba(234,246,255,0.87);
+  max-width: 60ch;
+  margin: 0.8rem auto 0;
+  font-weight: 500;
+}
+
+/* Benefit cards — glass + icon emphasis */
 .benefit-card {
   display: grid;
   gap: 0.35rem;
   place-items: center;
   text-align: center;
-  background: rgba(255, 255, 255, 0.13);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 14px;
-  padding: 1rem;
-  backdrop-filter: blur(4px);
+  padding: 1.15rem;
+  backdrop-filter: blur(6px) saturate(120%);
+  transition: transform 250ms cubic-bezier(.2,.9,.2,1), box-shadow 250ms;
 }
 
 .benefit-card i {
-  font-size: 1.2rem;
+  font-size: 1.35rem;
+  color: #fff;
+  display: inline-block;
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+}
+
+.benefit-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 18px 40px rgba(18,30,60,0.36);
+}
+
+/* Panel holding feature highlights */
+.panel-box {
+  background: linear-gradient(180deg,#fbfdff 0%, #f6fbff 100%);
+  border-radius: 14px;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 12px 30px rgba(6,22,60,0.06);
+}
+
+.page-title-center {
+  text-align: center;
 }
 
 .highlight-item {
   display: flex;
-  gap: 0.7rem;
+  gap: 1rem;
   align-items: center;
   background: #fff;
-  border: 1px solid var(--hawker-border);
-  border-radius: 10px;
-  padding: 0.8rem;
-  transition: all 180ms ease;
+  border: 1px solid rgba(14,32,63,0.06);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
 .highlight-item i {
-  color: #1f7a9f;
+  color: #fff;
+  min-width: 42px;
+  min-height: 42px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg,#2f9df6,#1f7aff);
+  box-shadow: 0 8px 20px rgba(31,122,255,0.12);
 }
 
+.highlight-item span { color: #0f2338; font-weight: 600; }
+
 .highlight-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(15, 61, 130, 0.1);
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(10,30,60,0.08);
 }
 
 .metric-card {
-  background: linear-gradient(155deg, #ffffff, #eef5ff);
+  background: linear-gradient(180deg,#ffffff,#eef6ff);
   border-radius: 14px;
   padding: 1rem 1.25rem;
-  border: 1px solid var(--hawker-border);
-  box-shadow: 0 14px 30px rgba(16, 41, 76, 0.08);
-  transition: transform 180ms ease;
-}
-
-.metric-card:hover {
-  transform: translateY(-4px);
+  border: 1px solid rgba(14,32,63,0.04);
+  box-shadow: 0 14px 30px rgba(18,34,60,0.06);
+  transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
 .metric-card span {
-  color: var(--hawker-muted);
+  color: rgba(12,36,64,0.6);
   font-size: 0.9rem;
 }
 
 .metric-card h3 {
   margin: 0.35rem 0 0;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: #07203a;
 }
+
+.metric-card:hover { transform: translateY(-6px); box-shadow: 0 20px 44px rgba(12,36,64,0.08); }
 
 .process-card {
   height: 100%;
   padding: 1.15rem;
   border-radius: 14px;
-  background: linear-gradient(140deg, #16095d, #2f1a95);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 12px 24px rgba(23, 9, 94, 0.18);
+  background: linear-gradient(180deg,#ffffff,#f2f9ff);
+  color: #07203a;
+  border: 1px solid rgba(14,32,63,0.04);
+  box-shadow: 0 8px 20px rgba(18,34,60,0.04);
 }
 
-.process-card h5 {
-  font-weight: 700;
-}
+.process-card h5 { font-weight: 800; color: #07203a; }
+.process-card p { color: rgba(7,32,58,0.75); }
 
 .cta-banner {
   border-radius: 16px;
   padding: 1.4rem;
-  background: linear-gradient(115deg, #19036f, #28128f 45%, #3f24ad);
+  background: linear-gradient(90deg,#0f2a63,#173a7a 40%,#2a56b0);
   color: #fff;
-  box-shadow: 0 16px 36px rgba(30, 12, 102, 0.28);
+  box-shadow: 0 24px 60px rgba(8,18,48,0.28);
+}
+
+.cta-banner h3 { font-weight: 800; }
+
+.cta-banner .btn {
+  border-radius: 10px;
+  padding: 0.65rem 1.05rem;
+  font-weight: 700;
+}
+
+.cta-banner .btn.btn-warning {
+  background: linear-gradient(90deg,#ffc05c,#ff8a4d);
+  border: none;
+  color: #082035;
+  box-shadow: 0 10px 30px rgba(255,150,70,0.18);
+}
+
+.cta-banner .btn.btn-light {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* responsive tweaks */
+@media (max-width: 768px) {
+  .landing-hero { padding: 3.2rem 0 2.5rem; }
+  .benefit-card i { width: 38px; height: 38px; line-height: 38px; }
+  .highlight-item { padding: 0.6rem; }
+  .metric-card h3 { font-size: 1.25rem; }
 }

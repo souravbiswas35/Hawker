@@ -1,6 +1,30 @@
 const pool = require("../config/db");
 const ApiError = require("../utils/apiError");
 
+let complaintCommentsTableReady = false;
+
+async function ensureComplaintCommentsTable() {
+  if (complaintCommentsTableReady) {
+    return;
+  }
+
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS complaint_comments (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      complaint_id BIGINT UNSIGNED NOT NULL,
+      author_type ENUM('vendor', 'admin') NOT NULL DEFAULT 'vendor',
+      author_id BIGINT UNSIGNED NULL,
+      comment TEXT NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_complaint_comments_complaint (complaint_id),
+      CONSTRAINT fk_complaint_comments_complaint FOREIGN KEY (complaint_id) REFERENCES vendor_complaints (id) ON DELETE CASCADE
+    ) ENGINE = InnoDB;`,
+  );
+
+  complaintCommentsTableReady = true;
+}
+
 async function upsertProfile(req, res, next) {
   try {
     const {
@@ -193,9 +217,458 @@ async function getDashboard(req, res, next) {
   }
 }
 
+async function listNotifications(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { category, search, status } = req.query;
+    const conditions = ["user_id = ?"];
+    const params = [userId];
+
+    if (category && category !== "All") {
+      conditions.push("category = ?");
+      params.push(category);
+    }
+
+    if (status === "read") {
+      conditions.push("is_read = 1");
+    } else if (status === "unread") {
+      conditions.push("is_read = 0");
+    }
+
+    if (search) {
+      conditions.push("(title LIKE ? OR message LIKE ?)");
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    const [rows] = await pool.query(
+      `SELECT id, category, title, message, link, is_read, created_at, updated_at
+       FROM vendor_notifications
+       WHERE ${conditions.join(" AND ")}
+       ORDER BY created_at DESC`,
+      params,
+    );
+
+    res.json({ notifications: rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getNotificationPreferences(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const [[prefs]] = await pool.query(
+      `SELECT email_notifications, sms_notifications, push_notifications,
+              license_updates, payment_alerts, renewal_reminders,
+              zone_changes, inspection_notices, system_announcements
+       FROM vendor_notification_preferences
+       WHERE user_id = ?`,
+      [userId],
+    );
+
+    if (prefs) {
+      res.json({ preferences: prefs });
+      return;
+    }
+
+    res.json({
+      preferences: {
+        email_notifications: true,
+        sms_notifications: true,
+        push_notifications: false,
+        license_updates: true,
+        payment_alerts: true,
+        renewal_reminders: true,
+        zone_changes: true,
+        inspection_notices: true,
+        system_announcements: true,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateNotificationPreferences(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const {
+      email_notifications = true,
+      sms_notifications = true,
+      push_notifications = false,
+      license_updates = true,
+      payment_alerts = true,
+      renewal_reminders = true,
+      zone_changes = true,
+      inspection_notices = true,
+      system_announcements = true,
+    } = req.body;
+
+    await pool.query(
+      `INSERT INTO vendor_notification_preferences
+       (user_id, email_notifications, sms_notifications, push_notifications,
+        license_updates, payment_alerts, renewal_reminders,
+        zone_changes, inspection_notices, system_announcements)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         email_notifications = VALUES(email_notifications),
+         sms_notifications = VALUES(sms_notifications),
+         push_notifications = VALUES(push_notifications),
+         license_updates = VALUES(license_updates),
+         payment_alerts = VALUES(payment_alerts),
+         renewal_reminders = VALUES(renewal_reminders),
+         zone_changes = VALUES(zone_changes),
+         inspection_notices = VALUES(inspection_notices),
+         system_announcements = VALUES(system_announcements)`,
+      [
+        userId,
+        email_notifications ? 1 : 0,
+        sms_notifications ? 1 : 0,
+        push_notifications ? 1 : 0,
+        license_updates ? 1 : 0,
+        payment_alerts ? 1 : 0,
+        renewal_reminders ? 1 : 0,
+        zone_changes ? 1 : 0,
+        inspection_notices ? 1 : 0,
+        system_announcements ? 1 : 0,
+      ],
+    );
+
+    res.json({ message: "Notification preferences updated successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function markNotificationRead(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const [result] = await pool.query(
+      `UPDATE vendor_notifications
+       SET is_read = 1
+       WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    res.json({ message: "Notification marked as read" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function markNotificationUnread(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const [result] = await pool.query(
+      `UPDATE vendor_notifications
+       SET is_read = 0
+       WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    res.json({ message: "Notification marked as unread" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteNotification(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const [result] = await pool.query(
+      `DELETE FROM vendor_notifications
+       WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    res.json({ message: "Notification deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function createComplaint(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { subject, category, priority = "medium", description, is_anonymous = false } = req.body;
+
+    if (!subject || !category || !description) {
+      throw new ApiError(400, "Subject, category, and description are required");
+    }
+
+    const categories = [
+      "Zone issue",
+      "License problem",
+      "Payment issue",
+      "Harassment",
+      "Illegal eviction",
+      "Others",
+    ];
+    if (!categories.includes(category)) {
+      throw new ApiError(400, "Invalid complaint category");
+    }
+
+    if (!["low", "medium", "high"].includes(priority)) {
+      throw new ApiError(400, "Invalid priority level");
+    }
+
+    const complaintRef = `C-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    const [result] = await pool.query(
+      `INSERT INTO vendor_complaints (
+        complaint_ref, user_id, is_anonymous, subject, category, priority, description, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'new')`,
+      [complaintRef, userId, is_anonymous ? 1 : 0, subject, category, priority, description],
+    );
+
+    res.status(201).json({
+      message: "Complaint filed successfully",
+      complaint_ref: complaintRef,
+      complaint_id: result.insertId,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function listComplaints(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { status } = req.query;
+
+    let query = `SELECT id, complaint_ref, subject, category, priority, status, description, created_at, resolved_at
+                 FROM vendor_complaints
+                 WHERE user_id = ?`;
+    const params = [userId];
+
+    if (status) {
+      query += " AND status = ?";
+      params.push(status);
+    }
+
+    query += " ORDER BY created_at DESC";
+
+    const [rows] = await pool.query(query, params);
+    res.json({ complaints: rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getComplaintDetails(req, res, next) {
+  try {
+    await ensureComplaintCommentsTable();
+
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const [[complaint]] = await pool.query(
+      `SELECT id, complaint_ref, subject, category, priority, status, description, 
+              resolution_note, created_at, resolved_at
+       FROM vendor_complaints
+       WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (!complaint) {
+      throw new ApiError(404, "Complaint not found");
+    }
+
+    const [evidence] = await pool.query(
+      `SELECT id, original_name, stored_name, file_type, file_size, created_at
+       FROM complaint_evidence
+       WHERE complaint_id = ?
+       ORDER BY created_at DESC`,
+      [id],
+    );
+
+    const [comments] = await pool.query(
+      `SELECT id, author_type, comment, created_at
+       FROM complaint_comments
+       WHERE complaint_id = ?
+       ORDER BY created_at ASC`,
+      [id],
+    );
+
+    res.json({ complaint, evidence, comments });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function addComplaintFollowUp(req, res, next) {
+  try {
+    await ensureComplaintCommentsTable();
+
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { comment } = req.body;
+
+    if (!comment || comment.trim().length === 0) {
+      throw new ApiError(400, "Follow-up comment is required");
+    }
+
+    const [[complaint]] = await pool.query(
+      `SELECT id FROM vendor_complaints WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (!complaint) {
+      throw new ApiError(404, "Complaint not found");
+    }
+
+    await pool.query(
+      `INSERT INTO complaint_comments (complaint_id, author_type, author_id, comment)
+       VALUES (?, 'vendor', ?, ?)`,
+      [id, userId, comment.trim()],
+    );
+
+    res.status(201).json({ message: "Follow-up comment added successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function closeComplaint(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const [[complaint]] = await pool.query(
+      `SELECT id, status FROM vendor_complaints WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (!complaint) {
+      throw new ApiError(404, "Complaint not found");
+    }
+
+    if (complaint.status === "closed") {
+      throw new ApiError(400, "Complaint is already closed");
+    }
+
+    await pool.query(
+      `UPDATE vendor_complaints
+       SET status = 'closed', resolved_at = NOW()
+       WHERE id = ?`,
+      [id],
+    );
+
+    res.json({ message: "Complaint closed successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function escalateComplaint(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const [[complaint]] = await pool.query(
+      `SELECT id, status FROM vendor_complaints WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (!complaint) {
+      throw new ApiError(404, "Complaint not found");
+    }
+
+    if (complaint.status === "closed") {
+      throw new ApiError(400, "Closed complaints cannot be escalated");
+    }
+
+    await pool.query(
+      `UPDATE vendor_complaints
+       SET status = 'in_progress'
+       WHERE id = ?`,
+      [id],
+    );
+
+    res.json({ message: "Complaint has been escalated for review" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function uploadComplaintEvidence(req, res, next) {
+  try {
+    const { complaintId } = req.params;
+    const files = req.files || [];
+
+    if (files.length === 0) {
+      throw new ApiError(400, "Please upload at least one file as evidence");
+    }
+
+    // Verify complaint belongs to user
+    const [[complaint]] = await pool.query(
+      `SELECT id FROM vendor_complaints WHERE id = ? AND user_id = ?`,
+      [complaintId, req.user.id],
+    );
+
+    if (!complaint) {
+      throw new ApiError(404, "Complaint not found");
+    }
+
+    const values = files.map((file) => [
+      complaintId,
+      file.fieldname,
+      file.originalname,
+      file.filename,
+      file.mimetype,
+      file.size,
+    ]);
+
+    await pool.query(
+      `INSERT INTO complaint_evidence
+       (complaint_id, file_type, original_name, stored_name, mime_type, file_size)
+       VALUES ?`,
+      [values],
+    );
+
+    res.status(201).json({
+      message: "Evidence uploaded successfully",
+      files: files.map((f) => ({
+        type: f.fieldname,
+        name: f.originalname,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   upsertProfile,
   uploadDocuments,
   uploadProfilePicture,
   getDashboard,
+  listNotifications,
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  markNotificationRead,
+  markNotificationUnread,
+  deleteNotification,
+  createComplaint,
+  listComplaints,
+  getComplaintDetails,
+  addComplaintFollowUp,
+  closeComplaint,
+  escalateComplaint,
+  uploadComplaintEvidence,
 };
