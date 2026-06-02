@@ -1,0 +1,151 @@
+.complaint-tracking-page {
+  min-height: 100%;
+}
+
+.complaint-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.summary-card {
+  background: #ffffff;
+  border: 1px solid rgba(13, 110, 253, 0.08);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  min-height: 110px;
+}
+
+.summary-card .summary-label {
+  display: block;
+  color: #6c757d;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.summary-total {
+  background: #eff6ff;
+}
+
+.summary-open {
+  background: #f0f9ff;
+}
+
+.summary-progress {
+  background: #fff4e5;
+}
+
+.summary-resolved {
+  background: #e9f7ef;
+}
+
+.summary-closed {
+  background: #f8f9fa;
+}
+
+.panel-box {
+  background: #ffffff;
+  border: 1px solid rgba(39, 88, 217, 0.08);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+}
+
+.panel-header h5 {
+  margin-bottom: 0;
+}
+
+.filter-form select,
+.filter-form input {
+  height: 48px;
+}
+
+.complaint-table-wrapper {
+  overflow-x: auto;
+}
+
+.complaint-table th,
+.complaint-table td {
+  vertical-align: middle;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.status-open {
+  background: #0dcaf0;
+}
+
+.status-progress {
+  background: #ffc107;
+  color: #212529;
+}
+
+.status-resolved {
+  background: #198754;
+}
+
+.status-closed {
+  background: #6c757d;
+}
+
+.detail-panel {
+  min-height: 760px;
+}
+
+.detail-card {
+  background: #f8f9ff;
+  border: 1px solid rgba(39, 88, 217, 0.12);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+}
+
+.admin-response {
+  border-left: 4px solid #0dcaf0;
+}
+
+.evidence-list .list-group-item {
+  border: none;
+  border-radius: 0.85rem;
+  background: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.comment-thread {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.comment-item {
+  background: #ffffff;
+  border: 1px solid rgba(39, 88, 217, 0.08);
+  border-radius: 0.95rem;
+  padding: 1rem;
+}
+
+.action-card {
+  background: #ffffff;
+}
+
+@media (max-width: 1200px) {
+  .complaint-summary-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .complaint-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-panel {
+    min-height: auto;
+  }
+}

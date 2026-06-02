@@ -74,6 +74,9 @@ router.post(
 router.post("/complaints", vendorController.createComplaint);
 router.get("/complaints", vendorController.listComplaints);
 router.get("/complaints/:id", vendorController.getComplaintDetails);
+router.post("/complaints/:id/follow-up", vendorController.addComplaintFollowUp);
+router.patch("/complaints/:id/close", vendorController.closeComplaint);
+router.patch("/complaints/:id/escalate", vendorController.escalateComplaint);
 router.post(
   "/complaints/:complaintId/evidence",
   upload.array("evidence", 5),
