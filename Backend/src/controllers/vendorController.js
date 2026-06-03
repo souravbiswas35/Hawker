@@ -284,8 +284,15 @@ async function listNotifications(req, res, next) {
       params,
     );
 
+    console.log(`Fetched ${rows.length} notifications for user ${userId}`);
     res.json({ notifications: rows });
   } catch (err) {
+    console.error('Error fetching notifications:', err);
+    // If table doesn't exist, return empty array instead of error
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      console.log('vendor_notifications table does not exist, returning empty array');
+      return res.json({ notifications: [] });
+    }
     next(err);
   }
 }
@@ -701,14 +708,16 @@ async function getMyLicense(req, res, next) {
       [userId],
     );
 
-    // Get approved license application
+    // Get approved license application with license type name
     const [[license]] = await pool.query(
-      `SELECT id, application_ref, license_number, desired_zone, stall_type,
-              business_category, goods_authorized, license_category,
-              issued_at, expires_at, qr_code_data, status, reviewed_at
-       FROM license_applications
-       WHERE user_id = ? AND status = 'approved'
-       ORDER BY reviewed_at DESC
+      `SELECT la.id, la.application_ref, la.license_number, la.desired_zone, la.stall_type,
+              la.business_category, la.goods_authorized, la.license_category,
+              la.license_type_id, lt.name as license_type_name,
+              la.issued_at, la.expires_at, la.qr_code_data, la.status, la.reviewed_at
+       FROM license_applications la
+       LEFT JOIN license_types lt ON la.license_type_id = lt.id
+       WHERE la.user_id = ? AND la.status = 'approved'
+       ORDER BY la.reviewed_at DESC
        LIMIT 1`,
       [userId],
     );
@@ -786,6 +795,23 @@ async function deactivateAccount(req, res, next) {
   }
 }
 
+async function getVendingZones(req, res, next) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, zone_code, name, location, area, total_spots, available_spots, 
+              latitude, longitude, zone_type, traffic_level
+       FROM vending_zones
+       ORDER BY name ASC`
+    );
+
+    console.log(`Fetched ${rows.length} vending zones`);
+    res.json({ zones: rows });
+  } catch (err) {
+    console.error('Error fetching vending zones:', err);
+    next(err);
+  }
+}
+
 module.exports = {
   upsertProfile,
   uploadDocuments,
@@ -807,4 +833,5 @@ module.exports = {
   getMyLicense,
   changePassword,
   deactivateAccount,
+  getVendingZones,
 };

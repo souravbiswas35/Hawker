@@ -34,12 +34,28 @@ export default function VendorDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [zoneData, setZoneData] = useState(null);
 
   useEffect(() => {
     async function load() {
       try {
         const res = await api.get("/vendor/dashboard");
         setData(res.data);
+        
+        // Load zone data if vendor has a zone assigned
+        if (res.data.profile?.vending_zone) {
+          try {
+            const zonesRes = await api.get("/vendor/zones");
+            const zone = zonesRes.data.zones?.find(
+              z => z.name === res.data.profile.vending_zone
+            );
+            if (zone) {
+              setZoneData(zone);
+            }
+          } catch (err) {
+            console.error("Failed to load zone data:", err);
+          }
+        }
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load dashboard");
       } finally {
@@ -441,7 +457,7 @@ export default function VendorDashboardPage() {
                       </div>
                       <div className="map-preview">
                         <iframe
-                          src="https://www.google.com/maps?q=Dhaka,Bangladesh&output=embed"
+                          src={`https://www.google.com/maps?q=${zoneData?.latitude || 23.8103},${zoneData?.longitude || 90.4125}&output=embed`}
                           style={{
                             width: "100%",
                             height: "300px",
@@ -457,7 +473,7 @@ export default function VendorDashboardPage() {
                             className="btn btn-success btn-sm"
                             onClick={() =>
                               window.open(
-                                `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(data.profile?.vending_zone + ", Dhaka, Bangladesh" || "Dhaka, Bangladesh")}`,
+                                `https://www.google.com/maps/dir/?api=1&destination=${zoneData?.latitude || 23.8103},${zoneData?.longitude || 90.4125}`,
                                 "_blank",
                               )
                             }

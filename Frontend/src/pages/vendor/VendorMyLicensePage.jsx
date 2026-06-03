@@ -109,7 +109,7 @@ export default function VendorMyLicensePage() {
     const licenseInfo = [
       { label: "License Number", value: data.license.license_number || "N/A" },
       { label: "Application Reference", value: data.license.application_ref || "N/A" },
-      { label: "License Type", value: data.license.stall_type || data.license.license_category || "N/A" },
+      { label: "License Type", value: data.license.license_type_name || data.license.stall_type || data.license.license_category || "N/A" },
       { label: "Category", value: data.license.license_category || "General" },
       { label: "Allocated Zone", value: data.license.desired_zone || data.profile.vending_zone || "N/A" },
       { label: "Goods Authorized", value: data.license.goods_authorized || data.license.business_category || "N/A" },
@@ -316,7 +316,7 @@ export default function VendorMyLicensePage() {
                   <FiShield /> License Type
                 </div>
                 <div className="detail-value">
-                  {license?.stall_type || license?.license_category || "N/A"}
+                  {license?.license_type_name || license?.stall_type || license?.license_category || "N/A"}
                 </div>
               </div>
 
@@ -469,7 +469,7 @@ export default function VendorMyLicensePage() {
                   </li>
                   <li>
                     <span className="detail-label">License Type:</span>
-                    <span className="detail-value">{license?.stall_type || license?.license_category || "N/A"}</span>
+                    <span className="detail-value">{license?.license_type_name || license?.stall_type || license?.license_category || "N/A"}</span>
                   </li>
                   <li>
                     <span className="detail-label">Category:</span>

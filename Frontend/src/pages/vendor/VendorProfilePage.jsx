@@ -38,9 +38,12 @@ export default function VendorProfilePage() {
   const [documentFiles, setDocumentFiles] = useState([]);
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
   const [displayDateOfBirth, setDisplayDateOfBirth] = useState("");
+  const [zones, setZones] = useState([]);
+  const [loadingZones, setLoadingZones] = useState(false);
 
   useEffect(() => {
     loadProfileData();
+    loadZones();
   }, []);
 
   const loadProfileData = async () => {
@@ -110,6 +113,20 @@ export default function VendorProfilePage() {
       }
     } catch (err) {
       console.error("Failed to load profile:", err);
+    }
+  };
+
+  const loadZones = async () => {
+    try {
+      setLoadingZones(true);
+      const { data } = await api.get("/vendor/zones");
+      console.log("Zones loaded:", data.zones);
+      setZones(data.zones || []);
+    } catch (err) {
+      console.error("Failed to load zones:", err);
+      setError("Failed to load vending zones. Please try again.");
+    } finally {
+      setLoadingZones(false);
     }
   };
 
@@ -638,14 +655,23 @@ export default function VendorProfilePage() {
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-500">Vending Zone *</label>
-                  <input
-                    type="text"
+                  <select
                     className="form-control"
                     name="vendingZone"
                     value={form.vendingZone}
                     onChange={onChange}
-                    placeholder="Enter assigned zone"
-                  />
+                    disabled={loadingZones}
+                  >
+                    <option value="">Select your vending zone</option>
+                    {zones.map((zone) => (
+                      <option key={zone.id} value={zone.name}>
+                        {zone.name} ({zone.location}) - {zone.available_spots} spots available
+                      </option>
+                    ))}
+                  </select>
+                  {loadingZones && (
+                    <small className="text-muted">Loading zones...</small>
+                  )}
                 </div>
               </div>
               <div className="d-flex gap-2">
