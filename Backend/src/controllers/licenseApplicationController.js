@@ -127,22 +127,33 @@ async function updateApplicationStep(req, res, next) {
       // Update step-specific data
       switch (stepNumber) {
         case 2: // Zone Selection
+          // Get zone names for desired_zone field
+          const [[primaryZone]] = await connection.query(
+            "SELECT name, zone_code FROM vending_zones WHERE id = ?",
+            [data.primaryZoneId]
+          );
+          const zoneName = primaryZone ? `${primaryZone.zone_code} - ${primaryZone.name}` : 'To be selected';
+          
           await connection.query(
             `UPDATE license_applications 
-            SET primary_zone_id = ?, alternate_zone_id = ?, current_step = 3,
+            SET primary_zone_id = ?, alternate_zone_id = ?, desired_zone = ?, current_step = 3,
                 completed_steps = JSON_ARRAY_APPEND(completed_steps, '$', 'zone_selection')
             WHERE id = ?`,
-            [data.primaryZoneId, data.alternateZoneId, applicationId]
+            [data.primaryZoneId, data.alternateZoneId, zoneName, applicationId]
           );
           break;
 
         case 3: // Business Details
+          // Extract stall_type and business_category from business details
+          const stallType = data.stall_type || 'Standard Stall';
+          const businessCategory = data.business_category || 'General';
+          
           await connection.query(
             `UPDATE license_applications 
-            SET business_details = ?, current_step = 4,
+            SET business_details = ?, stall_type = ?, business_category = ?, current_step = 4,
                 completed_steps = JSON_ARRAY_APPEND(completed_steps, '$', 'business_details')
             WHERE id = ?`,
-            [JSON.stringify(data), applicationId]
+            [JSON.stringify(data), stallType, businessCategory, applicationId]
           );
           break;
 

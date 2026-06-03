@@ -238,13 +238,31 @@ export default function VendorMyLicensePage() {
             <div className="license-vendor-section">
               <div className="vendor-photo-wrapper">
                 {profile?.profile_picture_url ? (
-                  <img
-                    src={profile.profile_picture_url}
-                    alt="Vendor Photo"
-                    className="vendor-photo"
-                  />
+                  <>
+                    <img
+                      src={profile.profile_picture_url.startsWith('http') ? profile.profile_picture_url : `http://localhost:8080${profile.profile_picture_url}`}
+                      alt="Vendor Photo"
+                      className="vendor-photo"
+                      onLoad={(e) => {
+                        console.log('Profile picture loaded successfully');
+                        e.target.style.display = 'block';
+                        const placeholder = e.target.nextElementSibling;
+                        if (placeholder) placeholder.style.display = 'none';
+                      }}
+                      onError={(e) => {
+                        console.error('Profile picture failed to load:', profile.profile_picture_url);
+                        e.target.style.display = 'none';
+                        const placeholder = e.target.nextElementSibling;
+                        if (placeholder) placeholder.style.display = 'flex';
+                      }}
+                      style={{ display: 'none' }}
+                    />
+                    <div className="vendor-photo-placeholder" style={{ display: 'flex' }}>
+                      <FiCreditCard size={32} />
+                    </div>
+                  </>
                 ) : (
-                  <div className="vendor-photo-placeholder">
+                  <div className="vendor-photo-placeholder" style={{ display: 'flex' }}>
                     <FiCreditCard size={32} />
                   </div>
                 )}
@@ -315,20 +333,13 @@ export default function VendorMyLicensePage() {
             {/* QR Code Section */}
             <div className="license-qr-section">
               <div className="qr-code-wrapper">
-                {license?.qr_code_data || license?.license_number ? (
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-                      `LICENSE:${license?.license_number}|VENDOR:${vendorName}|BUSINESS:${profile?.business_name || "N/A"}|ZONE:${license?.desired_zone || profile?.vending_zone || "N/A"}|VALID:${formatDate(license?.expires_at)}|ISSUED:Hawker Management Authority`
-                    )}`}
-                    alt="License QR Code"
-                    className="qr-code-image"
-                  />
-                ) : (
-                  <div className="qr-placeholder">
-                    <FiCreditCard size={48} />
-                    <span>QR Code</span>
-                  </div>
-                )}
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+                    `LICENSE:${license?.license_number || "PENDING"}|VENDOR:${vendorName}|BUSINESS:${profile?.business_name || "N/A"}|ZONE:${license?.desired_zone || profile?.vending_zone || "N/A"}|VALID:${formatDate(license?.expires_at)}|ISSUED:Hawker Management Authority`
+                  )}`}
+                  alt="License QR Code"
+                  className="qr-code-image"
+                />
               </div>
               <div className="qr-info">
                 <p className="qr-label">Scan to Verify</p>

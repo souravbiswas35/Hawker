@@ -140,11 +140,67 @@ async function reviewApplication(req, res, next) {
       );
     }
 
+    // Get application details
+    const [[application]] = await pool.query(
+      `SELECT la.*, lt.duration_days
+       FROM license_applications la
+       LEFT JOIN license_types lt ON la.license_type_id = lt.id
+       WHERE la.id = ?`,
+      [applicationId]
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    let updateFields = {
+      status,
+      admin_remarks: remarks || null,
+      reviewed_by: req.user.id,
+      reviewed_at: new Date(),
+    };
+
+    // Generate license details if approved
+    if (status === "approved") {
+      const ref = application.application_ref.startsWith('LIC-') 
+        ? application.application_ref 
+        : `LIC-${application.application_ref}`;
+      const licenseNumber = `${ref}-${new Date().getFullYear()}`;
+      const issuedAt = new Date();
+      const expiresAt = new Date(issuedAt);
+      expiresAt.setDate(expiresAt.getDate() + (application.duration_days || 365));
+
+      updateFields.license_number = licenseNumber;
+      updateFields.issued_at = issuedAt;
+      updateFields.expires_at = expiresAt;
+      updateFields.qr_code_data = JSON.stringify({
+        license_number: licenseNumber,
+        vendor_name: application.business_name || "N/A",
+        zone: application.desired_zone || "N/A",
+        issued_at: issuedAt.toISOString(),
+        expires_at: expiresAt.toISOString(),
+      });
+    }
+
     const [result] = await pool.query(
       `UPDATE license_applications
-       SET status = ?, admin_remarks = ?, reviewed_by = ?, reviewed_at = NOW()
+       SET status = ?, admin_remarks = ?, reviewed_by = ?, reviewed_at = ?,
+           license_number = ?,
+           issued_at = ?,
+           expires_at = ?,
+           qr_code_data = ?
        WHERE id = ?`,
-      [status, remarks || null, req.user.id, applicationId],
+      [
+        updateFields.status,
+        updateFields.admin_remarks,
+        updateFields.reviewed_by,
+        updateFields.reviewed_at,
+        updateFields.license_number || null,
+        updateFields.issued_at || null,
+        updateFields.expires_at || null,
+        updateFields.qr_code_data || null,
+        applicationId,
+      ],
     );
 
     if (result.affectedRows === 0) {

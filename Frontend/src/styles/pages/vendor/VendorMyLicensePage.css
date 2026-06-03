@@ -51,6 +51,7 @@
 /* License Card Wrapper */
 .license-card-wrapper {
   margin-bottom: 2rem;
+  text-align: left;
 }
 
 .digital-license-card {
@@ -62,6 +63,8 @@
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+  align-items: flex-start;
 }
 
 .digital-license-card::before {
@@ -130,8 +133,10 @@
   height: 110px;
   border-radius: 50%;
   object-fit: cover;
+  object-position: center;
   border: 4px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  display: block;
 }
 
 .vendor-photo-placeholder {
@@ -174,47 +179,57 @@
 .license-details-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.75rem;
+  gap: 1rem;
   margin-bottom: 2.5rem;
-  padding: 2rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  width: 100%;
+}
+
+.license-detail-item {
+  padding: 0.95rem 1rem;
   background: #fff;
   border-radius: 14px;
   border: 1px solid var(--hawker-border);
   box-shadow: 0 4px 12px rgba(15, 27, 46, 0.04);
+  transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
-.license-detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.license-detail-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(15, 61, 130, 0.1);
 }
 
 .detail-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
-  opacity: 0.85;
+  font-size: 0.8rem;
+  color: var(--hawker-muted);
   font-weight: 500;
+  margin-bottom: 0.35rem;
 }
 
 .detail-value {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.4;
-  color: white;
+  color: var(--hawker-ink);
+  text-align: left !important;
 }
 
 .license-number {
   font-family: 'Courier New', monospace;
-  letter-spacing: 1px;
-  font-size: 1.25rem;
-  background: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.5px;
+  font-size: 1rem;
+  background: #f7fbff;
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   display: inline-block;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--hawker-ink);
+  border: 1px solid var(--hawker-border);
 }
 
 /* QR Code Section */
@@ -691,11 +706,6 @@
     gap: 0.25rem;
   }
 
-  .detail-value {
-    text-align: left;
-    max-width: 100%;
-  }
-}
   .detail-value {
     text-align: left;
     max-width: 100%;

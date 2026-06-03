@@ -21,29 +21,29 @@ app.use(
       console.log("CORS CHECK:", origin);
 
       if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
+        callback(null, true);
+      } else {
+        callback(null, true); // dev mode allow all
       }
-
-      return callback(null, true); // TEMP: allow all for dev stability
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
 // 🔥 IMPORTANT: force preflight support
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+//   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH,DELETE, OPTIONS");
 
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
+//   if (req.method === "OPTIONS") {
+//     return res.sendStatus(200);
+//   }
 
-  next();
-});
+//   next();
+// });
 
 app.use(express.json());
 app.use(morgan("dev"));
