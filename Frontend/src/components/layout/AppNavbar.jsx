@@ -9,6 +9,7 @@ import {
   FiLayout,
   FiUsers,
   FiFileText,
+  FiUser,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 
@@ -167,9 +168,13 @@ export default function AppNavbar() {
 
             {isAuthenticated && (
               <li className="nav-item d-flex align-items-center gap-2 ms-lg-3">
-                <span className="badge text-bg-light text-dark rounded-pill">
-                  {user?.role}
-                </span>
+                <button
+                  className="btn btn-outline-light btn-sm rounded-circle"
+                  style={{ width: "40px", height: "40px", padding: "0" }}
+                  onClick={() => navigate(isAdmin ? "/admin/dashboard" : "/vendor/profile")}
+                >
+                  <FiUser />
+                </button>
                 <button
                   className="btn btn-outline-light btn-sm rounded-pill"
                   onClick={handleLogout}

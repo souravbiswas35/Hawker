@@ -9,8 +9,8 @@
 }
 
 .summary-card {
-  background: #ffffff;
-  border: 1px solid rgba(13, 110, 253, 0.08);
+  background: #fdfdfd;
+  border: 2px solid rgba(3, 42, 102);
   border-radius: 1rem;
   padding: 1.25rem;
   min-height: 110px;
