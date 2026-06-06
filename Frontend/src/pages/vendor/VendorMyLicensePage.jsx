@@ -36,12 +36,26 @@ export default function VendorMyLicensePage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
 
   useEffect(() => {
     async function loadLicense() {
       try {
         const res = await api.get("/vendor/my-license");
         setData(res.data);
+        
+        // Load profile picture from database if available
+        if (res.data.profile?.profile_picture_url) {
+          try {
+            const imgRes = await api.get("/vendor/profile-picture", {
+              responseType: 'blob'
+            });
+            const imageUrl = URL.createObjectURL(imgRes.data);
+            setProfilePictureUrl(imageUrl);
+          } catch (imgErr) {
+            console.error("Failed to load profile picture:", imgErr);
+          }
+        }
       } catch (err) {
         setError(
           err.response?.data?.message ||
@@ -237,10 +251,10 @@ export default function VendorMyLicensePage() {
             {/* Vendor Info Section */}
             <div className="license-vendor-section">
               <div className="vendor-photo-wrapper">
-                {profile?.profile_picture_url ? (
+                {profilePictureUrl ? (
                   <>
                     <img
-                      src={profile.profile_picture_url.startsWith('http') ? profile.profile_picture_url : `http://localhost:8080${profile.profile_picture_url}`}
+                      src={profilePictureUrl}
                       alt="Vendor Photo"
                       className="vendor-photo"
                       onLoad={(e) => {
@@ -250,7 +264,7 @@ export default function VendorMyLicensePage() {
                         if (placeholder) placeholder.style.display = 'none';
                       }}
                       onError={(e) => {
-                        console.error('Profile picture failed to load:', profile.profile_picture_url);
+                        console.error('Profile picture failed to load:', profilePictureUrl);
                         e.target.style.display = 'none';
                         const placeholder = e.target.nextElementSibling;
                         if (placeholder) placeholder.style.display = 'flex';

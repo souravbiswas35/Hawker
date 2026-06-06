@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FiHome,
@@ -13,12 +13,20 @@ import {
   FiDollarSign,
   FiCalendar,
   FiMapPin,
+  FiUser,
 } from "react-icons/fi";
+import api from "../../api/client";
 
 export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
+
+  useEffect(() => {
+    // Admin doesn't have profile picture endpoint yet, so we'll use a placeholder
+    // This can be enhanced later when admin profile pictures are implemented
+  }, []);
 
   const isActive = (path) => {
     return (
@@ -137,9 +145,50 @@ export default function AdminLayout({ children }) {
         </nav>
 
         <div className="admin-sidebar-footer">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <div
+              className="position-relative"
+              style={{ cursor: "pointer" }}
+              onClick={() => navigate("/admin/dashboard")}
+              title="Admin"
+            >
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center bg-light"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  border: "2px solid rgba(31, 122, 159, 0.3)",
+                }}
+              >
+                <FiUser />
+              </div>
+              <span
+                className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+                style={{
+                  fontSize: "0.65rem",
+                  padding: "0.25rem 0.5rem",
+                  opacity: 0,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => e.target.style.opacity = "1"}
+                onMouseLeave={(e) => e.target.style.opacity = "0"}
+              >
+                Admin
+              </span>
+            </div>
+          </div>
           <button
             className="admin-nav-item text-danger border-0 bg-transparent w-100 text-start"
             onClick={handleLogout}
+            style={{
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "rgba(220, 53, 69, 0.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "transparent";
+            }}
           >
             <FiLogOut className="admin-nav-icon" />
             <span className="admin-nav-text">Logout</span>

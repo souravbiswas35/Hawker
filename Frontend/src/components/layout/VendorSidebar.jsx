@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FiGrid,
@@ -11,6 +11,7 @@ import {
   FiShoppingBag,
 } from "react-icons/fi";
 import { FaRegListAlt } from "react-icons/fa";
+import api from "../../api/client";
 
 const navigationCategories = [
   {
@@ -78,6 +79,29 @@ export default function VendorSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState({});
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
+
+  useEffect(() => {
+    async function loadProfilePicture() {
+      try {
+        const res = await api.get("/vendor/profile");
+        if (res.data.profile?.profile_picture_url) {
+          try {
+            const imgRes = await api.get("/vendor/profile-picture", {
+              responseType: 'blob'
+            });
+            const imageUrl = URL.createObjectURL(imgRes.data);
+            setProfilePictureUrl(imageUrl);
+          } catch (imgErr) {
+            console.error("Failed to load profile picture:", imgErr);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load profile:", err);
+      }
+    }
+    loadProfilePicture();
+  }, []);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -168,9 +192,64 @@ export default function VendorSidebar() {
 
       {/* Footer */}
       <div className="admin-sidebar-footer">
+        <div className="d-flex align-items-center gap-2 mb-2">
+          <div
+            className="position-relative"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/vendor/profile")}
+            title="Vendor"
+          >
+            {profilePictureUrl ? (
+              <img
+                src={profilePictureUrl}
+                alt="Profile"
+                className="rounded-circle"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  objectFit: "cover",
+                  border: "2px solid rgba(31, 122, 159, 0.3)",
+                }}
+              />
+            ) : (
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center bg-light"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  border: "2px solid rgba(31, 122, 159, 0.3)",
+                }}
+              >
+                <FiUser />
+              </div>
+            )}
+            <span
+              className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+              style={{
+                fontSize: "0.65rem",
+                padding: "0.25rem 0.5rem",
+                opacity: 0,
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = "1"}
+              onMouseLeave={(e) => e.target.style.opacity = "0"}
+            >
+              Vendor
+            </span>
+          </div>
+        </div>
         <button
           className="admin-nav-item text-danger w-100 border-0 bg-transparent text-start"
           onClick={handleLogout}
+          style={{
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = "rgba(220, 53, 69, 0.1)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = "transparent";
+          }}
         >
           <FiLogOut className="admin-nav-icon" />
           <span>Logout</span>

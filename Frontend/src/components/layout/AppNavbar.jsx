@@ -12,6 +12,8 @@ import {
   FiUser,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
+import { useEffect, useState } from "react";
+import api from "../../api/client";
 
 export default function AppNavbar() {
   const { isAuthenticated, user, logout } = useAuth();
@@ -24,6 +26,31 @@ export default function AppNavbar() {
     : isVendor
       ? "/vendor/dashboard"
       : "/";
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
+
+  useEffect(() => {
+    async function loadProfilePicture() {
+      if (isAuthenticated && isVendor) {
+        try {
+          const res = await api.get("/vendor/profile");
+          if (res.data.profile?.profile_picture_url) {
+            try {
+              const imgRes = await api.get("/vendor/profile-picture", {
+                responseType: 'blob'
+              });
+              const imageUrl = URL.createObjectURL(imgRes.data);
+              setProfilePictureUrl(imageUrl);
+            } catch (imgErr) {
+              console.error("Failed to load profile picture:", imgErr);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load profile:", err);
+        }
+      }
+    }
+    loadProfilePicture();
+  }, [isAuthenticated, isVendor]);
 
   const handleLogout = () => {
     logout();
@@ -168,16 +195,62 @@ export default function AppNavbar() {
 
             {isAuthenticated && (
               <li className="nav-item d-flex align-items-center gap-2 ms-lg-3">
-                <button
-                  className="btn btn-outline-light btn-sm rounded-circle"
-                  style={{ width: "40px", height: "40px", padding: "0" }}
+                <div
+                  className="position-relative"
+                  style={{ cursor: "pointer" }}
                   onClick={() => navigate(isAdmin ? "/admin/dashboard" : "/vendor/profile")}
+                  title={isAdmin ? "Admin" : "Vendor"}
                 >
-                  <FiUser />
-                </button>
+                  {profilePictureUrl ? (
+                    <img
+                      src={profilePictureUrl}
+                      alt="Profile"
+                      className="rounded-circle"
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        objectFit: "cover",
+                        border: "2px solid rgba(255, 255, 255, 0.3)",
+                      }}
+                    />
+                  ) : (
+                    <button
+                      className="btn btn-outline-light btn-sm rounded-circle"
+                      style={{ width: "40px", height: "40px", padding: "0" }}
+                    >
+                      <FiUser />
+                    </button>
+                  )}
+                  <span
+                    className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+                    style={{
+                      fontSize: "0.65rem",
+                      padding: "0.25rem 0.5rem",
+                      opacity: 0,
+                      transition: "opacity 0.2s",
+                    }}
+                    onMouseEnter={(e) => e.target.style.opacity = "1"}
+                    onMouseLeave={(e) => e.target.style.opacity = "0"}
+                  >
+                    {isAdmin ? "Admin" : "Vendor"}
+                  </span>
+                </div>
                 <button
                   className="btn btn-outline-light btn-sm rounded-pill"
                   onClick={handleLogout}
+                  style={{
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = "rgba(220, 53, 69, 0.2)";
+                    e.target.style.borderColor = "#dc3545";
+                    e.target.style.color = "#dc3545";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = "transparent";
+                    e.target.style.borderColor = "rgba(255, 255, 255, 0.5)";
+                    e.target.style.color = "white";
+                  }}
                 >
                   Logout
                 </button>

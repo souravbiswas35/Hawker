@@ -1,6 +1,8 @@
 const pool = require("../config/db");
 const ApiError = require("../utils/apiError");
 const bcrypt = require("bcryptjs");
+const fs = require("fs");
+const path = require("path");
 
 let complaintCommentsTableReady = false;
 
@@ -179,8 +181,17 @@ async function uploadProfilePicture(req, res, next) {
     console.log("Uploading profile picture for user:", userId);
     console.log("File:", file.filename);
 
-    // Save the file path to database
-    const profilePictureUrl = `/uploads/profile-pictures/${file.filename}`;
+    // Read the file data as buffer
+    const filePath = path.join(__dirname, "../../uploads/profile-pictures", file.filename);
+    const fileData = fs.readFileSync(filePath);
+
+    // Delete the file from disk after reading it (since we're storing in database)
+    fs.unlinkSync(filePath);
+
+    console.log("File read and deleted from disk, size:", fileData.length);
+
+    // Store the image data in database
+    const profilePictureUrl = `/api/vendor/profile-picture`;
 
     console.log("Profile picture URL to save:", profilePictureUrl);
 
@@ -193,19 +204,19 @@ async function uploadProfilePicture(req, res, next) {
     if (existingProfile) {
       await pool.query(
         `UPDATE vendor_profiles
-         SET profile_picture_url = ?, profile_picture_uploaded_at = CURRENT_TIMESTAMP
+         SET profile_picture_url = ?, profile_picture_data = ?, profile_picture_mime_type = ?, profile_picture_uploaded_at = CURRENT_TIMESTAMP
          WHERE user_id = ?`,
-        [profilePictureUrl, userId],
+        [profilePictureUrl, fileData, file.mimetype, userId],
       );
     } else {
       await pool.query(
-        `INSERT INTO vendor_profiles (user_id, profile_picture_url, profile_picture_uploaded_at)
-         VALUES (?, ?, CURRENT_TIMESTAMP)`,
-        [userId, profilePictureUrl],
+        `INSERT INTO vendor_profiles (user_id, profile_picture_url, profile_picture_data, profile_picture_mime_type, profile_picture_uploaded_at)
+         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [userId, profilePictureUrl, fileData, file.mimetype],
       );
     }
 
-    console.log("Profile picture saved to database");
+    console.log("Profile picture data saved to database");
 
     res.json({
       message: "Profile picture uploaded successfully",
@@ -812,6 +823,27 @@ async function getVendingZones(req, res, next) {
   }
 }
 
+async function getProfilePicture(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    const [[profile]] = await pool.query(
+      `SELECT profile_picture_data, profile_picture_mime_type
+       FROM vendor_profiles WHERE user_id = ?`,
+      [userId],
+    );
+
+    if (!profile || !profile.profile_picture_data) {
+      throw new ApiError(404, "Profile picture not found");
+    }
+
+    res.set('Content-Type', profile.profile_picture_mime_type);
+    res.send(profile.profile_picture_data);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   upsertProfile,
   uploadDocuments,
@@ -834,4 +866,5 @@ module.exports = {
   changePassword,
   deactivateAccount,
   getVendingZones,
+  getProfilePicture,
 };

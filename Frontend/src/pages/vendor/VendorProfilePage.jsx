@@ -88,20 +88,23 @@ export default function VendorProfilePage() {
 
         if (data.profile.profile_picture_url) {
           console.log("Profile picture URL from backend:", data.profile.profile_picture_url);
-          // Construct full URL for profile picture if it's a relative path
-          let picUrl = data.profile.profile_picture_url;
-          if (!picUrl.startsWith('http')) {
-            // Backend is on port 8080, construct the full URL
-            picUrl = `http://localhost:8080${picUrl}`;
+          // Fetch the image with authentication headers
+          try {
+            const response = await api.get("/vendor/profile-picture", {
+              responseType: 'blob'
+            });
+            const imageUrl = URL.createObjectURL(response.data);
+            setProfilePicturePreview(imageUrl);
+            console.log("Profile picture loaded from database");
+          } catch (imgErr) {
+            console.error("Failed to load profile picture from database:", imgErr);
+            // Fallback to old URL method if database fetch fails
+            let picUrl = data.profile.profile_picture_url;
+            if (!picUrl.startsWith('http')) {
+              picUrl = `http://localhost:8080${picUrl}`;
+            }
+            setProfilePicturePreview(picUrl);
           }
-          console.log("Final profile picture URL:", picUrl);
-          setProfilePicturePreview(picUrl);
-          console.log("setProfilePicturePreview called with:", picUrl);
-          // Test if the image loads
-          const img = new Image();
-          img.onload = () => console.log("Profile picture loaded successfully");
-          img.onerror = (e) => console.error("Profile picture failed to load", e);
-          img.src = picUrl;
         } else {
           console.log("No profile picture URL found in profile data. Profile keys:", Object.keys(data.profile));
         }
