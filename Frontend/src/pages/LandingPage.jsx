@@ -32,10 +32,10 @@ export default function LandingPage() {
               <span className="hero-pill">
                 <FiTrendingUp /> Urban Vending Digital Platform
               </span>
-              <h1 className="display-4">
+              <h1 className="display-4" style={{ color: "#000" }}>
                 Streamlining urban vending for a better tomorrow
               </h1>
-              <p className="lead mt-3">
+              <p className="lead mt-3" style={{ color: "#000" }}>
                 Modern digital governance for vendor licensing, approvals, and
                 city-level monitoring.
               </p>
@@ -55,13 +55,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="container py-4">
+      <section className="container py-4 ">
+        
         <div className="panel-box">
           <PageTitle
             title="Feature Highlights"
             subtitle="Fast, transparent, and secure digital licensing capabilities"
             icon={FiShield}
-            className="text-center"
+            className="text-center page-title-center"
           />
           <div className="row g-3 mt-1">
             {highlights.map((item) => (

@@ -164,6 +164,7 @@ export default function VendorDashboardPage() {
         title="Vendor Dashboard"
         subtitle="Welcome back — manage your license, payments, and zone details from one place."
         icon={FiActivity}
+        iconSize={62}
         className="mb-4"
       />
 

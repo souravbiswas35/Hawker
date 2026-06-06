@@ -33,13 +33,17 @@ export default function AppNavbar() {
     <nav className="navbar navbar-expand-lg hawker-nav sticky-top">
       <div className="container">
         <Link
-          className="navbar-brand fw-bold text-light d-flex align-items-center gap-2"
+          className="navbar-brand fw-bold text-light d-flex align-items-center gap-1"
           to={brandLink}
         >
           <span className="brand-badge">
-            <i className="bi bi-shop" />
+            <img
+              src="/images/logo.png"
+              alt="logo"
+              style={{ height: "42px", width: "42px" }}
+            />
           </span>
-          StreetVendor
+          Hawker
         </Link>
 
         <button
@@ -54,7 +58,7 @@ export default function AppNavbar() {
 
         <div className="collapse navbar-collapse" id="hawkerNav">
           {showPublicLinks && (
-            <ul className="navbar-nav me-auto align-items-lg-center gap-lg-1">
+            <ul className="navbar-nav mx-auto align-items-lg-center gap-lg-2 justify-content-center">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/">
                   <HiOutlineHome />

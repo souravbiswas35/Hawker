@@ -68,6 +68,7 @@ export default function PublicFooter() {
       <div className="footer-bottom py-3 text-center">
         © 2026 Street Vendor Licensing System. All rights reserved.
       </div>
+      
     </footer>
   );
 }

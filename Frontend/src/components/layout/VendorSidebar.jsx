@@ -38,7 +38,7 @@ const navigationCategories = [
       { title: "Apply License", path: "/vendor/apply" },
       { title: "My License", path: "/vendor/my-license" },
       { title: "Renew License", path: "/vendor/renew-license" },
-      { title: "Track My Application", path: "/vendor/track-application" },
+      { title: "Track My Application", path: "/vendor/applications" },
     ],
   },
   {
@@ -93,7 +93,7 @@ export default function VendorSidebar() {
   return (
     <aside className="vendor-sidebar">
       {/* Header */}
-      <div className="admin-sidebar-header">
+      {/* <div className="admin-sidebar-header">
         <Link
           to="/vendor/dashboard"
           className="text-decoration-none d-flex align-items-center gap-2"
@@ -106,7 +106,7 @@ export default function VendorSidebar() {
             <small className="text-muted">Vendor Portal</small>
           </div>
         </Link>
-      </div>
+      </div> */}
 
       {/* Nav */}
       <nav className="vendor-nav">

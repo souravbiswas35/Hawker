@@ -73,7 +73,11 @@
 .dashboard-hero-modern {
   border-radius: 18px;
   border: 1px solid var(--hawker-border);
-  background: linear-gradient(155deg, #f2f8ff, #ffffff 55%, #f7fbff);
+  background-image: url("/images/dashboard.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* background: linear-gradient(155deg, #f2f8ff, #ffffff 55%, #f7fbff); */
   box-shadow: 0 16px 30px rgba(15, 27, 46, 0.08);
 }
 
