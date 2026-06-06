@@ -155,8 +155,8 @@ export default function AdminLayout({ children }) {
               <div
                 className="rounded-circle d-flex align-items-center justify-content-center bg-light"
                 style={{
-                  width: "40px",
-                  height: "40px",
+                  width: "30px",
+                  height: "30px",
                   border: "2px solid rgba(31, 122, 159, 0.3)",
                 }}
               >

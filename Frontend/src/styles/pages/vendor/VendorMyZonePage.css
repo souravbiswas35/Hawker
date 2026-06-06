@@ -1,0 +1,41 @@
+.zone-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.zone-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.zone-info-label {
+  font-size: 0.875rem;
+  color: var(--hawker-gray);
+}
+
+.zone-info-value {
+  font-size: 1rem;
+}
+
+.facilities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.facility-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--hawker-light);
+  border-radius: 0.5rem;
+}
+
+.facility-item span:first-of-type {
+  flex: 1;
+  margin-left: 0.5rem;
+}

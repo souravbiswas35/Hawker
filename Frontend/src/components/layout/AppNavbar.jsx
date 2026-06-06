@@ -200,6 +200,14 @@ export default function AppNavbar() {
                   style={{ cursor: "pointer" }}
                   onClick={() => navigate(isAdmin ? "/admin/dashboard" : "/vendor/profile")}
                   title={isAdmin ? "Admin" : "Vendor"}
+                  onMouseEnter={(e) => {
+                    const badge = e.currentTarget.querySelector('.badge');
+                    if (badge) badge.style.opacity = '1';
+                  }}
+                  onMouseLeave={(e) => {
+                    const badge = e.currentTarget.querySelector('.badge');
+                    if (badge) badge.style.opacity = '0';
+                  }}
                 >
                   {profilePictureUrl ? (
                     <img
@@ -207,8 +215,8 @@ export default function AppNavbar() {
                       alt="Profile"
                       className="rounded-circle"
                       style={{
-                        width: "40px",
-                        height: "40px",
+                        width: "30px",
+                        height: "30px",
                         objectFit: "cover",
                         border: "2px solid rgba(255, 255, 255, 0.3)",
                       }}
@@ -216,7 +224,7 @@ export default function AppNavbar() {
                   ) : (
                     <button
                       className="btn btn-outline-light btn-sm rounded-circle"
-                      style={{ width: "40px", height: "40px", padding: "0" }}
+                      style={{ width: "30px", height: "30px", padding: "0" }}
                     >
                       <FiUser />
                     </button>
@@ -228,9 +236,8 @@ export default function AppNavbar() {
                       padding: "0.25rem 0.5rem",
                       opacity: 0,
                       transition: "opacity 0.2s",
+                      pointerEvents: "none",
                     }}
-                    onMouseEnter={(e) => e.target.style.opacity = "1"}
-                    onMouseLeave={(e) => e.target.style.opacity = "0"}
                   >
                     {isAdmin ? "Admin" : "Vendor"}
                   </span>

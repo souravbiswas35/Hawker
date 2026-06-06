@@ -28,13 +28,15 @@
 }
 
 .notification-item {
-  padding: 1rem;
-  border-radius: 14px;
-  background: #f7fbff;
-  border: 1px solid var(--hawker-border);
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  padding: 0;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+  transform: translateX(4px);
 }
 
 .dashboard-map-shell {

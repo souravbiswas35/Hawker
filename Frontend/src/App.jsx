@@ -22,6 +22,7 @@ import TrackLicenseApplicationPage from "./pages/vendor/TrackLicenseApplicationP
 import VendorRenewLicensePage from "./pages/vendor/VendorRenewLicensePage";
 import VendorRenewalSuccessPage from "./pages/vendor/VendorRenewalSuccessPage";
 import VendorMyLicensePage from "./pages/vendor/VendorMyLicensePage";
+import VendorMyZonePage from "./pages/vendor/VendorMyZonePage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage";
 import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
@@ -101,6 +102,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={["vendor"]}>
               <VendorMyLicensePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendor/my-zone"
+          element={
+            <ProtectedRoute roles={["vendor"]}>
+              <VendorMyZonePage />
             </ProtectedRoute>
           }
         />

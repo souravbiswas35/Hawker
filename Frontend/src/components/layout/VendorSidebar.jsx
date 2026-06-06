@@ -205,8 +205,8 @@ export default function VendorSidebar() {
                 alt="Profile"
                 className="rounded-circle"
                 style={{
-                  width: "40px",
-                  height: "40px",
+                  width: "30px",
+                  height: "30px",
                   objectFit: "cover",
                   border: "2px solid rgba(31, 122, 159, 0.3)",
                 }}
@@ -215,8 +215,8 @@ export default function VendorSidebar() {
               <div
                 className="rounded-circle d-flex align-items-center justify-content-center bg-light"
                 style={{
-                  width: "40px",
-                  height: "40px",
+                  width: "32px",
+                  height: "32px",
                   border: "2px solid rgba(31, 122, 159, 0.3)",
                 }}
               >

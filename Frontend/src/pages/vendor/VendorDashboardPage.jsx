@@ -7,6 +7,11 @@ import {
   FiClock,
   FiMapPin,
   FiShield,
+  FiX,
+  FiEye,
+  FiEyeOff,
+  FiCheck,
+  FiFileText,
 } from "react-icons/fi";
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
@@ -25,6 +30,29 @@ function formatDateLabel(dateString) {
   });
 }
 
+function getNotificationColor(message) {
+  const lowerMessage = message?.toLowerCase() || "";
+
+  if (lowerMessage.includes("approved")) {
+    return { bg: "bg-success bg-opacity-10", text: "text-success", border: "border-success", icon: <FiCheck size={18} /> };
+  }
+
+  if (lowerMessage.includes("rejected")) {
+    return { bg: "bg-danger bg-opacity-10", text: "text-danger", border: "border-danger", icon: <FiX size={18} /> };
+  }
+
+  if (lowerMessage.includes("pending")) {
+    return { bg: "bg-warning bg-opacity-10", text: "text-warning", border: "border-warning", icon: <FiClock size={18} /> };
+  }
+
+  if (lowerMessage.includes("uploaded")) {
+    return { bg: "bg-info bg-opacity-10", text: "text-info", border: "border-info", icon: <FiFileText size={18} /> };
+  }
+
+  // Default
+  return { bg: "bg-secondary bg-opacity-10", text: "text-secondary", border: "border-secondary", icon: <FiBell size={18} /> };
+}
+
 export default function VendorDashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState({
@@ -35,6 +63,16 @@ export default function VendorDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [zoneData, setZoneData] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(true);
+  const [hiddenNotifications, setHiddenNotifications] = useState([]);
+
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+  };
+
+  const handleHideNotification = (notificationId) => {
+    setHiddenNotifications([...hiddenNotifications, notificationId]);
+  };
 
   useEffect(() => {
     async function load() {
@@ -56,6 +94,7 @@ export default function VendorDashboardPage() {
             console.error("Failed to load zone data:", err);
           }
         }
+
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load dashboard");
       } finally {
@@ -128,10 +167,17 @@ export default function VendorDashboardPage() {
       })),
     ];
 
+    console.log('Total items before filtering:', items.length);
+    console.log('Applications:', data.applications.length);
+    console.log('Documents:', data.documents.length);
+
     return items
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 5);
   }, [data.applications, data.documents]);
+
+  const visibleNotifications = notifications.filter(n => !hiddenNotifications.includes(n.id));
+
 
   const reminders = [];
   if (
@@ -388,29 +434,59 @@ export default function VendorDashboardPage() {
                         Last 5 updates for your account
                       </p>
                     </div>
-                    <span className="badge rounded-pill bg-secondary">
-                      {notifications.length}
-                    </span>
+                    <div className="d-flex align-items-center gap-2">
+                      <button
+                        className="btn btn-sm btn-link text-muted p-0"
+                        onClick={toggleNotifications}
+                        title={showNotifications ? "Hide notifications" : "Show notifications"}
+                      >
+                        {showNotifications ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </button>
+                      <span className="badge rounded-pill bg-secondary">
+                        {visibleNotifications.length}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="notification-list">
-                    {notifications.map((note) => (
-                      <div key={note.id} className="notification-item">
-                        <div>
-                          <h6 className="mb-1">{note.title}</h6>
-                          <p className="mb-1 text-muted">{note.message}</p>
+                  {showNotifications ? (
+                    <div className="notification-list">
+                      {visibleNotifications.map((note) => {
+                        const colors = getNotificationColor(note.message);
+                        return (
+                          <div key={note.id} className={`notification-item ${colors.border} border-start border-3 mb-2`}>
+                            <div className={`p-3 ${colors.bg} rounded`}>
+                              <div className="d-flex justify-content-between align-items-start mb-2">
+                                <div className="d-flex align-items-center gap-2">
+                                  <span className={`fs-5 ${colors.text}`}>{colors.icon}</span>
+                                  <h6 className={`mb-1 ${colors.text}`}>{note.title}</h6>
+                                </div>
+                                <button
+                                  className="btn btn-sm btn-link text-muted p-0 ms-2"
+                                  onClick={() => handleHideNotification(note.id)}
+                                  title="Hide notification"
+                                >
+                                  <FiX size={16} />
+                                </button>
+                              </div>
+                              <p className="mb-2 text-muted small">{note.message}</p>
+                              <small className={`text-muted ${colors.text} fw-semibold`}>
+                                {formatDateLabel(note.date)}
+                              </small>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {visibleNotifications.length === 0 && (
+                        <div className="text-center text-muted py-4">
+                          No recent notifications yet.
                         </div>
-                        <small className="text-muted">
-                          {formatDateLabel(note.date)}
-                        </small>
-                      </div>
-                    ))}
-                    {notifications.length === 0 && (
-                      <div className="text-center text-muted py-4">
-                        No recent notifications yet.
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted py-4">
+                      <p>Notifications are hidden. Click the eye icon to show them.</p>
+                    </div>
+                  )}
 
                   <div className="alert alert-info mt-4 mb-0">
                     <strong>Payment & renewal alert:</strong> {dueMessage}

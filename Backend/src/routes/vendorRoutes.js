@@ -66,6 +66,7 @@ router.get("/notifications/preferences", vendorController.getNotificationPrefere
 router.put("/notifications/preferences", vendorController.updateNotificationPreferences);
 router.patch("/notifications/:id/read", vendorController.markNotificationRead);
 router.patch("/notifications/:id/unread", vendorController.markNotificationUnread);
+router.patch("/notifications/:id/hide", vendorController.hideNotification);
 router.delete("/notifications/:id", vendorController.deleteNotification);
 router.post(
   "/profile-picture",
@@ -100,6 +101,8 @@ router.post(
   },
 );
 router.get("/my-license", vendorController.getMyLicense);
+router.get("/my-zone", vendorController.getMyZone);
+router.put("/my-zone", vendorController.updateMyZone);
 router.get("/zones", vendorController.getVendingZones);
 router.get("/profile-picture", vendorController.getProfilePicture);
 router.put("/change-password", vendorController.changePassword);

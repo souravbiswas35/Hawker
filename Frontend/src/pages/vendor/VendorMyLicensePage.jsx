@@ -312,7 +312,7 @@ export default function VendorMyLicensePage() {
                   <FiMapPin /> Allocated Zone
                 </div>
                 <div className="detail-value">
-                  {license?.desired_zone || profile?.vending_zone || "N/A"}
+                  {license?.allocated_zone || license?.desired_zone || profile?.vending_zone || "N/A"}
                 </div>
               </div>
 

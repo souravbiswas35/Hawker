@@ -5,6 +5,10 @@ const {
   listApplications,
   getApplicationDetails,
   reviewApplication,
+  listAllNotifications,
+  createNotification: createVendorNotification,
+  deleteNotificationAdmin,
+  createSystemNotification,
 } = require("../controllers/adminController");
 const {
   getReportsOverview,
@@ -37,6 +41,11 @@ router.post("/reports/generate", generateReport);
 
 router.get("/notifications", listNotifications);
 router.post("/notifications", createNotification);
+
+router.get("/vendor-notifications", listAllNotifications);
+router.post("/vendor-notifications", createVendorNotification);
+router.post("/vendor-notifications/system", createSystemNotification);
+router.delete("/vendor-notifications/:id", deleteNotificationAdmin);
 
 router.get("/complaints", listComplaints);
 router.patch("/complaints/:id", updateComplaint);

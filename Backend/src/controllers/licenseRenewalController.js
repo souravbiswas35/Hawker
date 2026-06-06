@@ -64,6 +64,21 @@ async function ensureVendorLicense(userId) {
       return { ...license, status: "expired" };
     }
 
+    // If current_zone is null or "To be selected", try to get it from vendor profile
+    if (!license.current_zone || license.current_zone === "To be selected") {
+      const [[profile]] = await pool.query(
+        "SELECT vending_zone FROM vendor_profiles WHERE user_id = ?",
+        [userId]
+      );
+      if (profile && profile.vending_zone && profile.vending_zone !== "To be selected") {
+        await pool.query(
+          "UPDATE vendor_licenses SET current_zone = ? WHERE id = ?",
+          [profile.vending_zone, license.id]
+        );
+        license.current_zone = profile.vending_zone;
+      }
+    }
+
     return license;
   }
 
@@ -87,6 +102,16 @@ async function ensureVendorLicense(userId) {
   expiresAt.setFullYear(expiresAt.getFullYear() + 1);
   const isExpired = getDayDiff(expiresAt) < 0;
 
+  // Get zone from vendor profile if desired_zone is missing
+  let currentZone = approvedApp.desired_zone;
+  if (!currentZone || currentZone === "To be selected") {
+    const [[profile]] = await pool.query(
+      "SELECT vending_zone FROM vendor_profiles WHERE user_id = ?",
+      [userId]
+    );
+    currentZone = profile?.vending_zone || "Not assigned";
+  }
+
   const [insertResult] = await pool.query(
     `INSERT INTO vendor_licenses
      (user_id, source_application_id, license_number, current_zone, issued_at, expires_at, status)
@@ -95,7 +120,7 @@ async function ensureVendorLicense(userId) {
       userId,
       approvedApp.id,
       `LIC-${approvedApp.application_ref}`,
-      approvedApp.desired_zone,
+      currentZone,
       issuedAt,
       expiresAt,
       isExpired ? "expired" : "active",

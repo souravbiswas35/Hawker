@@ -268,7 +268,7 @@ async function listNotifications(req, res, next) {
   try {
     const userId = req.user.id;
     const { category, search, status } = req.query;
-    const conditions = ["user_id = ?"];
+    const conditions = ["user_id = ?", "is_hidden = 0"];
     const params = [userId];
 
     if (category && category !== "All") {
@@ -287,15 +287,50 @@ async function listNotifications(req, res, next) {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    const [rows] = await pool.query(
-      `SELECT id, category, title, message, link, is_read, created_at, updated_at
-       FROM vendor_notifications
-       WHERE ${conditions.join(" AND ")}
-       ORDER BY created_at DESC`,
-      params,
-    );
+    let rows;
+    try {
+      rows = await pool.query(
+        `SELECT id, category, title, message, link, is_read, is_hidden, created_at, updated_at,
+                action_type, related_application_id, zone_or_area, admin_remarks, action_details
+         FROM vendor_notifications
+         WHERE ${conditions.join(" AND ")}
+         ORDER BY created_at DESC`,
+        params,
+      );
+    } catch (err) {
+      // Fallback if new columns don't exist yet
+      if (err.code === 'ER_BAD_FIELD_ERROR') {
+        console.log('New notification columns not found, using fallback query');
+        try {
+          rows = await pool.query(
+            `SELECT id, category, title, message, link, is_read, is_hidden, created_at, updated_at
+             FROM vendor_notifications
+             WHERE ${conditions.join(" AND ")}
+             ORDER BY created_at DESC`,
+            params,
+          );
+        } catch (err2) {
+          // Final fallback if is_hidden also doesn't exist
+          if (err2.code === 'ER_BAD_FIELD_ERROR') {
+            console.log('is_hidden column not found, using minimal query');
+            rows = await pool.query(
+              `SELECT id, category, title, message, link, is_read, created_at, updated_at
+               FROM vendor_notifications
+               WHERE ${conditions.join(" AND ").replace(" AND is_hidden = 0", "")}
+               ORDER BY created_at DESC`,
+              params.filter((_, i) => i !== 1), // Remove is_hidden param
+            );
+          } else {
+            throw err2;
+          }
+        }
+      } else {
+        throw err;
+      }
+    }
 
     console.log(`Fetched ${rows.length} notifications for user ${userId}`);
+    console.log('Notifications data:', JSON.stringify(rows, null, 2));
     res.json({ notifications: rows });
   } catch (err) {
     console.error('Error fetching notifications:', err);
@@ -431,6 +466,27 @@ async function markNotificationUnread(req, res, next) {
     }
 
     res.json({ message: "Notification marked as unread" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function hideNotification(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const [result] = await pool.query(
+      `UPDATE vendor_notifications
+       SET is_hidden = 1
+       WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    res.json({ message: "Notification hidden successfully" });
   } catch (err) {
     next(err);
   }
@@ -737,6 +793,14 @@ async function getMyLicense(req, res, next) {
       throw new ApiError(404, "No approved license found. Please apply for a license first.");
     }
 
+    // Use vendor profile zone for allocated zone display
+    license.allocated_zone = profile?.vending_zone || license.desired_zone || "Not assigned";
+
+    // Fill missing goods_authorized from vendor profile
+    if (!license.goods_authorized || license.goods_authorized === "To be selected" || license.goods_authorized === "") {
+      license.goods_authorized = profile?.business_type || license.business_category || "General";
+    }
+
     res.json({
       profile: profile || null,
       license,
@@ -809,7 +873,7 @@ async function deactivateAccount(req, res, next) {
 async function getVendingZones(req, res, next) {
   try {
     const [rows] = await pool.query(
-      `SELECT id, zone_code, name, location, area, total_spots, available_spots, 
+      `SELECT id, zone_code, name, location, area, total_spots, available_spots,
               latitude, longitude, zone_type, traffic_level
        FROM vending_zones
        ORDER BY name ASC`
@@ -819,6 +883,99 @@ async function getVendingZones(req, res, next) {
     res.json({ zones: rows });
   } catch (err) {
     console.error('Error fetching vending zones:', err);
+    next(err);
+  }
+}
+
+async function getMyZone(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    // Get vendor's assigned zone from profile
+    const [[profile]] = await pool.query(
+      "SELECT vending_zone, assigned_spot_number FROM vendor_profiles WHERE user_id = ?",
+      [userId]
+    );
+
+    if (!profile || !profile.vending_zone) {
+      throw new ApiError(404, "No zone assigned to your profile. Please contact admin.");
+    }
+
+    // Get zone details
+    const [[zone]] = await pool.query(
+      `SELECT id, zone_code, name, location, area, dimensions, total_spots, available_spots,
+              has_electricity, has_water, has_shade, nearby_landmarks, operating_hours,
+              rules_regulations, zone_in_charge_contact, latitude, longitude, zone_type, traffic_level
+       FROM vending_zones
+       WHERE name = ? OR zone_code = ?`,
+      [profile.vending_zone, profile.vending_zone]
+    );
+
+    if (!zone) {
+      throw new ApiError(404, "Zone not found in database");
+    }
+
+    // Get other vendors in the same zone
+    const [otherVendors] = await pool.query(
+      `SELECT vp.business_name, vp.assigned_spot_number, u.email
+       FROM vendor_profiles vp
+       JOIN users u ON u.id = vp.user_id
+       WHERE vp.vending_zone = ? AND vp.user_id != ?
+       LIMIT 10`,
+      [profile.vending_zone, userId]
+    );
+
+    res.json({
+      zone: {
+        ...zone,
+        has_electricity: Boolean(zone.has_electricity),
+        has_water: Boolean(zone.has_water),
+        has_shade: Boolean(zone.has_shade),
+      },
+      assigned_spot: profile.assigned_spot_number || "Not assigned",
+      other_vendors: otherVendors,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateMyZone(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { operating_hours, rules_regulations, zone_in_charge_contact, nearby_landmarks } = req.body;
+
+    // Get vendor's assigned zone from profile
+    const [[profile]] = await pool.query(
+      "SELECT vending_zone FROM vendor_profiles WHERE user_id = ?",
+      [userId]
+    );
+
+    if (!profile || !profile.vending_zone) {
+      throw new ApiError(404, "No zone assigned to your profile. Please contact admin.");
+    }
+
+    // Update zone details
+    await pool.query(
+      `UPDATE vending_zones
+       SET operating_hours = COALESCE(?, operating_hours),
+           rules_regulations = COALESCE(?, rules_regulations),
+           zone_in_charge_contact = COALESCE(?, zone_in_charge_contact),
+           nearby_landmarks = COALESCE(?, nearby_landmarks),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE name = ? OR zone_code = ?`,
+      [
+        operating_hours || null,
+        rules_regulations || null,
+        zone_in_charge_contact || null,
+        nearby_landmarks || null,
+        profile.vending_zone,
+        profile.vending_zone,
+      ]
+    );
+
+    res.json({ message: "Zone details updated successfully" });
+  } catch (err) {
     next(err);
   }
 }
@@ -854,6 +1011,7 @@ module.exports = {
   updateNotificationPreferences,
   markNotificationRead,
   markNotificationUnread,
+  hideNotification,
   deleteNotification,
   createComplaint,
   listComplaints,
@@ -866,5 +1024,7 @@ module.exports = {
   changePassword,
   deactivateAccount,
   getVendingZones,
+  getMyZone,
+  updateMyZone,
   getProfilePicture,
 };

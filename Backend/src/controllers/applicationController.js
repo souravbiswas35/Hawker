@@ -10,17 +10,11 @@ function buildRef() {
 async function createApplication(req, res, next) {
   try {
     const userId = req.user.id;
-    const { desiredZone, stallType, businessCategory, notes } = req.body;
+    const { desiredZone, stallType, businessCategory, notes, primaryZoneId, alternateZoneId } = req.body;
 
-    if (!desiredZone || !stallType || !businessCategory) {
-      throw new ApiError(
-        400,
-        "desiredZone, stallType, and businessCategory are required",
-      );
-    }
-
+    // Get vendor profile data
     const [[profile]] = await pool.query(
-      "SELECT id FROM vendor_profiles WHERE user_id = ?",
+      "SELECT id, business_name, business_type, vending_zone, first_name, last_name, phone, address FROM vendor_profiles WHERE user_id = ?",
       [userId],
     );
     if (!profile) {
@@ -43,17 +37,26 @@ async function createApplication(req, res, next) {
 
     const applicationRef = buildRef();
 
+    // Use profile data if not provided in request
+    const finalDesiredZone = desiredZone || profile.vending_zone;
+    const finalBusinessCategory = businessCategory || profile.business_type || "General";
+    const finalStallType = stallType || "Standard";
+    const finalBusinessName = profile.business_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+
     const [result] = await pool.query(
       `INSERT INTO license_applications
-      (application_ref, user_id, desired_zone, stall_type, business_category, notes, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'submitted')`,
+      (application_ref, user_id, desired_zone, stall_type, business_category, business_name, notes, status, primary_zone_id, alternate_zone_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'submitted', ?, ?)`,
       [
         applicationRef,
         userId,
-        desiredZone,
-        stallType,
-        businessCategory,
+        finalDesiredZone,
+        finalStallType,
+        finalBusinessCategory,
+        finalBusinessName,
         notes || null,
+        primaryZoneId || null,
+        alternateZoneId || null,
       ],
     );
 
