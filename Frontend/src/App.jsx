@@ -29,6 +29,7 @@ import VendorMakePaymentPage from "./pages/vendor/VendorMakePaymentPage";
 import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 import VendorSettingsPage from "./pages/vendor/VendorSettingsPage";
 import VendorInspectionHistoryPage from "./pages/vendor/VendorInspectionHistoryPage";
+import WomenVendorSupportPage from "./pages/vendor/WomenVendorSupportPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage";
 import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
@@ -40,6 +41,9 @@ import AdminInspectionsPage from "./pages/admin/AdminInspectionsPage";
 import AdminCompliancePage from "./pages/admin/AdminCompliancePage";
 import AdminZonesPage from "./pages/admin/AdminZonesPage";
 import AdminZoneCreatePage from "./pages/admin/AdminZoneCreatePage";
+import SchemeDetailPage from "./pages/vendor/SchemeDetailPage";
+import AdminWomenSchemeApplicationsPage from "./pages/admin/AdminWomenSchemeApplicationsPage";
+import AdminWomenMentorshipApplicationsPage from "./pages/admin/AdminWomenMentorshipApplicationsPage";
 
 function PageTransition({ children }) {
   const location = useLocation();
@@ -214,6 +218,22 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/vendor/women-support"
+            element={
+              <ProtectedRoute roles={["vendor"]}>
+                <WomenVendorSupportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/women-support/schemes/:schemeId"
+            element={
+              <ProtectedRoute roles={["vendor"]}>
+                <SchemeDetailPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/admin/dashboard"
@@ -300,6 +320,22 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminZoneCreatePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/women-support/scheme-applications"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminWomenSchemeApplicationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/women-support/mentorship-applications"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminWomenMentorshipApplicationsPage />
               </ProtectedRoute>
             }
           />

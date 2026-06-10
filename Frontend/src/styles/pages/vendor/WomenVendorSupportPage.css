@@ -1,0 +1,273 @@
+/* Women Vendor Support Page Styles */
+
+.women-support-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.women-support-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.women-support-header h1 {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.women-support-header p {
+  opacity: 0.9;
+  margin-bottom: 0;
+}
+
+.special-feature-badge {
+  background-color: #ff6b6b;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Emergency SOS Section */
+.emergency-sos-card {
+  border-left: 4px solid #dc3545;
+  background: linear-gradient(to right, #fff5f5, white);
+}
+
+.emergency-sos-card .card-title {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.emergency-btn {
+  border: 2px solid #dc3545;
+  color: #dc3545;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.emergency-btn:hover {
+  background-color: #dc3545;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Schemes & Subsidies Section */
+.scheme-card {
+  background-color: #f8f9fa;
+  border: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.scheme-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.scheme-card .card-title {
+  color: #333;
+  font-weight: 600;
+}
+
+.scheme-amount-badge {
+  background-color: #28a745;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-weight: 600;
+}
+
+/* Mentorship Program Section */
+.mentor-card {
+  border: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.mentor-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.mentor-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.connect-mentor-btn {
+  border: 2px solid #667eea;
+  color: #667eea;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.connect-mentor-btn:hover {
+  background-color: #667eea;
+  color: white;
+}
+
+/* Success Stories Section */
+.success-story-card {
+  background-color: #f8f9fa;
+  border: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.success-story-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.story-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.read-story-link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.read-story-link:hover {
+  color: #764ba2;
+}
+
+/* Community Section */
+.community-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+
+.community-card .card-title {
+  color: white;
+}
+
+.community-card .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.join-community-btn {
+  background-color: white;
+  color: #667eea;
+  font-weight: 600;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.join-community-btn:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+}
+
+/* Safety Guidelines Section */
+.safety-guide-item {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.safety-guide-item:hover {
+  background-color: #e9ecef;
+  transform: translateX(5px);
+}
+
+.download-guide-btn {
+  border: 2px solid #667eea;
+  color: #667eea;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.download-guide-btn:hover {
+  background-color: #667eea;
+  color: white;
+}
+
+/* Access Denied Card */
+.access-denied-card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.access-denied-icon {
+  color: #ffc107;
+  font-size: 4rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .women-support-header {
+    padding: 1.5rem 0;
+  }
+
+  .women-support-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .emergency-btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .scheme-card,
+  .mentor-card,
+  .success-story-card {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Loading Spinner */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}

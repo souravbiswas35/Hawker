@@ -510,6 +510,218 @@ async function createSystemNotification(req, res, next) {
   }
 }
 
+// Women Vendor Support Admin Functions
+async function getWomenSchemeApplications(req, res, next) {
+  try {
+    const { status } = req.query;
+    let query = `
+      SELECT wsa.id, wsa.application_ref, wsa.status, wsa.submitted_at, wsa.reviewed_at,
+             wsa.business_description, wsa.current_income, wsa.business_years,
+             wsa.employees_count, wsa.funding_purpose, wsa.additional_notes,
+             wsa.remarks,
+             ws.name as scheme_name, ws.amount as scheme_amount, ws.description as scheme_description,
+             u.email, vp.first_name, vp.last_name, vp.business_name, vp.business_type, vp.phone
+      FROM women_scheme_applications wsa
+      JOIN women_schemes_subsidies ws ON ws.id = wsa.scheme_id
+      JOIN users u ON u.id = wsa.user_id
+      LEFT JOIN vendor_profiles vp ON vp.user_id = wsa.user_id
+    `;
+    const params = [];
+
+    if (status) {
+      query += " WHERE wsa.status = ?";
+      params.push(status);
+    }
+
+    query += " ORDER BY wsa.submitted_at DESC";
+
+    const [applications] = await pool.query(query, params);
+    res.json({ applications });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getWomenSchemeApplicationDetails(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    const [[application]] = await pool.query(
+      `SELECT wsa.id, wsa.application_ref, wsa.status, wsa.submitted_at, wsa.reviewed_at,
+              wsa.business_description, wsa.current_income, wsa.business_years,
+              wsa.employees_count, wsa.funding_purpose, wsa.documents_attached, wsa.additional_notes,
+              wsa.remarks,
+              ws.name as scheme_name, ws.amount as scheme_amount, ws.description as scheme_description,
+              ws.eligibility_criteria, ws.deadline,
+              u.email, u.id as user_id,
+              vp.first_name, vp.last_name, vp.business_name, vp.business_type, vp.phone,
+              vp.address, vp.vending_zone
+       FROM women_scheme_applications wsa
+       JOIN women_schemes_subsidies ws ON ws.id = wsa.scheme_id
+       JOIN users u ON u.id = wsa.user_id
+       LEFT JOIN vendor_profiles vp ON vp.user_id = wsa.user_id
+       WHERE wsa.id = ?`,
+      [id]
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Scheme application not found");
+    }
+
+    res.json({ application });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function reviewWomenSchemeApplication(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { action, remarks } = req.body;
+
+    if (!action || !['approve', 'reject'].includes(action)) {
+      throw new ApiError(400, "Action must be 'approve' or 'reject'");
+    }
+
+    const [[application]] = await pool.query(
+      "SELECT user_id, scheme_id FROM women_scheme_applications WHERE id = ?",
+      [id]
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Scheme application not found");
+    }
+
+    await pool.query(
+      `UPDATE women_scheme_applications
+       SET status = ?, remarks = ?, reviewed_at = NOW()
+       WHERE id = ?`,
+      [action === 'approve' ? 'approved' : 'rejected', remarks || null, id]
+    );
+
+    // Create notification for vendor
+    const notificationTitle = action === 'approve' 
+      ? "Scheme Application Approved" 
+      : "Scheme Application Rejected";
+    const notificationMessage = action === 'approve'
+      ? "Your scheme application has been approved. You will receive further instructions."
+      : `Your scheme application has been rejected. Remarks: ${remarks || 'No remarks provided'}`;
+
+    await pool.query(
+      `INSERT INTO vendor_notifications (user_id, category, title, message, link)
+       VALUES (?, 'Scheme updates', ?, ?, '/vendor/women-support')`,
+      [application.user_id, notificationTitle, notificationMessage]
+    );
+
+    res.json({
+      message: `Scheme application ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getWomenMentorshipApplications(req, res, next) {
+  try {
+    const { status } = req.query;
+    let query = `
+      SELECT wmc.id, wmc.status, wmc.requested_at, wmc.accepted_at, wmc.completed_at, wmc.remarks,
+             wm.name as mentor_name, wm.expertise, wm.experience_years, wm.contact_email,
+             u.email, vp.first_name, vp.last_name, vp.business_name, vp.business_type
+      FROM women_mentor_connections wmc
+      JOIN women_mentors wm ON wm.id = wmc.mentor_id
+      JOIN users u ON u.id = wmc.user_id
+      LEFT JOIN vendor_profiles vp ON vp.user_id = wmc.user_id
+    `;
+    const params = [];
+
+    if (status) {
+      query += " WHERE wmc.status = ?";
+      params.push(status);
+    }
+
+    query += " ORDER BY wmc.requested_at DESC";
+
+    const [applications] = await pool.query(query, params);
+    res.json({ applications });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function reviewWomenMentorshipApplication(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { action, remarks } = req.body;
+
+    if (!action || !['accept', 'reject', 'complete'].includes(action)) {
+      throw new ApiError(400, "Action must be 'accept', 'reject', or 'complete'");
+    }
+
+    const [[application]] = await pool.query(
+      "SELECT user_id FROM women_mentor_connections WHERE id = ?",
+      [id]
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Mentorship application not found");
+    }
+
+    const statusMap = {
+      'accept': 'accepted',
+      'reject': 'rejected',
+      'complete': 'completed'
+    };
+
+    const updateFields = {
+      status: statusMap[action],
+      remarks: remarks || null
+    };
+
+    if (action === 'accept') {
+      updateFields.accepted_at = 'NOW()';
+    } else if (action === 'complete') {
+      updateFields.completed_at = 'NOW()';
+    }
+
+    const setClause = Object.entries(updateFields)
+      .map(([key, value]) => `${key} = ${value === 'NOW()' ? 'NOW()' : '?'}`)
+      .join(', ');
+    
+    const values = Object.values(updateFields).filter(v => v !== 'NOW()');
+    values.push(id);
+
+    await pool.query(
+      `UPDATE women_mentor_connections SET ${setClause} WHERE id = ?`,
+      values
+    );
+
+    // Create notification for vendor
+    const notificationTitle = action === 'accept'
+      ? "Mentorship Request Accepted"
+      : action === 'reject'
+      ? "Mentorship Request Rejected"
+      : "Mentorship Program Completed";
+    const notificationMessage = action === 'accept'
+      ? "Your mentorship request has been accepted. You will be contacted by your mentor soon."
+      : action === 'reject'
+      ? `Your mentorship request has been rejected. Remarks: ${remarks || 'No remarks provided'}`
+      : "Your mentorship program has been completed successfully.";
+
+    await pool.query(
+      `INSERT INTO vendor_notifications (user_id, category, title, message, link)
+       VALUES (?, 'Mentorship updates', ?, ?, '/vendor/women-support')`,
+      [application.user_id, notificationTitle, notificationMessage]
+    );
+
+    res.json({
+      message: `Mentorship application ${action === 'complete' ? 'marked as completed' : action + 'ed'} successfully`,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getDashboard,
   listVendors,
@@ -520,4 +732,9 @@ module.exports = {
   createNotification,
   deleteNotificationAdmin,
   createSystemNotification,
+  getWomenSchemeApplications,
+  getWomenSchemeApplicationDetails,
+  reviewWomenSchemeApplication,
+  getWomenMentorshipApplications,
+  reviewWomenMentorshipApplication,
 };

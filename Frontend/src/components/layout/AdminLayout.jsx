@@ -20,6 +20,7 @@ import ThemeToggle from "../common/ThemeToggle";
 
 export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState({});
   const location = useLocation();
   const navigate = useNavigate();
   const [profilePictureUrl, setProfilePictureUrl] = useState(null);
@@ -33,6 +34,18 @@ export default function AdminLayout({ children }) {
     return (
       location.pathname === path || location.pathname.startsWith(path + "/")
     );
+  };
+
+  const toggleExpand = (title) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
+
+  const isAnySubItemActive = (subItems) => {
+    if (!subItems) return false;
+    return subItems.some((item) => isActive(item.path));
   };
 
   const handleLogout = () => {
@@ -96,6 +109,22 @@ export default function AdminLayout({ children }) {
       path: "/admin/zones-management",
       badge: null,
     },
+    {
+      title: "Women Vendor Support",
+      icon: FiShield,
+      path: "/admin/women-support",
+      badge: null,
+      subItems: [
+        {
+          title: "Scheme Applications",
+          path: "/admin/women-support/scheme-applications",
+        },
+        {
+          title: "Mentorship Applications",
+          path: "/admin/women-support/mentorship-applications",
+        },
+      ],
+    },
   ];
 
   return (
@@ -132,20 +161,58 @@ export default function AdminLayout({ children }) {
         </div>
 
         <nav className="admin-nav">
-          {menuItems.map((item, index) => (
-            <Link
-              key={index}
-              to={item.path}
-              className={`admin-nav-item ${isActive(item.path) ? "active" : ""}`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <item.icon className="admin-nav-icon" />
-              <span className="admin-nav-text">{item.title}</span>
-              {item.badge && (
-                <span className="admin-nav-badge">{item.badge}</span>
-              )}
-            </Link>
-          ))}
+          {menuItems.map((item, index) => {
+            const hasSubItems = item.subItems && item.subItems.length > 0;
+            const isExpanded = expandedItems[item.title] || isAnySubItemActive(item.subItems);
+            const isItemActive = isActive(item.path);
+
+            if (hasSubItems) {
+              return (
+                <div key={index}>
+                  <button
+                    className={`admin-nav-item ${isAnySubItemActive(item.subItems) ? "active" : ""}`}
+                    onClick={() => toggleExpand(item.title)}
+                    style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer" }}
+                  >
+                    <item.icon className="admin-nav-icon" />
+                    <span className="admin-nav-text">{item.title}</span>
+                    <span style={{ marginLeft: "auto" }}>
+                      {isExpanded ? "▼" : "▶"}
+                    </span>
+                  </button>
+                  {isExpanded && (
+                    <div className="admin-subnav">
+                      {item.subItems.map((subItem, subIndex) => (
+                        <Link
+                          key={subIndex}
+                          to={subItem.path}
+                          className={`admin-subnav-item ${isActive(subItem.path) ? "active" : ""}`}
+                          onClick={() => setSidebarOpen(false)}
+                        >
+                          {subItem.title}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={index}
+                to={item.path}
+                className={`admin-nav-item ${isItemActive ? "active" : ""}`}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <item.icon className="admin-nav-icon" />
+                <span className="admin-nav-text">{item.title}</span>
+                {item.badge && (
+                  <span className="admin-nav-badge">{item.badge}</span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="admin-sidebar-footer">

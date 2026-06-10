@@ -20,6 +20,7 @@ const initialForm = {
   phone: "",
   nationalId: "",
   dateOfBirth: "",
+  gender: "",
   address: "",
   businessName: "",
   businessType: "",
@@ -79,6 +80,7 @@ export default function VendorProfilePage() {
           phone: data.profile.phone || "",
           nationalId: data.profile.national_id || "",
           dateOfBirth: formattedDate,
+          gender: data.profile.gender || "",
           address: data.profile.address || "",
           businessName: data.profile.business_name || "",
           businessType: data.profile.business_type || "",
@@ -307,6 +309,7 @@ export default function VendorProfilePage() {
         phone: form.phone,
         national_id: form.nationalId,
         date_of_birth: form.dateOfBirth,
+        gender: form.gender,
         address: form.address,
         business_name: form.businessName,
         business_type: form.businessType,
@@ -568,6 +571,24 @@ export default function VendorProfilePage() {
                     value={form.dateOfBirth}
                     onChange={onChange}
                   />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-500">Gender</label>
+                  <select
+                    className="form-select"
+                    name="gender"
+                    value={form.gender}
+                    onChange={onChange}
+                    disabled={!!form.gender && form.gender !== ""}
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                  {!!form.gender && form.gender !== "" && (
+                    <small className="text-muted">Gender can only be updated once.</small>
+                  )}
                 </div>
                 <div className="col-12">
                   <label className="form-label fw-500">Address *</label>

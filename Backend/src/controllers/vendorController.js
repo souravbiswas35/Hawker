@@ -36,6 +36,7 @@ async function upsertProfile(req, res, next) {
       phone,
       national_id,
       date_of_birth,
+      gender,
       address,
       business_name,
       business_type,
@@ -74,8 +75,9 @@ async function upsertProfile(req, res, next) {
     if (existingProfile) {
       // Update existing profile
       console.log("Updating existing profile");
-      result = await pool.query(
-        `UPDATE vendor_profiles SET 
+
+      // Build the update query dynamically to implement "gender can only be updated once"
+      let updateFields = `
           first_name = ?,
           last_name = ?,
           phone = ?,
@@ -86,8 +88,9 @@ async function upsertProfile(req, res, next) {
           business_type = ?,
           vending_zone = ?,
           updated_at = CURRENT_TIMESTAMP
-         WHERE user_id = ?`,
-        [
+      `;
+
+      let queryParams = [
           first_name || null,
           last_name || null,
           phone || null,
@@ -96,18 +99,35 @@ async function upsertProfile(req, res, next) {
           address || null,
           business_name || null,
           business_type || null,
-          vending_zone || null,
-          userId,
-        ]
+          vending_zone || null
+      ];
+
+      // Only allow updating gender if it hasn't been set before
+      // First, get the current gender from the profile
+      const [[currentProfile]] = await pool.query(
+        "SELECT gender FROM vendor_profiles WHERE user_id = ?",
+        [userId]
+      );
+
+      if (gender && (!currentProfile.gender || currentProfile.gender === '')) {
+        updateFields += ", gender = ?";
+        queryParams.push(gender);
+      }
+
+      queryParams.push(userId);
+
+      result = await pool.query(
+        `UPDATE vendor_profiles SET ${updateFields} WHERE user_id = ?`,
+        queryParams
       );
     } else {
       // Insert new profile
       console.log("Inserting new profile");
       result = await pool.query(
         `INSERT INTO vendor_profiles (
-          user_id, first_name, last_name, phone, national_id, date_of_birth,
+          user_id, first_name, last_name, phone, national_id, date_of_birth, gender,
           address, business_name, business_type, vending_zone
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           first_name || null,
@@ -115,6 +135,7 @@ async function upsertProfile(req, res, next) {
           phone || null,
           national_id || null,
           formattedDateOfBirth,
+          gender || null,
           address || null,
           business_name || null,
           business_type || null,
@@ -233,7 +254,7 @@ async function getDashboard(req, res, next) {
     const userId = req.user.id;
 
     const [[profile]] = await pool.query(
-      `SELECT first_name, last_name, phone, national_id, date_of_birth, address, business_name, business_type, vending_zone, profile_picture_url
+      `SELECT first_name, last_name, phone, national_id, date_of_birth, gender, address, business_name, business_type, vending_zone, profile_picture_url
        FROM vendor_profiles WHERE user_id = ?`,
       [userId],
     );
@@ -1271,6 +1292,208 @@ async function updateSettings(req, res, next) {
   }
 }
 
+// Women Vendor Support Functions
+async function checkWomenSupportAccess(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    const [[profile]] = await pool.query(
+      "SELECT gender FROM vendor_profiles WHERE user_id = ?",
+      [userId]
+    );
+
+    if (!profile || !profile.gender) {
+      return res.json({
+        canAccess: false,
+        message: "Gender information not found in your profile. Please complete your profile first."
+      });
+    }
+
+    if (profile.gender.toLowerCase() !== 'female') {
+      return res.json({
+        canAccess: false,
+        message: "This feature is not applicable for you, please contact the authority."
+      });
+    }
+
+    res.json({ canAccess: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getWomenSupportData(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    // Check gender first
+    const [[profile]] = await pool.query(
+      "SELECT gender FROM vendor_profiles WHERE user_id = ?",
+      [userId]
+    );
+
+    if (!profile || profile.gender.toLowerCase() !== 'female') {
+      throw new ApiError(403, "This feature is not applicable for you, please contact the authority.");
+    }
+
+    // Get schemes and subsidies
+    const [schemes] = await pool.query(
+      `SELECT id, name, description, amount, eligibility_criteria, application_link, deadline, status
+       FROM women_schemes_subsidies
+       WHERE status = 'active'
+       ORDER BY created_at DESC`
+    );
+
+    // Get mentors
+    const [mentors] = await pool.query(
+      `SELECT id, name, expertise, experience_years, bio, contact_email, contact_phone, profile_picture_url, available
+       FROM women_mentors
+       WHERE available = TRUE
+       ORDER BY experience_years DESC`
+    );
+
+    // Get success stories
+    const [successStories] = await pool.query(
+      `SELECT id, vendor_name, business_category, earnings_monthly, story_title, story_content, profile_picture_url, featured
+       FROM women_success_stories
+       ORDER BY featured DESC, created_at DESC`
+    );
+
+    // Get community posts count
+    const [[communityCount]] = await pool.query(
+      "SELECT COUNT(*) as count FROM women_community_posts"
+    );
+
+    // Get safety guides
+    const [safetyGuides] = await pool.query(
+      `SELECT id, title, description, guide_content, pdf_url
+       FROM women_safety_guides
+       ORDER BY created_at DESC`
+    );
+
+    // Get emergency contacts
+    const [emergencyContacts] = await pool.query(
+      `SELECT id, contact_type, contact_name, phone_number, description, available_24_7
+       FROM women_emergency_contacts
+       ORDER BY available_24_7 DESC, contact_type ASC`
+    );
+
+    res.json({
+      schemes,
+      mentors,
+      successStories,
+      communityCount: communityCount.count || 0,
+      safetyGuides,
+      emergencyContacts,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function applyForWomenScheme(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { schemeId } = req.params;
+    const {
+      business_description,
+      current_income,
+      business_years,
+      employees_count,
+      funding_purpose,
+      additional_notes,
+    } = req.body;
+
+    // Check gender first
+    const [[profile]] = await pool.query(
+      "SELECT gender FROM vendor_profiles WHERE user_id = ?",
+      [userId]
+    );
+
+    if (!profile || profile.gender.toLowerCase() !== 'female') {
+      throw new ApiError(403, "This feature is not applicable for you, please contact the authority.");
+    }
+
+    // Check if already applied
+    const [[existing]] = await pool.query(
+      "SELECT id FROM women_scheme_applications WHERE user_id = ? AND scheme_id = ?",
+      [userId, schemeId]
+    );
+
+    if (existing) {
+      throw new ApiError(400, "You have already applied for this scheme");
+    }
+
+    const applicationRef = `WS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    const [result] = await pool.query(
+      `INSERT INTO women_scheme_applications 
+       (user_id, scheme_id, application_ref, status, business_description, current_income, 
+        business_years, employees_count, funding_purpose, additional_notes)
+       VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        schemeId,
+        applicationRef,
+        business_description || null,
+        current_income || null,
+        business_years || null,
+        employees_count || null,
+        funding_purpose || null,
+        additional_notes || null,
+      ]
+    );
+
+    res.status(201).json({
+      message: "Scheme application submitted successfully",
+      application_ref: applicationRef,
+      application_id: result.insertId,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function connectWithMentor(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { mentorId } = req.params;
+
+    // Check gender first
+    const [[profile]] = await pool.query(
+      "SELECT gender FROM vendor_profiles WHERE user_id = ?",
+      [userId]
+    );
+
+    if (!profile || profile.gender.toLowerCase() !== 'female') {
+      throw new ApiError(403, "This feature is not applicable for you, please contact the authority.");
+    }
+
+    // Check if already connected
+    const [[existing]] = await pool.query(
+      "SELECT id FROM women_mentor_connections WHERE user_id = ? AND mentor_id = ?",
+      [userId, mentorId]
+    );
+
+    if (existing) {
+      throw new ApiError(400, "You have already requested to connect with this mentor");
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO women_mentor_connections (user_id, mentor_id, status)
+       VALUES (?, ?, 'requested')`,
+      [userId, mentorId]
+    );
+
+    res.status(201).json({
+      message: "Mentor connection request sent successfully",
+      connection_id: result.insertId,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   upsertProfile,
   uploadDocuments,
@@ -1302,4 +1525,8 @@ module.exports = {
   getProfilePicture,
   getSettings,
   updateSettings,
+  checkWomenSupportAccess,
+  getWomenSupportData,
+  applyForWomenScheme,
+  connectWithMentor,
 };
