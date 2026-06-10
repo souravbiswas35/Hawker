@@ -114,6 +114,12 @@ router.get("/activity-log", vendorController.getActivityLog);
 router.get("/settings", vendorController.getSettings);
 router.put("/settings", vendorController.updateSettings);
 
+// Women Vendor Support routes
+router.get("/women-support/access", vendorController.checkWomenSupportAccess);
+router.get("/women-support/data", vendorController.getWomenSupportData);
+router.post("/women-support/schemes/:schemeId/apply", vendorController.applyForWomenScheme);
+router.post("/women-support/mentors/:mentorId/connect", vendorController.connectWithMentor);
+
 // Inspection routes
 router.get("/inspection-history", requireAuth, inspectionController.getVendorInspectionHistory);
 router.get("/inspections/:id", requireAuth, inspectionController.getInspectionById);

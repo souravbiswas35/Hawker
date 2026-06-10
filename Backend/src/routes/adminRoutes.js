@@ -9,6 +9,11 @@ const {
   createNotification: createVendorNotification,
   deleteNotificationAdmin,
   createSystemNotification,
+  getWomenSchemeApplications,
+  getWomenSchemeApplicationDetails,
+  reviewWomenSchemeApplication,
+  getWomenMentorshipApplications,
+  reviewWomenMentorshipApplication,
 } = require("../controllers/adminController");
 const inspectionController = require("../controllers/inspectionController");
 const {
@@ -66,5 +71,12 @@ router.get("/inspections/inspectors", inspectionController.getInspectors);
 
 router.get("/zones-management", getZonesManagement);
 router.post("/zones-management", createZone);
+
+// Women Vendor Support routes
+router.get("/women-support/scheme-applications", getWomenSchemeApplications);
+router.get("/women-support/scheme-applications/:id", getWomenSchemeApplicationDetails);
+router.patch("/women-support/scheme-applications/:id/review", reviewWomenSchemeApplication);
+router.get("/women-support/mentorship-applications", getWomenMentorshipApplications);
+router.patch("/women-support/mentorship-applications/:id/review", reviewWomenMentorshipApplication);
 
 module.exports = router;
