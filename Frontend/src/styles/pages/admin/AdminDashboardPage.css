@@ -1,1 +1,114 @@
 /* Page-specific styles for AdminDashboardPage */
+
+.admin-stat-card {
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #e7eaf3;
+  box-shadow: var(--anim-shadow-md);
+  padding: 1.5rem;
+  transition:
+    transform var(--anim-duration-normal) var(--anim-easing-default),
+    box-shadow var(--anim-duration-normal) var(--anim-easing-default);
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--anim-shadow-lg);
+}
+
+.admin-stat-card.mint {
+  background: #a7f3d0;
+  border-color: #6ee7b7;
+}
+
+.admin-stat-card.coral {
+  background: #fecaca;
+  border-color: #fca5a5;
+}
+
+.admin-stat-card.yellow {
+  background: #fef08a;
+  border-color: #fde047;
+}
+
+.admin-stat-card.apple {
+  background: #86efac;
+  border-color: #4ade80;
+}
+
+.admin-stat-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.admin-stat-badge.mint {
+  background: #047857;
+  color: #ffffff;
+}
+
+.admin-stat-badge.coral {
+  background: #991b1b;
+  color: #ffffff;
+}
+
+.admin-stat-badge.yellow {
+  background: #92400e;
+  color: #ffffff;
+}
+
+.admin-stat-badge.apple {
+  background: #14532d;
+  color: #ffffff;
+}
+
+.admin-stat-value {
+  font-size: 1.7rem;
+  font-weight: 700;
+  font-family: "Space Grotesk", sans-serif;
+  line-height: 1;
+}
+
+.admin-stat-label {
+  font-size: 0.82rem;
+  opacity: 0.88;
+}
+
+.admin-action-card {
+  border-radius: 14px;
+  border: 1px solid #e7eaf3;
+  padding: 1.25rem;
+  transition:
+    transform var(--anim-duration-normal) var(--anim-easing-default),
+    box-shadow var(--anim-duration-normal) var(--anim-easing-default);
+}
+
+.admin-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--anim-shadow-md);
+}
+
+.admin-table-row {
+  transition:
+    background-color var(--anim-duration-fast) var(--anim-easing-default),
+    transform var(--anim-duration-fast) var(--anim-easing-default);
+}
+
+.admin-table-row:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  transform: scale(1.002);
+}
+
+/* ============================================
+   Dark Mode Overrides for Panel Box Headings
+   ============================================ */
+[data-theme="dark"] .panel-box h6 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .panel-box {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}

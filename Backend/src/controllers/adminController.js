@@ -9,11 +9,11 @@ async function getDashboard(req, res, next) {
         (SELECT COUNT(*) FROM license_applications WHERE status IN ('submitted','under-review')) AS pending_applications,
         (SELECT COUNT(*) FROM license_applications WHERE status = 'approved') AS approved_licenses,
         (SELECT COUNT(*) FROM license_applications WHERE status = 'needs-info') AS needs_info_count,
-        (SELECT COALESCE(SUM(ap.amount), 0)
-           FROM application_payments ap
-           WHERE ap.payment_status = 'completed'
-             AND MONTH(ap.paid_at) = MONTH(NOW())
-             AND YEAR(ap.paid_at) = YEAR(NOW())) AS revenue_this_month,
+        (SELECT COALESCE(SUM(vp.final_amount), 0)
+           FROM vendor_payments vp
+           WHERE vp.status = 'completed'
+             AND MONTH(vp.payment_date) = MONTH(NOW())
+             AND YEAR(vp.payment_date) = YEAR(NOW())) AS revenue_this_month,
         (SELECT COUNT(*)
            FROM license_applications la
            JOIN license_types lt ON lt.id = la.license_type_id
@@ -25,7 +25,7 @@ async function getDashboard(req, res, next) {
     );
 
     const [recentApps] = await pool.query(
-      `SELECT la.id, la.application_ref, la.status, la.submitted_at,
+      `SELECT la.id, la.application_ref, la.status, la.submitted_at, la.payment_status,
               u.email, vp.first_name, vp.last_name
        FROM license_applications la
        JOIN users u ON u.id = la.user_id
@@ -46,10 +46,37 @@ async function getDashboard(req, res, next) {
        LIMIT 8`,
     );
 
+    // Get payment statistics
+    const [[paymentStats]] = await pool.query(
+      `SELECT 
+        COUNT(*) as total_payments,
+        COALESCE(SUM(final_amount), 0) as total_revenue,
+        COALESCE(SUM(CASE WHEN status = 'completed' THEN final_amount ELSE 0 END), 0) as collected_amount,
+        COALESCE(SUM(CASE WHEN status = 'pending' THEN final_amount ELSE 0 END), 0) as pending_amount,
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count
+       FROM vendor_payments`
+    );
+
+    // Get recent payments
+    const [recentPayments] = await pool.query(
+      `SELECT vp.id, vp.transaction_id, vp.amount, vp.final_amount, vp.status, vp.payment_date,
+              pt.name as payment_type, pm.display_name as payment_method,
+              u.email, vp2.first_name, vp2.last_name
+       FROM vendor_payments vp
+       JOIN payment_types pt ON vp.payment_type_id = pt.id
+       JOIN payment_methods pm ON vp.payment_method_id = pm.id
+       JOIN users u ON u.id = vp.user_id
+       LEFT JOIN vendor_profiles vp2 ON vp2.user_id = vp.user_id
+       ORDER BY vp.payment_date DESC
+       LIMIT 8`
+    );
+
     res.json({
       stats: counts,
       recentApplications: recentApps,
       recentActivity,
+      paymentStats: paymentStats || { total_payments: 0, total_revenue: 0, collected_amount: 0, pending_amount: 0, pending_count: 0 },
+      recentPayments,
     });
   } catch (err) {
     next(err);

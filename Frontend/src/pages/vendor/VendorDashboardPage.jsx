@@ -229,34 +229,40 @@ export default function VendorDashboardPage() {
                     Here's what's happening with your vending license and zone
                     allocation.
                   </p>
-                  <div className="d-flex flex-wrap gap-3 mb-4">
-                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm">
-                      <div className="bg-success bg-opacity-10 p-2 rounded-2 me-3">
-                        <FiShield className="text-success fs-4" />
-                      </div>
-                      <div>
-                        <div className="text-muted small">License Status</div>
-                        <div className="fw-bold text-capitalize">
-                          {licenseStatus}
+                  <div className="row g-3 mb-4">
+                    <div className="col-12 col-md-4">
+                      <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100">
+                        <div className="bg-success bg-opacity-10 p-2 rounded-2 me-3 flex-shrink-0">
+                          <FiShield className="text-success fs-4" />
+                        </div>
+                        <div className="flex-grow-1">
+                          <div className="text-muted small text-truncate">License Status</div>
+                          <div className="fw-bold text-capitalize text-truncate">
+                            {licenseStatus}
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm">
-                      <div className="bg-warning bg-opacity-10 p-2 rounded-2 me-3">
-                        <FiClock className="text-warning fs-4" />
-                      </div>
-                      <div>
-                        <div className="text-muted small">Profile Complete</div>
-                        <div className="fw-bold">{profileCompletion}%</div>
+                    <div className="col-12 col-md-4">
+                      <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100">
+                        <div className="bg-warning bg-opacity-10 p-2 rounded-2 me-3 flex-shrink-0">
+                          <FiClock className="text-warning fs-4" />
+                        </div>
+                        <div className="flex-grow-1">
+                          <div className="text-muted small text-truncate">Profile Complete</div>
+                          <div className="fw-bold text-truncate">{profileCompletion}%</div>
+                        </div>
                       </div>
                     </div>
-                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm">
-                      <div className="bg-primary bg-opacity-10 p-2 rounded-2 me-3">
-                        <FiBell className="text-primary fs-4" />
-                      </div>
-                      <div>
-                        <div className="text-muted small">Documents</div>
-                        <div className="fw-bold">{data.documents.length}</div>
+                    <div className="col-12 col-md-4">
+                      <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100">
+                        <div className="bg-primary bg-opacity-10 p-2 rounded-2 me-3 flex-shrink-0">
+                          <FiBell className="text-primary fs-4" />
+                        </div>
+                        <div className="flex-grow-1">
+                          <div className="text-muted small text-truncate">Documents</div>
+                          <div className="fw-bold text-truncate">{data.documents.length}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -298,67 +304,65 @@ export default function VendorDashboardPage() {
           </div>
 
           {/* Modern Stats Cards */}
-          <div className="row g-4 mb-4">
+          <div className="row g-3 mb-4">
             <div className="col-md-6 col-xl-3">
-              <div className="stats-card-modern h-100">
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <div className="bg-success bg-opacity-10 p-3 rounded-3">
-                    <FiShield className="text-success fs-4" />
-                  </div>
-                  <span className="badge bg-success text-white">Active</span>
+              <div className="admin-stat-card mint">
+                <div className="d-flex justify-content-between align-items-start">
+                  <FiShield size={28} className="text-dark" />
+                  <span className="admin-stat-badge mint">Active</span>
                 </div>
-                <h2 className="mb-1">{licenseStatus}</h2>
-                <p className="text-muted mb-0">Current permit standing</p>
+                <div className="admin-stat-value text-dark">
+                  {licenseStatus}
+                </div>
+                <div className="admin-stat-label text-dark">
+                  Current permit standing
+                </div>
               </div>
             </div>
             <div className="col-md-6 col-xl-3">
-              <div className="stats-card-modern h-100">
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <div className="bg-warning bg-opacity-10 p-3 rounded-3">
-                    <FiClock className="text-warning fs-4" />
-                  </div>
-                  {renewalInfo &&
-                    renewalInfo.daysLeft !== null &&
-                    renewalInfo.daysLeft <= 15 && (
-                      <span className="badge bg-warning text-white">
-                        Due Soon
-                      </span>
-                    )}
+              <div className="admin-stat-card yellow">
+                <div className="d-flex justify-content-between align-items-start">
+                  <FiClock size={28} className="text-dark" />
+                  <span className="admin-stat-badge yellow">
+                    {renewalInfo && renewalInfo.daysLeft !== null && renewalInfo.daysLeft <= 15 ? 'Due Soon' : 'Days'}
+                  </span>
                 </div>
-                <h2 className="mb-1">
+                <div className="admin-stat-value text-dark">
                   {renewalInfo && renewalInfo.daysLeft !== null
                     ? `${renewalInfo.daysLeft}`
                     : "--"}
-                </h2>
-                <p className="text-muted mb-0">Days until renewal</p>
+                </div>
+                <div className="admin-stat-label text-dark">
+                  Days until renewal
+                </div>
               </div>
             </div>
             <div className="col-md-6 col-xl-3">
-              <div className="stats-card-modern h-100">
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <div className="bg-primary bg-opacity-10 p-3 rounded-3">
-                    <FiBell className="text-primary fs-4" />
-                  </div>
-                  <span className="badge bg-primary text-white">
-                    {data.applications.length}
-                  </span>
+              <div className="admin-stat-card coral">
+                <div className="d-flex justify-content-between align-items-start">
+                  <FiFileText size={28} className="text-dark" />
+                  <span className="admin-stat-badge coral">{data.applications.length}</span>
                 </div>
-                <h2 className="mb-1">{data.applications.length}</h2>
-                <p className="text-muted mb-0">Total applications</p>
+                <div className="admin-stat-value text-dark">
+                  {data.applications.length}
+                </div>
+                <div className="admin-stat-label text-dark">
+                  Total applications
+                </div>
               </div>
             </div>
             <div className="col-md-6 col-xl-3">
-              <div className="stats-card-modern h-100">
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <div className="bg-info bg-opacity-10 p-3 rounded-3">
-                    <FiMapPin className="text-info fs-4" />
-                  </div>
-                  <span className="badge bg-info text-white">Zone</span>
+              <div className="admin-stat-card apple">
+                <div className="d-flex justify-content-between align-items-start">
+                  <FiMapPin size={28} className="text-dark" />
+                  <span className="admin-stat-badge apple">Zone</span>
                 </div>
-                <h2 className="mb-1">
+                <div className="admin-stat-value text-dark">
                   {data.profile?.vending_zone || "Not Set"}
-                </h2>
-                <p className="text-muted mb-0">Assigned zone</p>
+                </div>
+                <div className="admin-stat-label text-dark">
+                  Assigned zone
+                </div>
               </div>
             </div>
           </div>
@@ -575,20 +579,26 @@ export default function VendorDashboardPage() {
 // Add styles for map preview
 const mapStyles = `
     .dashboard-map-container {
-      background: white;
+      background: var(--card-bg);
       border-radius: 12px;
       padding: 1.5rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      color: var(--text-primary);
     }
     
     .map-header {
       margin-bottom: 1rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid var(--border-secondary);
+      color: var(--text-primary);
+    }
+    
+    .map-header h6 {
+      color: var(--text-primary);
     }
     
     .map-preview {
-      background: #f8f9fa;
+      background: var(--bg-tertiary);
       border-radius: 8px;
       padding: 1.5rem;
       min-height: 300px;
@@ -656,6 +666,7 @@ const mapStyles = `
       align-items: center;
       gap: 0.5rem;
       font-size: 0.85rem;
+      color: var(--text-primary);
     }
     
     .legend-color {
@@ -685,7 +696,7 @@ const mapStyles = `
       gap: 0.75rem;
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px solid #f0f0f0;
+      border-top: 1px solid var(--border-secondary);
     }
   `;
 

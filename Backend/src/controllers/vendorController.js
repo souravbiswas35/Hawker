@@ -247,17 +247,40 @@ async function getDashboard(req, res, next) {
     );
 
     const [applications] = await pool.query(
-      `SELECT id, application_ref, desired_zone, stall_type, status, submitted_at, reviewed_at
+      `SELECT id, application_ref, desired_zone, stall_type, status, submitted_at, reviewed_at, payment_status, payment_id
        FROM license_applications
        WHERE user_id = ?
        ORDER BY submitted_at DESC`,
       [userId],
     );
 
+    // Get payment summary for dashboard
+    const [[paymentSummary]] = await pool.query(
+      `SELECT 
+        COUNT(*) as total_payments,
+        COALESCE(SUM(final_amount), 0) as total_paid,
+        COALESCE(SUM(CASE WHEN status = 'completed' AND YEAR(payment_date) = YEAR(NOW()) THEN final_amount ELSE 0 END), 0) as paid_this_year
+       FROM vendor_payments
+       WHERE user_id = ?`,
+      [userId]
+    );
+
+    // Get outstanding dues
+    const [[outstandingSummary]] = await pool.query(
+      `SELECT 
+        COUNT(*) as outstanding_count,
+        COALESCE(SUM(amount), 0) as outstanding_amount
+       FROM vendor_dues
+       WHERE user_id = ? AND is_paid = 0`,
+      [userId]
+    );
+
     res.json({
       profile: profile || null,
       documents: docs,
       applications,
+      payment_summary: paymentSummary || { total_payments: 0, total_paid: 0, paid_this_year: 0 },
+      outstanding_summary: outstandingSummary || { outstanding_count: 0, outstanding_amount: 0 },
     });
   } catch (err) {
     next(err);
@@ -790,7 +813,12 @@ async function getMyLicense(req, res, next) {
     );
 
     if (!license) {
-      throw new ApiError(404, "No approved license found. Please apply for a license first.");
+      // Return 200 with null license instead of 404
+      return res.json({
+        profile: profile || null,
+        license: null,
+        message: "No approved license found. Please apply for a license first.",
+      });
     }
 
     // Use vendor profile zone for allocated zone display
@@ -866,6 +894,144 @@ async function deactivateAccount(req, res, next) {
 
     res.json({ message: "Account deactivated successfully" });
   } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteAccount(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    // Delete vendor profile
+    await pool.query("DELETE FROM vendor_profiles WHERE user_id = ?", [userId]);
+
+    // Delete license applications
+    await pool.query("DELETE FROM license_applications WHERE user_id = ?", [userId]);
+
+    // Delete notifications
+    await pool.query("DELETE FROM vendor_notifications WHERE user_id = ?", [userId]);
+
+    // Delete notification preferences
+    await pool.query("DELETE FROM vendor_notification_preferences WHERE user_id = ?", [userId]);
+
+    // Delete settings
+    await pool.query("DELETE FROM vendor_settings WHERE user_id = ?", [userId]);
+
+    // Delete complaints
+    await pool.query("DELETE FROM complaints WHERE user_id = ?", [userId]);
+
+    // Delete user
+    await pool.query("DELETE FROM users WHERE id = ?", [userId]);
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function downloadUserData(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    // Get user data
+    const [[user]] = await pool.query(
+      "SELECT id, email, role, account_status, created_at FROM users WHERE id = ?",
+      [userId],
+    );
+
+    // Get vendor profile
+    const [[profile]] = await pool.query(
+      "SELECT * FROM vendor_profiles WHERE user_id = ?",
+      [userId],
+    );
+
+    // Get license applications
+    const [applications] = await pool.query(
+      "SELECT * FROM license_applications WHERE user_id = ?",
+      [userId],
+    );
+
+    // Get complaints
+    const [complaints] = await pool.query(
+      "SELECT * FROM complaints WHERE user_id = ?",
+      [userId],
+    );
+
+    // Get notifications
+    const [notifications] = await pool.query(
+      "SELECT * FROM vendor_notifications WHERE user_id = ?",
+      [userId],
+    );
+
+    // Get settings
+    const [[settings]] = await pool.query(
+      "SELECT * FROM vendor_settings WHERE user_id = ?",
+      [userId],
+    );
+
+    const userData = {
+      user: user || null,
+      profile: profile || null,
+      applications: applications || [],
+      complaints: complaints || [],
+      notifications: notifications || [],
+      settings: settings || null,
+      exportDate: new Date().toISOString(),
+    };
+
+    res.json(userData);
+  } catch (err) {
+    console.error("Error downloading user data:", err);
+    next(err);
+  }
+}
+
+async function getActivityLog(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    // Get recent activity from various tables
+    let applications = [];
+    let complaints = [];
+    let notifications = [];
+
+    try {
+      [applications] = await pool.query(
+        "SELECT 'application' as type, id, status, created_at, updated_at FROM license_applications WHERE user_id = ? ORDER BY updated_at DESC LIMIT 20",
+        [userId],
+      );
+    } catch (err) {
+      console.error("Error fetching applications for activity log:", err);
+    }
+
+    try {
+      [complaints] = await pool.query(
+        "SELECT 'complaint' as type, id, status, created_at, updated_at FROM complaints WHERE user_id = ? ORDER BY updated_at DESC LIMIT 20",
+        [userId],
+      );
+    } catch (err) {
+      console.error("Error fetching complaints for activity log:", err);
+    }
+
+    try {
+      [notifications] = await pool.query(
+        "SELECT 'notification' as type, id, is_read as status, created_at, updated_at FROM vendor_notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20",
+        [userId],
+      );
+    } catch (err) {
+      console.error("Error fetching notifications for activity log:", err);
+    }
+
+    // Combine and sort by date
+    const activities = [
+      ...applications.map(a => ({ ...a, description: `License application ${a.status}` })),
+      ...complaints.map(c => ({ ...c, description: `Complaint ${c.status}` })),
+      ...notifications.map(n => ({ ...n, description: n.status ? 'Notification read' : 'New notification' })),
+    ].sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at));
+
+    res.json({ activities });
+  } catch (err) {
+    console.error("Error fetching activity log:", err);
     next(err);
   }
 }
@@ -1001,6 +1167,110 @@ async function getProfilePicture(req, res, next) {
   }
 }
 
+async function getSettings(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    const [[settings]] = await pool.query(
+      `SELECT theme, language, high_contrast_mode, large_text, screen_reader_support,
+              profile_visibility, auto_renewal, save_payment_methods, email_receipts,
+              two_factor_auth, marketing_communications
+       FROM vendor_settings WHERE user_id = ?`,
+      [userId],
+    );
+
+    if (!settings) {
+      // Return default settings if none exist
+      return res.json({
+        theme: 'light',
+        language: 'english',
+        high_contrast_mode: 0,
+        large_text: 0,
+        screen_reader_support: 0,
+        profile_visibility: 1,
+        auto_renewal: 1,
+        save_payment_methods: 1,
+        email_receipts: 1,
+        two_factor_auth: 0,
+        marketing_communications: 0,
+      });
+    }
+
+    res.json({
+      theme: settings.theme,
+      language: settings.language,
+      high_contrast_mode: Boolean(settings.high_contrast_mode),
+      large_text: Boolean(settings.large_text),
+      screen_reader_support: Boolean(settings.screen_reader_support),
+      profile_visibility: Boolean(settings.profile_visibility),
+      auto_renewal: Boolean(settings.auto_renewal),
+      save_payment_methods: Boolean(settings.save_payment_methods),
+      email_receipts: Boolean(settings.email_receipts),
+      two_factor_auth: Boolean(settings.two_factor_auth),
+      marketing_communications: Boolean(settings.marketing_communications),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateSettings(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const {
+      theme,
+      language,
+      high_contrast_mode,
+      large_text,
+      screen_reader_support,
+      profile_visibility,
+      auto_renewal,
+      save_payment_methods,
+      email_receipts,
+      two_factor_auth,
+      marketing_communications,
+    } = req.body;
+
+    await pool.query(
+      `INSERT INTO vendor_settings
+       (user_id, theme, language, high_contrast_mode, large_text, screen_reader_support,
+        profile_visibility, auto_renewal, save_payment_methods, email_receipts,
+        two_factor_auth, marketing_communications)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         theme = VALUES(theme),
+         language = VALUES(language),
+         high_contrast_mode = VALUES(high_contrast_mode),
+         large_text = VALUES(large_text),
+         screen_reader_support = VALUES(screen_reader_support),
+         profile_visibility = VALUES(profile_visibility),
+         auto_renewal = VALUES(auto_renewal),
+         save_payment_methods = VALUES(save_payment_methods),
+         email_receipts = VALUES(email_receipts),
+         two_factor_auth = VALUES(two_factor_auth),
+         marketing_communications = VALUES(marketing_communications)`,
+      [
+        userId,
+        theme || 'light',
+        language || 'english',
+        high_contrast_mode ? 1 : 0,
+        large_text ? 1 : 0,
+        screen_reader_support ? 1 : 0,
+        profile_visibility ? 1 : 0,
+        auto_renewal ? 1 : 0,
+        save_payment_methods ? 1 : 0,
+        email_receipts ? 1 : 0,
+        two_factor_auth ? 1 : 0,
+        marketing_communications ? 1 : 0,
+      ],
+    );
+
+    res.json({ message: "Settings updated successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   upsertProfile,
   uploadDocuments,
@@ -1023,8 +1293,13 @@ module.exports = {
   getMyLicense,
   changePassword,
   deactivateAccount,
+  deleteAccount,
+  downloadUserData,
+  getActivityLog,
   getVendingZones,
   getMyZone,
   updateMyZone,
   getProfilePicture,
+  getSettings,
+  updateSettings,
 };

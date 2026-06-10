@@ -4,6 +4,7 @@ const multer = require("multer");
 const { requireAuth, requireRole } = require("../middleware/auth");
 const vendorController = require("../controllers/vendorController");
 const licenseRenewalController = require("../controllers/licenseRenewalController");
+const inspectionController = require("../controllers/inspectionController");
 
 const router = express.Router();
 
@@ -107,5 +108,14 @@ router.get("/zones", vendorController.getVendingZones);
 router.get("/profile-picture", vendorController.getProfilePicture);
 router.put("/change-password", vendorController.changePassword);
 router.put("/deactivate-account", vendorController.deactivateAccount);
+router.delete("/delete-account", vendorController.deleteAccount);
+router.get("/download-data", vendorController.downloadUserData);
+router.get("/activity-log", vendorController.getActivityLog);
+router.get("/settings", vendorController.getSettings);
+router.put("/settings", vendorController.updateSettings);
+
+// Inspection routes
+router.get("/inspection-history", requireAuth, inspectionController.getVendorInspectionHistory);
+router.get("/inspections/:id", requireAuth, inspectionController.getInspectionById);
 
 module.exports = router;

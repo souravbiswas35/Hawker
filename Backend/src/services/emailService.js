@@ -30,17 +30,24 @@ async function sendVerificationCode(email, code) {
 
   if (!isSmtpConfigured) {
     console.log(`[EMAIL_SIMULATION] To: ${email} | Code: ${code}`);
-    return { simulated: true };
+    console.log(`[EMAIL_SIMULATION] SMTP not configured. Configure SMTP_HOST, SMTP_USER, SMTP_PASS in .env file to send real emails.`);
+    return { simulated: true, code };
   }
 
-  await transporter.sendMail({
-    from: smtp.from,
-    to: email,
-    subject,
-    text,
-  });
-
-  return { simulated: false };
+  try {
+    await transporter.sendMail({
+      from: smtp.from,
+      to: email,
+      subject,
+      text,
+    });
+    console.log(`[EMAIL_SENT] Verification code sent to ${email}`);
+    return { simulated: false };
+  } catch (error) {
+    console.error(`[EMAIL_ERROR] Failed to send email to ${email}:`, error.message);
+    console.log(`[EMAIL_FALLBACK] Code for ${email}: ${code}`);
+    return { simulated: true, error: error.message, code };
+  }
 }
 
 module.exports = {

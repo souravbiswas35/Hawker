@@ -11,17 +11,28 @@ export default function AdminPaymentsPage() {
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState({ stats: {}, payments: [] });
   const [manual, setManual] = useState({
-    applicationId: "",
+    userId: "",
     amount: "",
-    method: "cash",
-    transactionId: "",
+    paymentTypeId: "1",
+    paymentMethodId: "5",
+    notes: "",
   });
+  const [success, setSuccess] = useState("");
 
   async function load() {
     try {
-      const { data } = await api.get("/admin/payments");
-      setData(data);
+      const [statsRes, paymentsRes] = await Promise.all([
+        api.get("/payments/admin/stats"),
+        api.get("/payments/admin/all"),
+      ]);
+      console.log("Admin stats:", statsRes.data);
+      console.log("Admin payments:", paymentsRes.data);
+      setData({
+        stats: statsRes.data,
+        payments: paymentsRes.data.payments,
+      });
     } catch (err) {
+      console.error("Failed to load payments:", err);
       setError(err.response?.data?.message || "Failed to load payments");
     } finally {
       setLoading(false);
@@ -35,19 +46,24 @@ export default function AdminPaymentsPage() {
   async function handleManualPayment(e) {
     e.preventDefault();
     setSaving(true);
+    setError("");
+    setSuccess("");
     try {
-      await api.post("/admin/payments/manual", {
-        applicationId: Number(manual.applicationId),
+      await api.post("/payments/admin/manual", {
+        user_id: Number(manual.userId),
+        payment_type_id: Number(manual.paymentTypeId),
+        payment_method_id: Number(manual.paymentMethodId),
         amount: Number(manual.amount),
-        method: manual.method,
-        transactionId: manual.transactionId || null,
+        notes: manual.notes || "Manual payment by admin",
       });
       setManual({
-        applicationId: "",
+        userId: "",
         amount: "",
-        method: "cash",
-        transactionId: "",
+        paymentTypeId: "1",
+        paymentMethodId: "5",
+        notes: "",
       });
+      setSuccess("Payment added successfully!");
       await load();
     } catch (err) {
       setError(
@@ -66,6 +82,7 @@ export default function AdminPaymentsPage() {
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
+      {success && <div className="alert alert-success">{success}</div>}
       {loading ? <LoadingState label="Loading payments..." /> : null}
 
       {!loading && (
@@ -110,20 +127,23 @@ export default function AdminPaymentsPage() {
             </h5>
             <form onSubmit={handleManualPayment} className="row g-3">
               <div className="col-md-3">
+                <label className="form-label">Vendor User ID *</label>
                 <input
                   className="form-control"
-                  placeholder="Application ID"
-                  value={manual.applicationId}
+                  placeholder="Enter User ID"
+                  value={manual.userId}
                   onChange={(e) =>
-                    setManual((p) => ({ ...p, applicationId: e.target.value }))
+                    setManual((p) => ({ ...p, userId: e.target.value }))
                   }
                   required
                 />
               </div>
               <div className="col-md-3">
+                <label className="form-label">Amount (BDT) *</label>
                 <input
                   className="form-control"
-                  placeholder="Amount"
+                  type="number"
+                  placeholder="Enter amount"
                   value={manual.amount}
                   onChange={(e) =>
                     setManual((p) => ({ ...p, amount: e.target.value }))
@@ -132,27 +152,46 @@ export default function AdminPaymentsPage() {
                 />
               </div>
               <div className="col-md-3">
+                <label className="form-label">Payment Type *</label>
                 <select
                   className="form-select"
-                  value={manual.method}
+                  value={manual.paymentTypeId}
                   onChange={(e) =>
-                    setManual((p) => ({ ...p, method: e.target.value }))
+                    setManual((p) => ({ ...p, paymentTypeId: e.target.value }))
                   }
+                  required
                 >
-                  <option value="cash">Cash</option>
-                  <option value="bkash">Bkash</option>
-                  <option value="nagad">Nagad</option>
-                  <option value="visa">Visa</option>
-                  <option value="mastercard">Mastercard</option>
+                  <option value="1">License Fee</option>
+                  <option value="2">Renewal Fee</option>
+                  <option value="3">Penalty</option>
+                  <option value="4">Other</option>
                 </select>
               </div>
               <div className="col-md-3">
+                <label className="form-label">Payment Method *</label>
+                <select
+                  className="form-select"
+                  value={manual.paymentMethodId}
+                  onChange={(e) =>
+                    setManual((p) => ({ ...p, paymentMethodId: e.target.value }))
+                  }
+                  required
+                >
+                  <option value="1">Credit/Debit Card</option>
+                  <option value="2">Net Banking</option>
+                  <option value="3">UPI</option>
+                  <option value="4">Mobile Wallet</option>
+                  <option value="5">Cash at Office</option>
+                </select>
+              </div>
+              <div className="col-12">
+                <label className="form-label">Notes (Optional)</label>
                 <input
                   className="form-control"
-                  placeholder="Transaction ID (optional)"
-                  value={manual.transactionId}
+                  placeholder="Add any notes"
+                  value={manual.notes}
                   onChange={(e) =>
-                    setManual((p) => ({ ...p, transactionId: e.target.value }))
+                    setManual((p) => ({ ...p, notes: e.target.value }))
                   }
                 />
               </div>
@@ -175,7 +214,7 @@ export default function AdminPaymentsPage() {
                   <tr>
                     <th>Date</th>
                     <th>Vendor</th>
-                    <th>Reference</th>
+                    <th>Transaction ID</th>
                     <th>Type</th>
                     <th>Method</th>
                     <th>Status</th>
@@ -186,27 +225,30 @@ export default function AdminPaymentsPage() {
                   {data.payments.map((p) => (
                     <tr key={p.id}>
                       <td>
-                        {new Date(
-                          p.paid_at || p.created_at,
-                        ).toLocaleDateString()}
-                      </td>
-                      <td>{p.email || "-"}</td>
-                      <td>
-                        {p.source_type === "renewal"
-                          ? p.renewal_ref || `#${p.renewal_id}`
-                          : p.application_ref || `#${p.application_id}`}
+                        {new Date(p.payment_date).toLocaleDateString()}
                       </td>
                       <td>
-                        <span className="text-capitalize">{p.source_type}</span>
-                        {p.is_demo_payment ? (
-                          <span className="badge text-bg-warning ms-2">
-                            Demo Payment
-                          </span>
-                        ) : null}
+                        {p.email || p.business_name || "-"}
+                        {p.first_name && (
+                          <small className="d-block text-muted">
+                            {p.first_name} {p.last_name}
+                          </small>
+                        )}
                       </td>
-                      <td className="text-capitalize">{p.payment_method}</td>
-                      <td className="text-capitalize">{p.payment_status}</td>
-                      <td>{Number(p.amount).toLocaleString()}</td>
+                      <td>
+                        <code className="small">{p.transaction_id}</code>
+                      </td>
+                      <td>{p.payment_type}</td>
+                      <td>{p.payment_method}</td>
+                      <td>
+                        <span className={`badge ${
+                          p.status === 'completed' ? 'bg-success' : 
+                          p.status === 'pending' ? 'bg-warning' : 'bg-danger'
+                        }`}>
+                          {p.status}
+                        </span>
+                      </td>
+                      <td>{Number(p.final_amount).toLocaleString()}</td>
                     </tr>
                   ))}
                   {data.payments.length === 0 && (

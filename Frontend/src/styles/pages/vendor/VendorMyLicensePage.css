@@ -9,6 +9,11 @@
   padding: 2rem 1rem;
 }
 
+/* Dark mode override for license page container */
+[data-theme="dark"] .license-page-container {
+  background: linear-gradient(150deg, #1a1a2e 0%, #16213e 48%, #1a1a2e 100%);
+}
+
 .license-page-container::before {
   content: "";
   position: absolute;
@@ -197,6 +202,13 @@
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
+/* Dark mode override for license detail items */
+[data-theme="dark"] .license-detail-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .license-detail-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 22px rgba(15, 61, 130, 0.1);
@@ -232,6 +244,13 @@
   border: 1px solid var(--hawker-border);
 }
 
+/* Dark mode override for license number */
+[data-theme="dark"] .license-number {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 /* QR Code Section */
 .license-qr-section {
   display: flex;
@@ -243,12 +262,24 @@
   border: 1px solid var(--hawker-border);
 }
 
+/* Dark mode override for QR section */
+[data-theme="dark"] .license-qr-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .qr-code-wrapper {
   flex-shrink: 0;
   background: white;
   padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode override for QR code wrapper */
+[data-theme="dark"] .qr-code-wrapper {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .qr-code-image {
@@ -362,6 +393,19 @@
   color: #1f7a9f;
 }
 
+/* Dark mode override for print button */
+[data-theme="dark"] .print-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .print-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
 .share-btn {
   background: white;
   color: var(--hawker-ink);
@@ -372,6 +416,19 @@
   background: #f7fbff;
   border-color: #1f7a9f;
   color: #1f7a9f;
+}
+
+/* Dark mode override for share button */
+[data-theme="dark"] .share-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .share-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #ffffff;
+  color: #ffffff;
 }
 
 .report-btn {
@@ -396,6 +453,13 @@
   border: 1px solid var(--hawker-border);
 }
 
+/* Dark mode override for license info card */
+[data-theme="dark"] .license-info-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
 .info-card-title {
   margin: 0 0 1.5rem 0;
   font-size: 1.25rem;
@@ -417,6 +481,12 @@
   background: #f7fbff;
   border-radius: 12px;
   border: 1px solid var(--hawker-border);
+}
+
+/* Dark mode override for info item */
+[data-theme="dark"] .info-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .info-label {
@@ -588,6 +658,12 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
+/* Dark mode override for modal */
+[data-theme="dark"] .license-details-modal {
+  background: #1a1a2e;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -598,11 +674,22 @@
   border-radius: 16px 16px 0 0;
 }
 
+/* Dark mode override for modal header */
+[data-theme="dark"] .modal-header {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .modal-header h4 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--hawker-ink);
+}
+
+/* Dark mode override for modal header h4 */
+[data-theme="dark"] .modal-header h4 {
+  color: #ffffff;
 }
 
 .close-btn {
@@ -622,6 +709,12 @@
 .close-btn:hover {
   background: rgba(0, 0, 0, 0.1);
   color: var(--hawker-ink);
+}
+
+/* Dark mode override for close button hover */
+[data-theme="dark"] .close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .modal-body {
@@ -645,6 +738,12 @@
   border-bottom: 2px solid #1f7a9f;
 }
 
+/* Dark mode override for details section h5 */
+[data-theme="dark"] .details-section h5 {
+  color: #4fc3f7;
+  border-color: #4fc3f7;
+}
+
 .details-list {
   list-style: none;
   padding: 0;
@@ -657,6 +756,11 @@
   align-items: center;
   padding: 0.75rem 0;
   border-bottom: 1px solid #f0f0f0;
+}
+
+/* Dark mode override for details list items */
+[data-theme="dark"] .details-list li {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .details-list li:last-child {
@@ -678,6 +782,15 @@
   word-break: break-word;
 }
 
+/* Dark mode override for detail label and value */
+[data-theme="dark"] .detail-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .detail-value {
+  color: #ffffff;
+}
+
 .license-number-highlight {
   font-family: 'Courier New', monospace;
   font-weight: 700;
@@ -685,6 +798,12 @@
   background: #f7fbff;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
+}
+
+/* Dark mode override for license number highlight */
+[data-theme="dark"] .license-number-highlight {
+  color: #4fc3f7;
+  background: rgba(79, 195, 247, 0.1);
 }
 
 @media (max-width: 768px) {

@@ -1,1 +1,321 @@
 /* Page-specific styles for AdminApplicationsPage */
+
+/* Ensure review button is visible and clickable */
+.btn-group .btn-outline-primary {
+  z-index: 1;
+  position: relative;
+}
+
+/* Modal z-index fix */
+.modal {
+  z-index: 1055 !important;
+}
+
+.modal-dialog {
+  z-index: 1056 !important;
+}
+
+.modal-content {
+  z-index: 1057 !important;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 1px solid #e9ecef;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0 0 12px 12px;
+}
+
+/* Ensure modal is visible when shown */
+.modal.show {
+  display: block !important;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1050;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .modal-content {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .modal-header {
+  border-bottom: 1px solid #333;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .modal-body {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .modal-footer {
+  border-top: 1px solid #333;
+}
+
+[data-theme="dark"] .modal-title {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .modal-header h5 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .text-muted {
+  color: #a0a0a0 !important;
+}
+
+[data-theme="dark"] label {
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .fw-bold {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .border {
+  border-color: #333 !important;
+}
+
+[data-theme="dark"] h6 {
+  color: #e0e0e0;
+}
+
+/* Form styling improvements */
+.form-select,
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-control {
+  background-color: #2d2d2d;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+.form-select:focus,
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+[data-theme="dark"] .form-select:focus,
+[data-theme="dark"] .form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Progress indicators - colorful and workable */
+.border.rounded {
+  border-radius: 8px !important;
+  transition: all 0.2s ease;
+  background-color: #f8f9fa;
+  border: 2px solid #e9ecef;
+}
+
+[data-theme="dark"] .border.rounded {
+  background-color: #2d2d2d;
+  border-color: #444 !important;
+}
+
+.border.rounded:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  border-color: #0d6efd;
+}
+
+[data-theme="dark"] .border.rounded:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: #0d6efd;
+}
+
+/* Progress step specific styling */
+.progress-step {
+  position: relative;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none !important;
+  color: white !important;
+  transition: all 0.3s ease;
+}
+
+.progress-step small {
+  color: white !important;
+  font-weight: 600;
+}
+
+.progress-step:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .progress-step:active {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Colorful progress states */
+.text-success {
+  color: #28a745 !important;
+}
+
+[data-theme="dark"] .text-success {
+  color: #4ade80 !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+/* Add colorful indicators for progress steps */
+.border.rounded .text-success {
+  color: #10b981 !important;
+}
+
+[data-theme="dark"] .border.rounded .text-success {
+  color: #34d399 !important;
+}
+
+.border.rounded .text-muted {
+  color: #9ca3af !important;
+}
+
+[data-theme="dark"] .border.rounded .text-muted {
+  color: #6b7280 !important;
+}
+
+/* Add vibrant colors for completed steps */
+.border.rounded:hover .text-success {
+  color: #059669 !important;
+}
+
+[data-theme="dark"] .border.rounded:hover .text-success {
+  color: #22c55e !important;
+}
+
+/* Progress step hover effects */
+.progress-step:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+[data-theme="dark"] .progress-step:hover {
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* Icon colors in progress steps */
+.progress-step .text-success {
+  color: #4ade80 !important;
+  filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.5));
+}
+
+.progress-step .text-muted {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Icon hover effects */
+.progress-step:hover .text-success {
+  color: #22c55e !important;
+  filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.7));
+}
+
+.progress-step:hover .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Icon animation on hover */
+.progress-step .fs-4 {
+  transition: all 0.3s ease;
+}
+
+.progress-step:hover .fs-4 {
+  transform: scale(1.1);
+}
+
+/* Button improvements */
+.btn {
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Primary button with gradient */
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Outline secondary button with gradient border */
+.btn-outline-secondary {
+  border: 2px solid #667eea;
+  color: #667eea;
+  font-weight: 600;
+  background: transparent;
+}
+
+.btn-outline-secondary:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+[data-theme="dark"] .btn-outline-secondary {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:disabled {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}

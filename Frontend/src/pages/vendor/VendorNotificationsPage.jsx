@@ -232,16 +232,16 @@ export default function VendorNotificationsPage() {
                 </div>
               ) : (
                 <div className="notification-list">
-                  {notifications.map((note) => (
+                  {notifications.map((note, index) => (
                     <div
-                      key={note.id}
+                      key={note.id || `notification-${index}`}
                       className={`notification-item ${note.is_read ? "read" : "unread"}`}
                     >
                       <div className="d-flex align-items-start justify-content-between gap-3">
                         <div>
                           <div className="d-flex align-items-center gap-2 mb-2">
-                            <span className={`notification-badge status-${note.category.replace(/\s+/g, "-").toLowerCase()}`}>
-                              {note.category}
+                            <span className={`notification-badge status-${(note.category || 'general').replace(/\s+/g, "-").toLowerCase()}`}>
+                              {note.category || 'General'}
                             </span>
                             <span className="text-muted small">{new Date(note.created_at).toLocaleString()}</span>
                           </div>

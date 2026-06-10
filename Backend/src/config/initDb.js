@@ -2,6 +2,34 @@ const pool = require("./db");
 
 async function initializeDatabase() {
   try {
+    console.log("Checking users table...");
+    
+    // Check if users table exists and has data
+    const [users] = await pool.query("SELECT COUNT(*) as count FROM users");
+    console.log(`Total users in database: ${users[0].count}`);
+
+    // If no users, insert demo data
+    if (users[0].count === 0) {
+      console.log("No users found, inserting demo data...");
+      
+      await pool.query(`
+        INSERT INTO users (id, email, password_hash, role, is_email_verified, account_status)
+        VALUES 
+          (1, 'admin@hawker.gov', '$2b$12$8E0BmN5nuE0hHFmkggTNI.PI6yJ7uzBNoKb3L7lnagUt0j/ElGT1S', 'admin', 1, 'active'),
+          (2, 'vendor1@hawker.app', '$2b$12$xL8/ort9VXbFCfH6KgHphuZKgSOm.yvjkcyy0N7oB59/mEVHsw1qu', 'vendor', 1, 'active'),
+          (3, 'vendor2@hawker.app', '$2b$12$Ep37CQc/s3lyTcpmW4OceObIUAPTbboE1jkZSO9pjSkOkbfIm1/5e', 'vendor', 1, 'active')
+      `);
+      
+      await pool.query(`
+        INSERT INTO vendor_profiles (user_id, first_name, last_name, phone, national_id, date_of_birth, address, business_name, business_type, vending_zone)
+        VALUES 
+          (2, 'Rahim', 'Khan', '+8801711111111', 'NID-1000001', '1993-04-16', 'Road 12, Dhaka', 'Rahim Fast Bites', 'Street Food', 'Zone-A'),
+          (3, 'Sadia', 'Akter', '+8801811111111', 'NID-1000002', '1996-08-11', 'Road 2, Chattogram', 'Sadia Fresh Juice', 'Beverage', 'Zone-B')
+      `);
+      
+      console.log("Demo users inserted successfully");
+    }
+
     console.log("Checking vendor_notifications table...");
     
     // Check if table exists
@@ -47,10 +75,10 @@ async function initializeDatabase() {
     if (count[0].count === 0) {
       console.log("No notifications found, adding sample data...");
       
-      const [users] = await pool.query("SELECT id FROM users WHERE role = 'vendor'");
-      console.log(`Found ${users.length} vendor users`);
+      const [vendorUsers] = await pool.query("SELECT id FROM users WHERE role = 'vendor'");
+      console.log(`Found ${vendorUsers.length} vendor users`);
 
-      for (const user of users) {
+      for (const user of vendorUsers) {
         await pool.query(`
           INSERT INTO vendor_notifications (user_id, category, title, message, link, is_read, created_at)
           VALUES (?, 'System announcements', 'Welcome to Hawker System', 

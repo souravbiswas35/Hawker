@@ -480,16 +480,7 @@ export default function VendorProfilePage() {
       )}
 
       {/* Tab Navigation */}
-      <div
-        className="profile-tabs mb-4"
-        style={{
-          background: "white",
-          borderRadius: "16px",
-          borderBottom: "1px solid #d5e3f3",
-          display: "flex",
-          gap: "1px",
-        }}
-      >
+      <div className="profile-tabs mb-4">
         {[
           { id: "personal", label: "Personal Info", icon: FiUser },
           { id: "business", label: "Business Info", icon: FiFileText },
@@ -501,23 +492,7 @@ export default function VendorProfilePage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                flex: 1,
-                padding: "1rem",
-                border: "none",
-                background: activeTab === tab.id ? "#f8fbff" : "transparent",
-                borderBottom:
-                  activeTab === tab.id ? "3px solid #1f7a9f" : "none",
-                color: activeTab === tab.id ? "#1f7a9f" : "#607086",
-                fontWeight: activeTab === tab.id ? "600" : "500",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.5rem",
-                fontSize: "0.95rem",
-                transition: "all 0.2s ease",
-              }}
+              className={activeTab === tab.id ? "active" : ""}
             >
               <TabIcon size={18} />
               {tab.label}
@@ -528,12 +503,10 @@ export default function VendorProfilePage() {
 
       {/* Form Card */}
       <div
-        className="card border-0 shadow-sm"
+        className="card border-0 shadow-sm profile-form-card"
         style={{
-          background: "rgba(255, 255, 255, 0.8)",
           backdropFilter: "blur(10px)",
           borderRadius: "16px",
-          border: "1px solid #d5e3f3",
         }}
       >
         <div className="card-body p-4">

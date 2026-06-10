@@ -89,53 +89,53 @@ export default function AdminDashboardPage() {
             </p>
             <div className="row g-3">
               <div className="col-md-3 col-6">
-                <div className="admin-stat-card admin-stat-green">
+                <div className="admin-stat-card mint">
                   <div className="d-flex justify-content-between align-items-start">
-                    <FiUsers size={28} />
-                    <span className="admin-stat-badge green">+12%</span>
+                    <FiUsers size={28} className="text-dark" />
+                    <span className="admin-stat-badge mint">+12%</span>
                   </div>
-                  <div className="admin-stat-value">
+                  <div className="admin-stat-value text-dark">
                     {(s.total_vendors || 0).toLocaleString()}
                   </div>
-                  <div className="admin-stat-label">
+                  <div className="admin-stat-label text-dark">
                     Total Vendors Registered
                   </div>
                 </div>
               </div>
               <div className="col-md-3 col-6">
-                <div className="admin-stat-card admin-stat-red">
+                <div className="admin-stat-card coral">
                   <div className="d-flex justify-content-between align-items-start">
-                    <FiFileText size={28} />
-                    <span className="admin-stat-badge red">Urgent</span>
+                    <FiFileText size={28} className="text-dark" />
+                    <span className="admin-stat-badge coral">Urgent</span>
                   </div>
-                  <div className="admin-stat-value">
+                  <div className="admin-stat-value text-dark">
                     {s.pending_applications || 0}
                   </div>
-                  <div className="admin-stat-label">Pending Applications</div>
+                  <div className="admin-stat-label text-dark">Pending Applications</div>
                 </div>
               </div>
               <div className="col-md-3 col-6">
-                <div className="admin-stat-card admin-stat-yellow">
+                <div className="admin-stat-card yellow">
                   <div className="d-flex justify-content-between align-items-start">
-                    <FiDollarSign size={28} />
+                    <FiDollarSign size={28} className="text-dark" />
                     <span className="admin-stat-badge yellow">This Month</span>
                   </div>
-                  <div className="admin-stat-value">
+                  <div className="admin-stat-value text-dark">
                     {formatBDT(s.revenue_this_month)}
                   </div>
-                  <div className="admin-stat-label">Revenue Collected</div>
+                  <div className="admin-stat-label text-dark">Revenue Collected</div>
                 </div>
               </div>
               <div className="col-md-3 col-6">
-                <div className="admin-stat-card admin-stat-teal">
+                <div className="admin-stat-card apple">
                   <div className="d-flex justify-content-between align-items-start">
-                    <FiCheckCircle size={28} />
-                    <span className="admin-stat-badge teal">+8%</span>
+                    <FiCheckCircle size={28} className="text-dark" />
+                    <span className="admin-stat-badge apple">+8%</span>
                   </div>
-                  <div className="admin-stat-value">
+                  <div className="admin-stat-value text-dark">
                     {(s.approved_licenses || 0).toLocaleString()}
                   </div>
-                  <div className="admin-stat-label">Licenses Issued</div>
+                  <div className="admin-stat-label text-dark">Licenses Issued</div>
                 </div>
               </div>
             </div>

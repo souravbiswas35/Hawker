@@ -24,9 +24,12 @@ export default function RegisterPage() {
     try {
       const { data } = await api.post("/auth/register", form);
       setMessage(data.message);
+      if (data.simulated) {
+        setMessage(data.message + " Check your backend console for the verification code.");
+      }
       setTimeout(() => {
         navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
-      }, 700);
+      }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
     } finally {

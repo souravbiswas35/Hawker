@@ -49,6 +49,9 @@ export default function VerifyEmailPage() {
         email: form.email,
       });
       setMessage(data.message);
+      if (data.simulated) {
+        setMessage(data.message + " Check your backend console for the verification code.");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to resend code");
     } finally {

@@ -9,6 +9,7 @@ import {
   FiLogOut,
   FiChevronDown,
   FiShoppingBag,
+  FiX,
 } from "react-icons/fi";
 import { FaRegListAlt } from "react-icons/fa";
 import api from "../../api/client";
@@ -53,6 +54,16 @@ const navigationCategories = [
     ],
   },
   {
+    id: "payments",
+    title: "Payments",
+    icon: FiShoppingBag,
+    subItems: [
+      { title: "Payment Dashboard", path: "/vendor/payments" },
+      { title: "Make Payment", path: "/vendor/payments/make" },
+      { title: "Payment History", path: "/vendor/payments/history" },
+    ],
+  },
+  {
     id: "support",
     title: "Support & Communication",
     icon: FiHelpCircle,
@@ -75,7 +86,7 @@ const navigationCategories = [
   },
 ];
 
-export default function VendorSidebar() {
+export default function VendorSidebar({ isOpen, onClose }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState({});
@@ -115,7 +126,7 @@ export default function VendorSidebar() {
   };
 
   return (
-    <aside className="vendor-sidebar">
+    <aside className={`vendor-sidebar ${isOpen ? 'show' : ''}`}>
       {/* Header */}
       {/* <div className="admin-sidebar-header">
         <Link
@@ -149,6 +160,9 @@ export default function VendorSidebar() {
                 key={cat.id}
                 to={cat.path}
                 className={`admin-nav-item${directActive ? " active" : ""}`}
+                onClick={() => {
+                  if (onClose) onClose();
+                }}
               >
                 <Icon className="admin-nav-icon" />
                 <span>{cat.title}</span>
@@ -179,6 +193,9 @@ export default function VendorSidebar() {
                       key={item.path}
                       to={item.path}
                       className={`vendor-subnav-item${isActive(item.path) ? " active" : ""}`}
+                      onClick={() => {
+                        if (onClose) onClose();
+                      }}
                     >
                       {item.title}
                     </Link>

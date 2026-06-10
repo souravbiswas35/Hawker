@@ -10,6 +10,7 @@ const {
   deleteNotificationAdmin,
   createSystemNotification,
 } = require("../controllers/adminController");
+const inspectionController = require("../controllers/inspectionController");
 const {
   getReportsOverview,
   generateReport,
@@ -53,8 +54,15 @@ router.patch("/complaints/:id", updateComplaint);
 router.get("/payments", getPaymentsOverview);
 router.post("/payments/manual", createManualPayment);
 
-router.get("/inspections", getInspections);
-router.post("/inspections", createInspection);
+// Inspection routes
+router.get("/inspections/dashboard-metrics", inspectionController.getAdminDashboardMetrics);
+router.get("/inspections/calendar-events", inspectionController.getCalendarEvents);
+router.get("/inspections/today-schedule", inspectionController.getTodaySchedule);
+router.post("/inspections/schedule", inspectionController.scheduleInspection);
+router.put("/inspections/:id", inspectionController.updateInspectionStatus);
+router.get("/inspections/history", inspectionController.getInspectionHistory);
+router.get("/inspections/templates", inspectionController.getInspectionTemplates);
+router.get("/inspections/inspectors", inspectionController.getInspectors);
 
 router.get("/zones-management", getZonesManagement);
 router.post("/zones-management", createZone);

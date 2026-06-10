@@ -25,6 +25,13 @@ export default function AdminApplicationsPage() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewData, setReviewData] = useState({ status: "", remarks: "" });
 
+  // Predefined remarks based on status
+  const statusRemarks = {
+    approved: "Application approved. License will be issued shortly.",
+    rejected: "Application rejected. Please review the requirements and reapply.",
+    "needs-info": "Application requires additional information. Please provide the requested documents.",
+  };
+
   async function fetchApplications() {
     try {
       const { data } = await api.get("/admin/applications");
@@ -66,9 +73,10 @@ export default function AdminApplicationsPage() {
       const { data } = await api.get(`/admin/applications/${application.id}`);
       console.log("Application details response:", data);
       setSelectedApplication(data.application);
+      const initialStatus = data.application.status || "";
       setReviewData({
-        status: data.application.status || "",
-        remarks: data.application.admin_remarks || "",
+        status: initialStatus,
+        remarks: data.application.admin_remarks || (initialStatus ? statusRemarks[initialStatus] : ""),
       });
       setShowReviewModal(true);
     } catch (err) {
@@ -89,6 +97,15 @@ export default function AdminApplicationsPage() {
     e.preventDefault();
     if (!selectedApplication) return;
     updateStatus(selectedApplication.id, reviewData.status, reviewData.remarks);
+  };
+
+  const handleStatusChange = (e) => {
+    const newStatus = e.target.value;
+    setReviewData((prev) => ({
+      ...prev,
+      status: newStatus,
+      remarks: statusRemarks[newStatus] || prev.remarks,
+    }));
   };
 
   const getStatusColor = (status) => {
@@ -193,7 +210,11 @@ export default function AdminApplicationsPage() {
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
-                            onClick={() => openReviewModal(app)}
+                            onClick={() => {
+                              console.log("Review button clicked for app:", app);
+                              openReviewModal(app);
+                            }}
+                            type="button"
                           >
                             <FiEye className="me-1" /> Review
                           </button>
@@ -218,10 +239,16 @@ export default function AdminApplicationsPage() {
       {/* Review Modal */}
       {showReviewModal && selectedApplication && (
         <div
-          className="modal d-block"
+          className="modal fade show d-block"
+          tabIndex="-1"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeReviewModal();
+            }
+          }}
         >
-          <div className="modal-dialog modal-lg">
+          <div className="modal-dialog modal-lg modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">
@@ -232,9 +259,8 @@ export default function AdminApplicationsPage() {
                   type="button"
                   className="btn-close"
                   onClick={closeReviewModal}
-                >
-                  <FiX />
-                </button>
+                  aria-label="Close"
+                />
               </div>
               <div className="modal-body">
                 <div className="row g-4">
@@ -272,14 +298,14 @@ export default function AdminApplicationsPage() {
                   </div>
                   <div className="col-md-6">
                     <h6 className="text-muted mb-3">Application Details</h6>
-                    <div className="mb-3">
+                    <div className="mb-3" id="license-type-section">
                       <label className="text-muted small">License Type</label>
                       <div className="fw-bold">
                         {selectedApplication.license_type_name ||
                           "Not specified"}
                       </div>
                     </div>
-                    <div className="mb-3">
+                    <div className="mb-3" id="zone-selection-section">
                       <label className="text-muted small">Primary Zone</label>
                       <div className="fw-bold">
                         {selectedApplication.primary_zone_name ||
@@ -292,7 +318,7 @@ export default function AdminApplicationsPage() {
                         {selectedApplication.alternate_zone_name || "None"}
                       </div>
                     </div>
-                    <div className="mb-3">
+                    <div className="mb-3" id="business-details-section">
                       <label className="text-muted small">
                         Business Category
                       </label>
@@ -315,6 +341,12 @@ export default function AdminApplicationsPage() {
                         {selectedApplication.application_ref}
                       </div>
                     </div>
+                    <div className="mb-3" id="documents-section">
+                      <label className="text-muted small">Document Verification</label>
+                      <div className="fw-bold">
+                        {selectedApplication.document_verification ? "Verified" : "Pending"}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -323,7 +355,14 @@ export default function AdminApplicationsPage() {
                   <h6 className="text-muted mb-3">Application Progress</h6>
                   <div className="row g-3">
                     <div className="col-md-3">
-                      <div className="text-center p-3 border rounded">
+                      <div
+                        className="text-center p-3 border rounded progress-step"
+                        onClick={() => {
+                          const element = document.getElementById('license-type-section');
+                          if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
                         <div
                           className={`mb-2 ${selectedApplication.license_type_id ? "text-success" : "text-muted"}`}
                         >
@@ -333,7 +372,14 @@ export default function AdminApplicationsPage() {
                       </div>
                     </div>
                     <div className="col-md-3">
-                      <div className="text-center p-3 border rounded">
+                      <div
+                        className="text-center p-3 border rounded progress-step"
+                        onClick={() => {
+                          const element = document.getElementById('zone-selection-section');
+                          if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
                         <div
                           className={`mb-2 ${selectedApplication.primary_zone_id ? "text-success" : "text-muted"}`}
                         >
@@ -343,7 +389,14 @@ export default function AdminApplicationsPage() {
                       </div>
                     </div>
                     <div className="col-md-3">
-                      <div className="text-center p-3 border rounded">
+                      <div
+                        className="text-center p-3 border rounded progress-step"
+                        onClick={() => {
+                          const element = document.getElementById('business-details-section');
+                          if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
                         <div
                           className={`mb-2 ${selectedApplication.business_details ? "text-success" : "text-muted"}`}
                         >
@@ -353,7 +406,14 @@ export default function AdminApplicationsPage() {
                       </div>
                     </div>
                     <div className="col-md-3">
-                      <div className="text-center p-3 border rounded">
+                      <div
+                        className="text-center p-3 border rounded progress-step"
+                        onClick={() => {
+                          const element = document.getElementById('documents-section');
+                          if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
                         <div
                           className={`mb-2 ${selectedApplication.document_verification ? "text-success" : "text-muted"}`}
                         >
@@ -371,12 +431,7 @@ export default function AdminApplicationsPage() {
                     <select
                       className="form-select"
                       value={reviewData.status}
-                      onChange={(e) =>
-                        setReviewData((prev) => ({
-                          ...prev,
-                          status: e.target.value,
-                        }))
-                      }
+                      onChange={handleStatusChange}
                       required
                     >
                       <option value="">Select Status</option>
@@ -405,14 +460,14 @@ export default function AdminApplicationsPage() {
               <div className="modal-footer">
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-outline-secondary"
                   onClick={closeReviewModal}
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  className="btn btn-success"
+                  className="btn btn-primary"
                   onClick={handleReviewSubmit}
                   disabled={
                     savingId === selectedApplication.id || !reviewData.status

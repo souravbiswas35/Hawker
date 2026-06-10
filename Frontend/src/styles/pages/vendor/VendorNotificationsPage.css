@@ -7,6 +7,12 @@
   border: 1px solid rgba(39, 88, 217, 0.08);
 }
 
+[data-theme="dark"] .notifications-panel,
+[data-theme="dark"] .preferences-panel {
+  background-color: #1e1e1e;
+  border-color: #333;
+}
+
 .notification-list {
   display: grid;
   gap: 1rem;
@@ -16,7 +22,16 @@
   padding: 1.5rem;
   border-radius: 1rem;
   border: 1px solid #e7eaf3;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color var(--anim-duration-fast) var(--anim-easing-default),
+    border-color var(--anim-duration-fast) var(--anim-easing-default),
+    transform var(--anim-duration-fast) var(--anim-easing-default),
+    box-shadow var(--anim-duration-fast) var(--anim-easing-default);
+}
+
+.notification-item:hover {
+  transform: translateX(-4px);
+  box-shadow: var(--anim-shadow-md);
 }
 
 .notification-item.unread {
@@ -26,6 +41,28 @@
 
 .notification-item.read {
   background: #ffffff;
+}
+
+[data-theme="dark"] .notification-item {
+  border-color: #333;
+}
+
+[data-theme="dark"] .notification-item.unread {
+  background: #1a2332;
+  border-color: #3a4a6a;
+}
+
+[data-theme="dark"] .notification-item.read {
+  background: #1e1e1e;
+  border-color: #333;
+}
+
+[data-theme="dark"] .notification-item h6 {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .notification-item p {
+  color: #b0b0b0;
 }
 
 .notification-badge {
@@ -69,6 +106,37 @@
   color: #6c757d;
 }
 
+/* Dark mode badge colors */
+[data-theme="dark"] .status-license-updates {
+  background: rgba(102, 16, 242, 0.2);
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .status-payment-reminders {
+  background: rgba(13, 110, 253, 0.2);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .status-renewal-alerts {
+  background: rgba(255, 193, 7, 0.2);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .status-zone-changes {
+  background: rgba(25, 135, 84, 0.2);
+  color: #4ade80;
+}
+
+[data-theme="dark"] .status-inspection-notices {
+  background: rgba(220, 53, 69, 0.2);
+  color: #f87171;
+}
+
+[data-theme="dark"] .status-system-announcements {
+  background: rgba(108, 117, 125, 0.2);
+  color: #9ca3af;
+}
+
 .notification-message {
   margin-bottom: 0.75rem;
 }
@@ -76,12 +144,33 @@
 .notification-link {
   font-weight: 600;
   color: #276cd2;
+  transition:
+    color var(--anim-duration-fast) var(--anim-easing-default),
+    transform var(--anim-duration-fast) var(--anim-easing-default);
+}
+
+.notification-link:hover {
+  color: #1a5bb8;
+  transform: translateX(2px);
+}
+
+[data-theme="dark"] .notification-link {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .notification-link:hover {
+  color: #93c5fd;
 }
 
 .preference-group,
 .category-preferences {
   border-top: 1px solid #eceef2;
   padding-top: 1rem;
+}
+
+[data-theme="dark"] .preference-group,
+[data-theme="dark"] .category-preferences {
+  border-top-color: #333;
 }
 
 .preference-item {
@@ -91,12 +180,24 @@
   gap: 1rem;
 }
 
+[data-theme="dark"] .preference-item strong {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .preference-item .text-muted {
+  color: #a0a0a0;
+}
+
 .preference-item + .preference-item {
   margin-top: 1rem;
 }
 
 .category-preferences .preference-item.small {
   display: block;
+}
+
+[data-theme="dark"] .category-preferences .preference-item.small span {
+  color: #e0e0e0;
 }
 
 .category-preferences .form-check {
@@ -138,8 +239,12 @@
   right: 0;
   bottom: 0;
   background-color: #dee2e6;
-  transition: 0.3s;
+  transition: background-color var(--anim-duration-normal) var(--anim-easing-default);
   border-radius: 999px;
+}
+
+[data-theme="dark"] .slider {
+  background-color: #4a4a4a;
 }
 
 .slider:before {
@@ -150,8 +255,12 @@
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: 0.3s;
+  transition: transform var(--anim-duration-normal) var(--anim-easing-bounce);
   border-radius: 50%;
+}
+
+[data-theme="dark"] .slider:before {
+  background-color: #e0e0e0;
 }
 
 .switch input:checked + .slider {
@@ -160,4 +269,13 @@
 
 .switch input:checked + .slider:before {
   transform: translateX(22px);
+}
+
+[data-theme="dark"] .text-muted {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: #e0e0e0;
 }

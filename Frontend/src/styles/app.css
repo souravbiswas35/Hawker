@@ -122,7 +122,11 @@ h6,
 }
 
 .public-page {
-  animation: pageFade 360ms ease;
+  animation: pageFade var(--anim-duration-slow) var(--anim-easing-out);
+}
+
+.app-page {
+  animation: pageFadeIn var(--anim-duration-slow) var(--anim-easing-out);
 }
 
 .landing-hero,
@@ -735,7 +739,9 @@ h6,
     min-width: 260px;
     max-width: 260px;
     height: 100vh;
-    z-index: 10;
+    z-index: 1050;
+    transition:
+      transform var(--anim-duration-slow) var(--anim-easing-out);
   }
 
   .admin-sidebar.show {
@@ -745,6 +751,7 @@ h6,
   .admin-main {
     margin-left: 0;
     padding: 1rem;
+    padding-top: 5rem;
   }
 
   .admin-header {
@@ -754,7 +761,16 @@ h6,
   .admin-sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 27, 46, 0.4);
+    background: rgba(15, 27, 46, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--anim-duration-normal) var(--anim-easing-out);
+  }
+
+  .admin-sidebar-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 
@@ -771,6 +787,41 @@ h6,
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  transition:
+    transform var(--anim-duration-slow) var(--anim-easing-out),
+    width var(--anim-duration-slow) var(--anim-easing-out);
+}
+
+@media (max-width: 991px) {
+  .vendor-sidebar {
+    position: fixed;
+    inset: 0 auto auto 0;
+    transform: translateX(-100%);
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    height: 100vh;
+    z-index: 1050;
+  }
+
+  .vendor-sidebar.show {
+    transform: translateX(0);
+  }
+
+  .vendor-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 27, 46, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--anim-duration-normal) var(--anim-easing-out);
+  }
+
+  .vendor-sidebar-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .vendor-nav {
@@ -916,7 +967,10 @@ textarea.form-control {
   margin-top: 2rem;
   background: linear-gradient(115deg, #202736, #495066 55%, #6f778f);
   color: #ecf1fb;
-   border-radius: 30px 30px 0 0; /* top corners only */
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
 
 .footer-title {
@@ -974,6 +1028,17 @@ textarea.form-control {
   from {
     opacity: 0;
     transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;

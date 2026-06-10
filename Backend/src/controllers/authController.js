@@ -52,10 +52,16 @@ async function register(req, res, next) {
     );
 
     const code = await createEmailVerification(result.insertId, email);
-    await sendVerificationCode(email, code);
+    const emailResult = await sendVerificationCode(email, code);
+
+    let message = "Registration successful. Verification code sent to email.";
+    if (emailResult.simulated) {
+      message = "Registration successful. Check console for verification code (SMTP not configured).";
+    }
 
     res.status(201).json({
-      message: "Registration successful. Verification code sent to email.",
+      message,
+      simulated: emailResult.simulated,
     });
   } catch (err) {
     next(err);
@@ -145,9 +151,14 @@ async function resendCode(req, res, next) {
     }
 
     const code = await createEmailVerification(userRows[0].id, email);
-    await sendVerificationCode(email, code);
+    const emailResult = await sendVerificationCode(email, code);
 
-    res.json({ message: "New verification code sent" });
+    let message = "New verification code sent to email.";
+    if (emailResult.simulated) {
+      message = "New verification code generated. Check console for code (SMTP not configured).";
+    }
+
+    res.json({ message, simulated: emailResult.simulated });
   } catch (err) {
     next(err);
   }

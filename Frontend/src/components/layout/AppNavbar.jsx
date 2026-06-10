@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useEffect, useState } from "react";
 import api from "../../api/client";
+import ThemeToggle from "../common/ThemeToggle";
 
 export default function AppNavbar() {
   const { isAuthenticated, user, logout } = useAuth();
@@ -121,6 +122,9 @@ export default function AppNavbar() {
           )}
 
           <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+            <li className="nav-item">
+              <ThemeToggle />
+            </li>
             {!isAuthenticated && (
               <>
                 <li className="nav-item">
@@ -243,21 +247,8 @@ export default function AppNavbar() {
                   </span>
                 </div>
                 <button
-                  className="btn btn-outline-light btn-sm rounded-pill"
+                  className="btn btn-outline-light btn-sm rounded-pill logout-btn"
                   onClick={handleLogout}
-                  style={{
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = "rgba(220, 53, 69, 0.2)";
-                    e.target.style.borderColor = "#dc3545";
-                    e.target.style.color = "#dc3545";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = "transparent";
-                    e.target.style.borderColor = "rgba(255, 255, 255, 0.5)";
-                    e.target.style.color = "white";
-                  }}
                 >
                   Logout
                 </button>

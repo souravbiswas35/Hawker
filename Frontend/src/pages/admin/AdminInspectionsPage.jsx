@@ -9,7 +9,11 @@ export default function AdminInspectionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [data, setData] = useState({ stats: {}, schedule: [] });
+  const [data, setData] = useState({ todayInspections: 0, completed: 0, upcoming: 0, violations: 0 });
+  const [schedule, setSchedule] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [zones, setZones] = useState([]);
+  const [inspectors, setInspectors] = useState([]);
   const [form, setForm] = useState({
     vendorUserId: "",
     zoneCode: "",
@@ -20,8 +24,20 @@ export default function AdminInspectionsPage() {
 
   async function load() {
     try {
-      const { data } = await api.get("/admin/inspections");
-      setData(data);
+      const { data: metrics } = await api.get("/admin/inspections/dashboard-metrics");
+      setData(metrics);
+      
+      const { data: scheduleData } = await api.get("/admin/inspections/today-schedule");
+      setSchedule(scheduleData.schedule || []);
+      
+      const { data: vendorsData } = await api.get("/admin/vendors");
+      setVendors(vendorsData.vendors || []);
+      
+      const { data: zonesData } = await api.get("/admin/zones-management");
+      setZones(zonesData.zones || []);
+      
+      const { data: inspectorsData } = await api.get("/admin/inspections/inspectors");
+      setInspectors(inspectorsData.inspectors || []);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load inspections");
     } finally {
@@ -37,12 +53,12 @@ export default function AdminInspectionsPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.post("/admin/inspections", {
-        vendorUserId: Number(form.vendorUserId),
-        zoneCode: form.zoneCode,
-        inspectorName: form.inspectorName,
-        scheduledAt: form.scheduledAt,
-        notes: form.notes,
+      await api.post("/admin/inspections/schedule", {
+        vendorId: Number(form.vendorUserId),
+        inspectorId: Number(form.inspectorName),
+        scheduledDate: form.scheduledAt,
+        templateId: null,
+        type: "routine",
       });
       setForm({
         vendorUserId: "",
@@ -76,25 +92,25 @@ export default function AdminInspectionsPage() {
           <div className="row g-3 mb-4">
             <div className="col-md-3">
               <div className="admin-kpi-card kpi-blue">
-                <h3>{data.stats.today_count || 0}</h3>
+                <h3>{data.todayInspections || 0}</h3>
                 <p>Today's Inspections</p>
               </div>
             </div>
             <div className="col-md-3">
               <div className="admin-kpi-card kpi-green">
-                <h3>{data.stats.completed_count || 0}</h3>
+                <h3>{data.completed || 0}</h3>
                 <p>Completed</p>
               </div>
             </div>
             <div className="col-md-3">
               <div className="admin-kpi-card kpi-teal">
-                <h3>{data.stats.upcoming_count || 0}</h3>
+                <h3>{data.upcoming || 0}</h3>
                 <p>Upcoming</p>
               </div>
             </div>
             <div className="col-md-3">
               <div className="admin-kpi-card kpi-red">
-                <h3>{data.stats.violations_found || 0}</h3>
+                <h3>{data.violations || 0}</h3>
                 <p>Violations Found</p>
               </div>
             </div>
@@ -107,37 +123,55 @@ export default function AdminInspectionsPage() {
             </h5>
             <form className="row g-3" onSubmit={createInspection}>
               <div className="col-md-3">
-                <input
+                <select
                   className="form-control"
-                  placeholder="Vendor User ID"
                   value={form.vendorUserId}
                   onChange={(e) =>
                     setForm((p) => ({ ...p, vendorUserId: e.target.value }))
                   }
                   required
-                />
+                >
+                  <option value="">Select Vendor</option>
+                  {vendors.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.first_name} {v.last_name} - {v.business_name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="col-md-2">
-                <input
+                <select
                   className="form-control"
-                  placeholder="Zone Code"
                   value={form.zoneCode}
                   onChange={(e) =>
                     setForm((p) => ({ ...p, zoneCode: e.target.value }))
                   }
                   required
-                />
+                >
+                  <option value="">Select Zone</option>
+                  {zones.map((z) => (
+                    <option key={z.id} value={z.name}>
+                      {z.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="col-md-3">
-                <input
+                <select
                   className="form-control"
-                  placeholder="Inspector Name"
                   value={form.inspectorName}
                   onChange={(e) =>
                     setForm((p) => ({ ...p, inspectorName: e.target.value }))
                   }
                   required
-                />
+                >
+                  <option value="">Select Inspector</option>
+                  {inspectors.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.name} ({i.inspector_rank})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="col-md-4">
                 <input
@@ -175,17 +209,17 @@ export default function AdminInspectionsPage() {
               Inspection Schedule
             </h5>
             <div className="d-grid gap-2">
-              {data.schedule.map((s) => (
+              {schedule.map((s) => (
                 <div key={s.id} className="admin-list-item">
                   <div>
                     <div className="fw-semibold">
-                      {new Date(s.scheduled_at).toLocaleString()}
+                      {new Date(s.scheduled_date).toLocaleString()}
                     </div>
                     <div className="small text-muted">
                       {s.first_name
                         ? `${s.first_name} ${s.last_name || ""}`.trim()
                         : s.email || "Unknown vendor"}{" "}
-                      • Zone {s.zone_code}
+                      • {s.zone_name || "Unknown zone"}
                     </div>
                     <div className="small text-muted">
                       Inspector: {s.inspector_name}
@@ -196,7 +230,7 @@ export default function AdminInspectionsPage() {
                   </span>
                 </div>
               ))}
-              {data.schedule.length === 0 && (
+              {schedule.length === 0 && (
                 <div className="text-muted">No inspections scheduled.</div>
               )}
             </div>

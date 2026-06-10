@@ -1,25 +1,31 @@
 .dashboard-action-card {
   display: block;
-  background: linear-gradient(150deg, #eff8ff, #f5faff);
+  background: linear-gradient(150deg, var(--bg-tertiary), var(--bg-secondary));
   border: 1px solid var(--hawker-border);
   border-radius: 14px;
   padding: 1rem;
-  color: var(--hawker-ink);
+  color: var(--text-primary);
   text-decoration: none;
   height: 100%;
   transition:
-    transform 180ms ease,
-    box-shadow 180ms ease;
+    transform var(--anim-duration-normal) var(--anim-easing-default),
+    box-shadow var(--anim-duration-normal) var(--anim-easing-default);
 }
 
 .dashboard-action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--anim-shadow-lg);
+}
+
+.dashboard-action-card:active {
   transform: translateY(-2px);
-  box-shadow: 0 12px 22px rgba(15, 61, 130, 0.1);
+  box-shadow: var(--anim-shadow-md);
 }
 
 .dashboard-action-card strong {
   display: block;
   margin-bottom: 0.45rem;
+  color: var(--text-primary);
 }
 
 .notification-list {
@@ -32,18 +38,21 @@
   border-radius: 12px;
   background: transparent;
   border: none;
-  transition: all 0.2s ease;
+  transition:
+    transform var(--anim-duration-fast) var(--anim-easing-default),
+    opacity var(--anim-duration-fast) var(--anim-easing-default),
+    background-color var(--anim-duration-fast) var(--anim-easing-default);
 }
 
 .notification-item:hover {
-  transform: translateX(4px);
+  transform: translateX(-4px);
 }
 
 .dashboard-map-shell {
   min-height: 280px;
   border-radius: 18px;
   overflow: hidden;
-  background: linear-gradient(160deg, #f4f8ff, #e9f1ff);
+  background: linear-gradient(160deg, var(--bg-tertiary), var(--bg-secondary));
   border: 1px solid var(--hawker-border);
   display: grid;
   place-items: center;
@@ -60,16 +69,21 @@
 }
 
 .dashboard-map-details div {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 14px;
   border: 1px solid var(--hawker-border);
   padding: 0.95rem 1rem;
+  color: var(--text-primary);
 }
 
 .dashboard-map-details span {
-  color: var(--hawker-muted);
+  color: var(--text-secondary);
   display: block;
   margin-bottom: 0.35rem;
+}
+
+.dashboard-map-details strong {
+  color: var(--text-primary);
 }
 
 .dashboard-hero-modern {
@@ -80,38 +94,73 @@
   background-position: center;
   background-repeat: no-repeat;
   /* background: linear-gradient(155deg, #f2f8ff, #ffffff 55%, #f7fbff); */
-  box-shadow: 0 16px 30px rgba(15, 27, 46, 0.08);
+  box-shadow: var(--shadow-lg);
 }
 
 .stats-card-modern {
   border-radius: 16px;
-  background: #fff;
+  background: var(--card-bg);
   border: 1px solid var(--hawker-border);
-  box-shadow: 0 12px 24px rgba(15, 27, 46, 0.06);
+  box-shadow: var(--anim-shadow-md);
   padding: 1rem;
+  transition:
+    transform var(--anim-duration-normal) var(--anim-easing-default),
+    box-shadow var(--anim-duration-normal) var(--anim-easing-default);
+  color: var(--text-primary);
+}
+
+.stats-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--anim-shadow-lg);
 }
 
 .stats-card-modern h2 {
   font-size: 1.45rem;
   font-weight: 700;
+  color: var(--text-primary);
 }
 
 .dashboard-map-container {
   width: 100%;
-  background: white;
+  background: var(--card-bg);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--anim-shadow-md);
+  transition:
+    transform var(--anim-duration-normal) var(--anim-easing-default),
+    box-shadow var(--anim-duration-normal) var(--anim-easing-default);
+  color: var(--text-primary);
+}
+
+.dashboard-map-container:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--anim-shadow-lg);
 }
 
 .map-header {
   margin-bottom: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-secondary);
+  color: var(--text-primary);
+}
+
+.map-header h6 {
+  color: var(--text-primary);
 }
 
 .map-preview {
-  background: #f8f9fa;
+  background: var(--bg-tertiary);
   border-radius: 8px;
   padding: 1rem;
+}
+
+/* ============================================
+   Dark Mode Text Overrides for Dashboard Hero
+   ============================================ */
+[data-theme="dark"] .dashboard-hero-modern h1 {
+  color: #000000 !important;
+}
+
+[data-theme="dark"] .dashboard-hero-modern p.text-muted {
+  color: #000000 !important;
 }
