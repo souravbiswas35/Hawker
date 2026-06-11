@@ -1,0 +1,105 @@
+/* License Application Steps - Selection Styles */
+
+/* Selection card base styles */
+.license-selection-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+}
+
+.license-selection-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Selected state - prominent border and pop-up effect */
+.license-selection-card.selected {
+  border: 3px solid #ffc107 !important;
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 35px rgba(255, 193, 7, 0.4);
+  background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%) !important;
+}
+
+.license-selection-card.selected::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: inherit;
+  border: 2px solid rgba(255, 193, 7, 0.3);
+  pointer-events: none;
+}
+
+/* Alternate selection state (for zones) */
+.license-selection-card.selected-alternate {
+  border: 3px solid #0dcaf0 !important;
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 35px rgba(13, 202, 240, 0.4);
+  background: linear-gradient(135deg, #e7faff 0%, #ffffff 100%) !important;
+}
+
+.license-selection-card.selected-alternate::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: inherit;
+  border: 2px solid rgba(13, 202, 240, 0.3);
+  pointer-events: none;
+}
+
+/* Unselected state */
+.license-selection-card:not(.selected):not(.selected-alternate) {
+  border: 2px solid #dee2e6 !important;
+  background: #ffffff !important;
+}
+
+.license-selection-card:not(.selected):not(.selected-alternate):hover {
+  border-color: #ffc107 !important;
+}
+
+/* Checkmark animation for selected items */
+.selection-checkmark {
+  animation: checkmarkPop 0.3s ease-out;
+}
+
+@keyframes checkmarkPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Ripple effect on click */
+.license-selection-card::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 193, 7, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s, opacity 0.4s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.license-selection-card:active::after {
+  width: 200%;
+  height: 200%;
+  opacity: 1;
+  transition: 0s;
+}

@@ -1,0 +1,76 @@
+/* Vendor Announcements Page Styles */
+
+/* Announcement Cards */
+.announcement-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.announcement-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.announcement-card.pinned {
+  border-left: 4px solid #ffc107;
+  background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+}
+
+.announcement-preview {
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+/* Modal Styles */
+.announcement-modal {
+  z-index: 1050;
+}
+
+.announcement-modal .modal-content {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.announcement-modal .modal-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1.5rem;
+}
+
+.announcement-modal .modal-body {
+  padding: 1.5rem;
+}
+
+.announcement-modal .modal-footer {
+  border-top: 1px solid #e5e7eb;
+  padding: 1.5rem;
+}
+
+.announcement-content {
+  line-height: 1.8;
+  color: #374151;
+  white-space: pre-wrap;
+}
+
+/* Attachments */
+.attachment-item {
+  display: inline-block;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .announcement-card .card-body {
+    padding: 1rem;
+  }
+  
+  .announcement-modal .modal-body,
+  .announcement-modal .modal-header,
+  .announcement-modal .modal-footer {
+    padding: 1rem;
+  }
+}

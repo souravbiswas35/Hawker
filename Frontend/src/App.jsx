@@ -30,6 +30,8 @@ import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 import VendorSettingsPage from "./pages/vendor/VendorSettingsPage";
 import VendorInspectionHistoryPage from "./pages/vendor/VendorInspectionHistoryPage";
 import WomenVendorSupportPage from "./pages/vendor/WomenVendorSupportPage";
+import Feedback from "./pages/vendor/Feedback";
+import Announcements from "./pages/vendor/Announcements";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage";
 import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
@@ -44,6 +46,9 @@ import AdminZoneCreatePage from "./pages/admin/AdminZoneCreatePage";
 import SchemeDetailPage from "./pages/vendor/SchemeDetailPage";
 import AdminWomenSchemeApplicationsPage from "./pages/admin/AdminWomenSchemeApplicationsPage";
 import AdminWomenMentorshipApplicationsPage from "./pages/admin/AdminWomenMentorshipApplicationsPage";
+import AdminFeedbackPage from "./pages/admin/AdminFeedbackPage";
+import AdminAnnouncementsPage from "./pages/admin/AdminAnnouncementsPage";
+import AdminAddAnnouncement from "./pages/admin/AdminAddAnnouncement";
 
 function PageTransition({ children }) {
   const location = useLocation();
@@ -234,6 +239,22 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/vendor/feedback"
+            element={
+              <ProtectedRoute roles={["vendor"]}>
+                <Feedback />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/announcements"
+            element={
+              <ProtectedRoute roles={["vendor"]}>
+                <Announcements />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/admin/dashboard"
@@ -336,6 +357,30 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminWomenMentorshipApplicationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/feedback"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminFeedbackPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/announcements"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminAnnouncementsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/announcements/add"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminAddAnnouncement />
               </ProtectedRoute>
             }
           />

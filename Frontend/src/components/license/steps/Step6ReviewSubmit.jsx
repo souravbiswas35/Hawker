@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiCheck, FiFileText, FiMapPin, FiBriefcase, FiCreditCard, FiEdit } from "react-icons/fi";
 
 const businessCategories = [
@@ -22,11 +22,16 @@ const stallSizes = [
   { id: '4x4', name: '4m X 4m' }
 ];
 
-export default function Step6ReviewSubmit({ onSubmit, data, trackingNumber, loading }) {
+export default function Step6ReviewSubmit({ onSubmit, data, trackingNumber, loading, onValidationChange }) {
   const [declaration, setDeclaration] = useState(false);
   const [digitalSignature, setDigitalSignature] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    const isValid = declaration && digitalSignature.trim();
+    onValidationChange?.(!!isValid);
+  }, [declaration, digitalSignature, onValidationChange]);
 
   // Real data from previous steps
   const applicationSummary = {

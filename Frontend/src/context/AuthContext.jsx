@@ -7,10 +7,18 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("hawker_token"));
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
 
   useEffect(() => {
     async function bootstrap() {
       if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      // Skip /auth/me call if user just logged in (user already set from login response)
+      if (justLoggedIn) {
+        setJustLoggedIn(false);
         setLoading(false);
         return;
       }
@@ -26,10 +34,11 @@ export function AuthProvider({ children }) {
     }
 
     bootstrap();
-  }, [token]);
+  }, [token, justLoggedIn]);
 
   const login = (nextToken, nextUser) => {
     localStorage.setItem("hawker_token", nextToken);
+    setJustLoggedIn(true);
     setToken(nextToken);
     setUser(nextUser);
   };

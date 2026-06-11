@@ -92,6 +92,18 @@ export default function AdminLayout({ children }) {
       badge: null,
     },
     {
+      title: "Feedbacks",
+      icon: FiMessageSquare,
+      path: "/admin/feedback",
+      badge: null,
+    },
+    {
+      title: "Announcements",
+      icon: FiMessageSquare,
+      path: "/admin/announcements",
+      badge: null,
+    },
+    {
       title: "Payments",
       icon: FiDollarSign,
       path: "/admin/payments",
