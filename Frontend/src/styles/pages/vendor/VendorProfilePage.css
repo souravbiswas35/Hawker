@@ -111,6 +111,58 @@
   padding: 2rem;
   color: white;
   box-shadow: 0 8px 24px rgba(31, 122, 159, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-header-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: shimmer 15s infinite linear;
+}
+
+.profile-header-card::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -30%;
+  width: 150%;
+  height: 150%;
+  background: radial-gradient(circle, rgba(255, 188, 66, 0.15) 0%, transparent 60%);
+  animation: pulse 8s infinite ease-in-out;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(-10%, -10%) rotate(180deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.profile-header-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ============================================

@@ -71,7 +71,6 @@ const navigationCategories = [
       { title: "Notifications", path: "/vendor/notifications" },
       { title: "Complaints", path: "/vendor/complaints" },
       { title: "My Complaints Tracking", path: "/vendor/complaint-tracking" },
-      { title: "Help & Support", path: "/vendor/help" },
       { title: "Feedback & Suggestions", path: "/vendor/feedback" },
       { title: "Announcements", path: "/vendor/announcements" },
     ],
