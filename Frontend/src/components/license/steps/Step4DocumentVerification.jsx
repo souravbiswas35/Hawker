@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FiUpload, FiFile, FiCheck, FiAlertCircle, FiDownload } from "react-icons/fi";
 import api from "../../../api/client";
+import "../../../styles/components/license/LicenseApplicationSteps.css";
 
 const requiredDocuments = [
   { id: 'national_id', name: 'National ID', required: true, description: 'Front and back of your national ID card' },
@@ -10,10 +11,16 @@ const requiredDocuments = [
   { id: 'photo', name: 'Recent Photograph', required: true, description: 'Passport size photograph' }
 ];
 
-export default function Step4DocumentVerification({ onSubmit, data, loading }) {
+export default function Step4DocumentVerification({ onSubmit, data, loading, onValidationChange }) {
   const [documents, setDocuments] = useState(data.documentVerification || {});
   const [uploading, setUploading] = useState({});
   const [existingDocs, setExistingDocs] = useState([]);
+
+  useEffect(() => {
+    const requiredDocs = requiredDocuments.filter(doc => doc.required);
+    const allRequiredUploaded = requiredDocs.every(doc => isDocumentComplete(doc.id));
+    onValidationChange?.(allRequiredUploaded);
+  }, [documents, existingDocs, onValidationChange]);
 
   useEffect(() => {
     fetchExistingDocuments();
@@ -142,7 +149,7 @@ export default function Step4DocumentVerification({ onSubmit, data, loading }) {
 
             return (
               <div key={doc.id} className="col-md-6">
-                <div className={`card h-100 ${isUploaded ? 'border-success bg-light' : 'border-secondary'}`}>
+                <div className={`card h-100 license-selection-card ${isUploaded ? 'selected' : ''}`}>
                   <div className="card-body">
                     <div className="d-flex justify-content-between align-items-start mb-2">
                       <div>
@@ -152,7 +159,7 @@ export default function Step4DocumentVerification({ onSubmit, data, loading }) {
                         </h6>
                         <small className="text-muted">{doc.description}</small>
                       </div>
-                      {isUploaded && <FiCheck className="text-success" />}
+                      {isUploaded && <FiCheck className="text-success selection-checkmark" />}
                     </div>
 
                     {existingDoc ? (
@@ -253,16 +260,6 @@ export default function Step4DocumentVerification({ onSubmit, data, loading }) {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="d-flex justify-content-end mt-4">
-          <button
-            type="submit"
-            className="btn btn-warning px-4 rounded-pill"
-            disabled={loading || requiredDocuments.filter(d => d.required).some(d => !isDocumentComplete(d.id))}
-          >
-            {loading ? "Processing..." : "Continue to Fee Payment"}
-          </button>
         </div>
       </form>
     </div>

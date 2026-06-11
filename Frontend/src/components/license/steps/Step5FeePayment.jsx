@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiCreditCard, FiSmartphone, FiDollarSign, FiPercent } from "react-icons/fi";
+import "../../../styles/components/license/LicenseApplicationSteps.css";
 
 const paymentMethods = [
   { id: 'bkash', name: 'bKash', icon: FiSmartphone, description: 'Mobile banking', hasCashback: true },
@@ -9,13 +10,20 @@ const paymentMethods = [
   { id: 'pay_later', name: 'Pay Later at Designated Booth', icon: FiDollarSign, description: 'Pay in person', hasCashback: false }
 ];
 
-export default function Step5FeePayment({ onSubmit, data, loading }) {
+export default function Step5FeePayment({ onSubmit, data, loading, onValidationChange }) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(data.paymentMethod || "");
   const [formData, setFormData] = useState({
     paymentMethod: data.paymentMethod || "",
     transactionId: data.transactionId || "",
     agreeToTerms: data.agreeToTerms || false
   });
+
+  useEffect(() => {
+    const isValid = selectedPaymentMethod && 
+                    (selectedPaymentMethod === 'pay_later' || formData.transactionId) && 
+                    formData.agreeToTerms;
+    onValidationChange?.(!!isValid);
+  }, [selectedPaymentMethod, formData, onValidationChange]);
 
   // Calculate fees based on license type (this would come from previous steps)
   const feeBreakdown = {
@@ -136,8 +144,8 @@ export default function Step5FeePayment({ onSubmit, data, loading }) {
             return (
               <div key={method.id} className="col-md-6">
                 <div
-                  className={`card h-100 cursor-pointer transition-all ${
-                    isSelected ? "border-warning bg-light" : "border-secondary"
+                  className={`card h-100 license-selection-card ${
+                    isSelected ? "selected" : ""
                   }`}
                   onClick={() => {
                     setSelectedPaymentMethod(method.id);
@@ -237,16 +245,6 @@ export default function Step5FeePayment({ onSubmit, data, loading }) {
               </label>
             </div>
           </div>
-        </div>
-
-        <div className="d-flex justify-content-end">
-          <button
-            type="submit"
-            className="btn btn-warning px-4 rounded-pill"
-            disabled={!selectedPaymentMethod || loading || !formData.agreeToTerms}
-          >
-            {loading ? "Processing..." : "Continue to Review & Submit"}
-          </button>
         </div>
       </form>
     </div>

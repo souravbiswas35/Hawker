@@ -457,15 +457,15 @@ export default function VendorDashboardPage() {
                       {visibleNotifications.map((note) => {
                         const colors = getNotificationColor(note.message);
                         return (
-                          <div key={note.id} className={`notification-item ${colors.border} border-start border-3 mb-2`}>
-                            <div className={`p-3 ${colors.bg} rounded`}>
+                          <div key={note.id} className={`card notification-card mb-3`}>
+                            <div className="card-body">
                               <div className="d-flex justify-content-between align-items-start mb-2">
                                 <div className="d-flex align-items-center gap-2">
                                   <span className={`fs-5 ${colors.text}`}>{colors.icon}</span>
-                                  <h6 className={`mb-1 ${colors.text}`}>{note.title}</h6>
+                                  <h6 className={`mb-0 ${colors.text}`}>{note.title}</h6>
                                 </div>
                                 <button
-                                  className="btn btn-sm btn-link text-muted p-0 ms-2"
+                                  className="btn btn-sm btn-link text-muted p-0"
                                   onClick={() => handleHideNotification(note.id)}
                                   title="Hide notification"
                                 >
@@ -482,7 +482,8 @@ export default function VendorDashboardPage() {
                       })}
                       {visibleNotifications.length === 0 && (
                         <div className="text-center text-muted py-4">
-                          No recent notifications yet.
+                          <FiBell size={48} className="mb-3" />
+                          <p>No recent notifications yet.</p>
                         </div>
                       )}
                     </div>

@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiInfo, FiCheck } from "react-icons/fi";
+import "../../../styles/components/license/LicenseApplicationSteps.css";
 
-export default function Step1LicenseType({ onSubmit, data, licenseTypes, loading }) {
+export default function Step1LicenseType({ onSubmit, data, licenseTypes, loading, onValidationChange }) {
   const [selectedLicense, setSelectedLicense] = useState(data.licenseTypeId || null);
+
+  useEffect(() => {
+    onValidationChange?.(!!selectedLicense);
+  }, [selectedLicense, onValidationChange]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,8 +38,8 @@ export default function Step1LicenseType({ onSubmit, data, licenseTypes, loading
             return (
               <div key={license.id} className="col-md-6">
                 <div
-                  className={`card h-100 cursor-pointer transition-all ${
-                    isSelected ? "border-warning bg-light" : "border-secondary"
+                  className={`card h-100 license-selection-card ${
+                    isSelected ? "selected" : ""
                   }`}
                   onClick={() => setSelectedLicense(license.id)}
                 >
@@ -44,7 +49,7 @@ export default function Step1LicenseType({ onSubmit, data, licenseTypes, loading
                         <h6 className="mb-1">{license.name}</h6>
                         <small className="text-muted">Valid for {license.duration_days} days</small>
                       </div>
-                      {isSelected && <FiCheck className="text-warning" />}
+                      {isSelected && <FiCheck className="text-warning selection-checkmark" />}
                     </div>
                     
                     <div className="mb-3">
@@ -95,16 +100,6 @@ export default function Step1LicenseType({ onSubmit, data, licenseTypes, loading
             </div>
           </div>
         )}
-
-        <div className="d-flex justify-content-end mt-4">
-          <button
-            type="submit"
-            className="btn btn-warning px-4 rounded-pill"
-            disabled={!selectedLicense || loading}
-          >
-            {loading ? "Processing..." : "Continue to Zone Selection"}
-          </button>
-        </div>
       </form>
     </div>
   );

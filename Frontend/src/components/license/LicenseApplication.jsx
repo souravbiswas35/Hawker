@@ -26,6 +26,7 @@ export default function LicenseApplication() {
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [stepValid, setStepValid] = useState(false);
 
   useEffect(() => {
     fetchLicenseTypes();
@@ -120,6 +121,7 @@ export default function LicenseApplication() {
       licenseTypes,
       zones,
       loading,
+      onValidationChange: setStepValid,
     };
 
     switch (currentStep) {
@@ -137,6 +139,31 @@ export default function LicenseApplication() {
         return <Step6ReviewSubmit {...stepProps} trackingNumber={trackingNumber} />;
       default:
         return null;
+    }
+  };
+
+  const handleContinue = () => {
+    // Trigger form submission for current step
+    const form = document.querySelector('.card-body form');
+    if (form) {
+      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+  };
+
+  const getContinueButtonText = () => {
+    switch (currentStep) {
+      case 1:
+        return "Continue to Zone Selection";
+      case 2:
+        return "Continue to Business Details";
+      case 3:
+        return "Continue to Document Verification";
+      case 4:
+        return "Continue to Fee Payment";
+      case 5:
+        return "Continue to Review & Submit";
+      default:
+        return "Continue";
     }
   };
 
@@ -205,8 +232,8 @@ export default function LicenseApplication() {
           </div>
 
           {/* Navigation Buttons */}
-          {currentStep > 1 && currentStep < 6 && (
-            <div className="d-flex justify-content-between mt-4">
+          <div className="d-flex justify-content-between mt-4">
+            {currentStep > 1 && (
               <button
                 className="btn btn-outline-secondary px-4 rounded-pill"
                 onClick={handlePrevious}
@@ -215,8 +242,18 @@ export default function LicenseApplication() {
                 <FiArrowLeft className="me-2" />
                 Previous
               </button>
-            </div>
-          )}
+            )}
+            {currentStep < 6 && (
+              <button
+                className="btn btn-warning px-4 rounded-pill"
+                onClick={handleContinue}
+                disabled={!stepValid || loading}
+              >
+                {loading ? "Processing..." : getContinueButtonText()}
+                <FiArrowRight className="ms-2" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

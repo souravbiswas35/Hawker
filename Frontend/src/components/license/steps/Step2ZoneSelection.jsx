@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
 import { FiMapPin, FiZap, FiDroplet, FiSun, FiUsers } from "react-icons/fi";
+import "../../../styles/components/license/LicenseApplicationSteps.css";
 
-export default function Step2ZoneSelection({ onSubmit, data, zones, loading }) {
+export default function Step2ZoneSelection({ onSubmit, data, zones, loading, onValidationChange }) {
   const [selectedPrimaryZone, setSelectedPrimaryZone] = useState(data.primaryZoneId || null);
   const [selectedAlternateZone, setSelectedAlternateZone] = useState(data.alternateZoneId || "");
   const [filteredZones, setFilteredZones] = useState(zones);
   const [areaFilter, setAreaFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+
+  useEffect(() => {
+    onValidationChange?.(!!selectedPrimaryZone);
+  }, [selectedPrimaryZone, onValidationChange]);
 
   useEffect(() => {
     let filtered = zones;
@@ -128,10 +133,10 @@ export default function Step2ZoneSelection({ onSubmit, data, zones, loading }) {
             return (
               <div key={zone.id} className="col-md-6">
                 <div
-                  className={`card h-100 cursor-pointer transition-all ${
-                    isPrimarySelected ? "border-warning bg-light" : 
-                    isAlternateSelected ? "border-info bg-light" : 
-                    "border-secondary"
+                  className={`card h-100 license-selection-card ${
+                    isPrimarySelected ? "selected" : 
+                    isAlternateSelected ? "selected-alternate" : 
+                    ""
                   }`}
                   onClick={() => {
                     if (!isPrimarySelected) {
@@ -148,8 +153,8 @@ export default function Step2ZoneSelection({ onSubmit, data, zones, loading }) {
                         <h6 className="mb-1">{zone.zone_code} - {zone.name}</h6>
                         <small className="text-muted">{zone.location}</small>
                       </div>
-                      {isPrimarySelected && <div className="badge bg-warning">Primary</div>}
-                      {isAlternateSelected && <div className="badge bg-info">Alternate</div>}
+                      {isPrimarySelected && <div className="badge bg-warning selection-checkmark">Primary</div>}
+                      {isAlternateSelected && <div className="badge bg-info selection-checkmark">Alternate</div>}
                     </div>
                     
                     <div className="mb-2">
@@ -212,16 +217,6 @@ export default function Step2ZoneSelection({ onSubmit, data, zones, loading }) {
               }
             </select>
           </div>
-        </div>
-
-        <div className="d-flex justify-content-end">
-          <button
-            type="submit"
-            className="btn btn-warning px-4 rounded-pill"
-            disabled={!selectedPrimaryZone || loading}
-          >
-            {loading ? "Processing..." : "Continue to Business Details"}
-          </button>
         </div>
       </form>
     </div>

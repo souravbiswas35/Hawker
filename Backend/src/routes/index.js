@@ -5,6 +5,8 @@ const applicationRoutes = require("./applicationRoutes");
 const adminRoutes = require("./adminRoutes");
 const licenseApplicationRoutes = require("./licenseApplicationRoutes");
 const paymentRoutes = require("./paymentRoutes");
+const feedbackRoutes = require("./feedbackRoutes");
+const announcementRoutes = require("./announcementRoutes");
 
 const router = express.Router();
 
@@ -18,5 +20,7 @@ router.use("/applications", applicationRoutes);
 router.use("/license", licenseApplicationRoutes);
 router.use("/admin", adminRoutes);
 router.use("/payments", paymentRoutes);
+router.use("/feedback", feedbackRoutes);
+router.use("/announcements", announcementRoutes);
 
 module.exports = router;

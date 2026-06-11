@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import "../../../styles/components/license/LicenseApplicationSteps.css";
 
 const businessCategories = [
   { id: 'food_beverages', name: 'Food & Beverages', examples: 'Snacks, Tea, Coffee, Fast Food' },
@@ -21,7 +22,7 @@ const operatingDays = [
   { id: 'custom', name: 'Custom' }
 ];
 
-export default function Step3BusinessDetails({ onSubmit, data, loading }) {
+export default function Step3BusinessDetails({ onSubmit, data, loading, onValidationChange }) {
   const [formData, setFormData] = useState({
     typeOfGoods: data.typeOfGoods || "",
     goodsDescription: data.goodsDescription || "",
@@ -34,6 +35,11 @@ export default function Step3BusinessDetails({ onSubmit, data, loading }) {
   });
 
   const [selectedCategory, setSelectedCategory] = useState(data.typeOfGoods || "");
+
+  useEffect(() => {
+    const isValid = formData.typeOfGoods && formData.goodsDescription && formData.numberOfStaff && formData.operatingHoursStart && formData.operatingHoursEnd && formData.operatingDays && formData.stallSize;
+    onValidationChange?.(!!isValid);
+  }, [formData, onValidationChange]);
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
@@ -77,8 +83,8 @@ export default function Step3BusinessDetails({ onSubmit, data, loading }) {
               {businessCategories.map((category) => (
                 <div key={category.id} className="col-md-6 col-lg-4">
                   <div
-                    className={`card cursor-pointer transition-all ${
-                      selectedCategory === category.id ? "border-warning bg-light" : "border-secondary"
+                    className={`card h-100 license-selection-card ${
+                      selectedCategory === category.id ? "selected" : ""
                     }`}
                     onClick={() => handleCategorySelect(category.id)}
                   >
@@ -217,16 +223,6 @@ export default function Step3BusinessDetails({ onSubmit, data, loading }) {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="d-flex justify-content-end mt-4">
-          <button
-            type="submit"
-            className="btn btn-warning px-4 rounded-pill"
-            disabled={loading}
-          >
-            {loading ? "Processing..." : "Continue to Document Verification"}
-          </button>
         </div>
       </form>
     </div>
