@@ -178,8 +178,8 @@
   --navbar-bg: linear-gradient(120deg, rgba(15, 23, 42, 0.98),
     rgba(30, 41, 59, 0.98) 55%,
     rgba(51, 65, 85, 0.98));
-  --navbar-text: #f1f5f9;
-  --navbar-hover-bg: rgba(255, 255, 255, 0.1);
+  --navbar-text: #ffffff;
+  --navbar-hover-bg: rgba(255, 255, 255, 0.15);
 
   --footer-bg: linear-gradient(115deg, #0f172a, #1e293b 55%, #334155);
   --footer-text: #f1f5f9;
@@ -265,6 +265,17 @@ body {
   color: var(--text-on-primary);
   background: var(--navbar-hover-bg);
 }
+
+[data-theme="dark"] .hawker-nav .nav-link {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .hawker-nav .nav-link.active,
+[data-theme="dark"] .hawker-nav .nav-link:hover {
+  color: #ffffff !important;
+  background: var(--navbar-hover-bg);
+}
+
 
 .panel-box {
   background: var(--card-bg);
@@ -1219,6 +1230,267 @@ input[type="tel"].form-control {
   color: #ffffff !important;
   background: rgba(255, 255, 255, 0.1) !important;
 }
+
+/* ============================================
+   Landing Page Dark Mode Overrides
+   ============================================ */
+[data-theme="dark"] .highlight-item {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .highlight-item span {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .process-card {
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .process-card h5 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .process-card p {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .metric-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .metric-card span {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .metric-card h3 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .cta-banner {
+  background: linear-gradient(90deg, #1e3a5f, #1d4ed8 40%, #0891b2) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .cta-banner h3 {
+  color: #ffffff !important;
+}
+
+/* ============================================
+   About Page Dark Mode Overrides
+   ============================================ */
+[data-theme="dark"] .about-intro-box {
+  background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .about-copy {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .about-summary-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .about-summary-item svg {
+  color: var(--hawker-mid) !important;
+}
+
+[data-theme="dark"] .about-summary-item p {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .about-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .about-feature-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .about-feature-icon {
+  background: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.2),
+    rgba(167, 139, 250, 0.2)
+  ) !important;
+  color: var(--hawker-deep) !important;
+}
+
+[data-theme="dark"] .about-feature-card h6 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .about-feature-card p {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .about-benefit-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .about-benefit-icon {
+  background: linear-gradient(
+    135deg,
+    rgba(52, 211, 153, 0.2),
+    rgba(56, 189, 248, 0.2)
+  ) !important;
+  color: var(--hawker-success) !important;
+}
+
+[data-theme="dark"] .about-benefit-head strong {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .about-benefit-card p {
+  color: var(--text-secondary) !important;
+}
+
+/* ============================================
+   About Page Additional Dark Mode Overrides
+   ============================================ */
+[data-theme="dark"] .about-hero-text {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+[data-theme="dark"] .about-description {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .page-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .about-flow {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .about-flow-item {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .about-flow-arrow {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .overview-flow div {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .overview-flow span {
+  color: var(--text-secondary) !important;
+}
+
+
+
+
+[data-theme="dark"] .key-objective-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .key-objective-card h6 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .key-objective-card p {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .benefit-stakeholder-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .benefit-stakeholder-card h6 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .benefit-stakeholder-card p {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .benefit-stakeholder-icon {
+  background: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.2),
+    rgba(167, 139, 250, 0.2)
+  ) !important;
+  color: var(--hawker-deep) !important;
+}
+
+/* ============================================
+   Features Page Dark Mode Overrides
+   ============================================ */
+[data-theme="dark"] .feature-card-modern {
+  background: linear-gradient(165deg, #1e3a5f, #1d4ed8 58%, #0891b2) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .video-item {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .video-thumb {
+  background: linear-gradient(120deg, #1e3a5f, #0891b2) !important;
+}
+
+/* ============================================
+   Zones Page Dark Mode Overrides
+   ============================================ */
+[data-theme="dark"] .map-shell {
+  border-color: var(--card-border) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+[data-theme="dark"] .zone-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .zone-card:hover {
+  box-shadow: var(--shadow-lg) !important;
+}
+
+/* ============================================
+   FAQ Page Dark Mode Overrides
+   ============================================ */
+[data-theme="dark"] .faq-item {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] .faq-item summary {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .live-help-wrap {
+  background: linear-gradient(120deg, #1e3a5f, #1d4ed8) !important;
+}
+
+[data-theme="dark"] .support-card {
+  background: var(--card-bg) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+[data-theme="dark"] .download-row {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+
+
+
+
 
 .hawker-nav .btn-outline-light:hover {
   background: rgba(255, 255, 255, 0.25) !important;

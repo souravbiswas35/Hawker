@@ -1354,9 +1354,10 @@ async function getWomenSupportData(req, res, next) {
 
     // Get success stories
     const [successStories] = await pool.query(
-      `SELECT id, vendor_name, business_category, earnings_monthly, story_title, story_content, profile_picture_url, featured
+      `SELECT id, vendor_name, business_category, earnings_monthly, story_title, full_story, business_journey, is_approved
        FROM women_success_stories
-       ORDER BY featured DESC, created_at DESC`
+       WHERE is_approved = 1
+       ORDER BY created_at DESC`
     );
 
     // Get community posts count

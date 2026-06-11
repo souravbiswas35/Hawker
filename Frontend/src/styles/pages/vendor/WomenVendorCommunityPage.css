@@ -1,0 +1,112 @@
+/* Women Vendor Community Page Styles */
+
+.community-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.community-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.community-header h1 {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.community-header p {
+  opacity: 0.9;
+  margin-bottom: 0;
+}
+
+.community-stats-card {
+  transition: all 0.3s ease;
+}
+
+.community-stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.community-post-card {
+  transition: all 0.3s ease;
+}
+
+.community-post-card:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.post-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.post-actions button {
+  transition: all 0.2s ease;
+}
+
+.post-actions button:hover {
+  color: #667eea !important;
+}
+
+.community-sidebar-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .community-header {
+    padding: 1.5rem 0;
+  }
+
+  .community-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .community-stats-card {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.community-post-card {
+  animation: fadeIn 0.5s ease-out;
+}

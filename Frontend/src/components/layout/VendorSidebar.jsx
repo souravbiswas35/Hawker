@@ -82,6 +82,7 @@ const navigationCategories = [
     icon: FiUsers,
     subItems: [
       { title: "Women Vendor Support", path: "/vendor/women-support" },
+      { title: "Community Forum", path: "/vendor/women-support/community" },
     ],
   },
 ];

@@ -406,62 +406,93 @@ export default function VendorNotificationsPage() {
               <div className="category-preferences mb-4">
                 <div className="d-flex align-items-center gap-2 mb-3">
                   <FiMail className="text-secondary fs-4" />
-                  <h6 className="mb-0">Category alerts</h6>
+                  <div>
+                    <h5 className="mb-0">Category alerts</h5>
+                    <div className="text-muted small">Choose which categories you want to receive notifications for</div>
+                  </div>
                 </div>
-                <div className="preference-item small">
-                  <label className="form-check form-switch d-flex align-items-center justify-content-between mb-3">
-                    <span>License updates</span>
+                <div className="preference-item">
+                  <div>
+                    <strong>License updates</strong>
+                    <div className="text-muted small">Get notified about license status changes</div>
+                  </div>
+                  <label className="switch">
                     <input
-                      className="form-check-input"
                       type="checkbox"
                       checked={preferences.license_updates}
                       onChange={(e) => updatePreference("license_updates", e.target.checked)}
                     />
+                    <span className="slider" />
                   </label>
-                  <label className="form-check form-switch d-flex align-items-center justify-content-between mb-3">
-                    <span>Payment alerts</span>
+                </div>
+                <div className="preference-item">
+                  <div>
+                    <strong>Payment alerts</strong>
+                    <div className="text-muted small">Receive payment due notifications</div>
+                  </div>
+                  <label className="switch">
                     <input
-                      className="form-check-input"
                       type="checkbox"
                       checked={preferences.payment_alerts}
                       onChange={(e) => updatePreference("payment_alerts", e.target.checked)}
                     />
+                    <span className="slider" />
                   </label>
-                  <label className="form-check form-switch d-flex align-items-center justify-content-between mb-3">
-                    <span>Renewal reminders</span>
+                </div>
+                <div className="preference-item">
+                  <div>
+                    <strong>Renewal reminders</strong>
+                    <div className="text-muted small">Get alerts before license expires</div>
+                  </div>
+                  <label className="switch">
                     <input
-                      className="form-check-input"
                       type="checkbox"
                       checked={preferences.renewal_reminders}
                       onChange={(e) => updatePreference("renewal_reminders", e.target.checked)}
                     />
+                    <span className="slider" />
                   </label>
-                  <label className="form-check form-switch d-flex align-items-center justify-content-between mb-3">
-                    <span>Zone changes</span>
+                </div>
+                <div className="preference-item">
+                  <div>
+                    <strong>Zone changes</strong>
+                    <div className="text-muted small">Notifications about zone assignments</div>
+                  </div>
+                  <label className="switch">
                     <input
-                      className="form-check-input"
                       type="checkbox"
                       checked={preferences.zone_changes}
                       onChange={(e) => updatePreference("zone_changes", e.target.checked)}
                     />
+                    <span className="slider" />
                   </label>
-                  <label className="form-check form-switch d-flex align-items-center justify-content-between mb-3">
-                    <span>Inspection notices</span>
+                </div>
+                <div className="preference-item">
+                  <div>
+                    <strong>Inspection notices</strong>
+                    <div className="text-muted small">Alerts about scheduled inspections</div>
+                  </div>
+                  <label className="switch">
                     <input
-                      className="form-check-input"
                       type="checkbox"
                       checked={preferences.inspection_notices}
                       onChange={(e) => updatePreference("inspection_notices", e.target.checked)}
                     />
+                    <span className="slider" />
                   </label>
-                  <label className="form-check form-switch d-flex align-items-center justify-content-between mb-0">
-                    <span>System announcements</span>
+                </div>
+                <div className="preference-item">
+                  <div>
+                    <strong>System announcements</strong>
+                    <div className="text-muted small">Important system-wide updates</div>
+                  </div>
+                  <label className="switch">
                     <input
-                      className="form-check-input"
                       type="checkbox"
                       checked={preferences.system_announcements}
                       onChange={(e) => updatePreference("system_announcements", e.target.checked)}
                     />
+                    <span className="slider" />
                   </label>
                 </div>
               </div>
