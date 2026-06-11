@@ -5,6 +5,143 @@
   min-height: 100vh;
 }
 
+.card-title {
+  text-decoration: none !important;
+}
+
+.card h5,
+.card h6,
+.card-title,
+.card .card-title {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+.card h5:hover,
+.card h6:hover,
+.card-title:hover,
+.card .card-title:hover {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+.card-body h5,
+.card-body h6 {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.text-danger,
+.text-primary,
+.text-muted h5,
+.text-muted h6 {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.d-flex h5,
+.d-flex h6 {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+/* Remove all underlines from headings on this page */
+.women-support-page h1,
+.women-support-page h2,
+.women-support-page h3,
+.women-support-page h4,
+.women-support-page h5,
+.women-support-page h6 {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove underlines from all links */
+.women-support-page a,
+.women-support-page .btn-link {
+  text-decoration: none !important;
+}
+
+/* Target all h5 and h6 elements regardless of parent */
+h5, h6 {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+/* Target the flex containers that hold headings with icons */
+.d-flex.align-items-center {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.d-flex.align-items-center h5,
+.d-flex.align-items-center h6 {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  border: none !important;
+}
+
+/* Remove any borders from icon containers */
+.d-flex.align-items-center svg {
+  text-decoration: none !important;
+  border: none !important;
+}
+
+/* Very specific rules for the section headings */
+.card-body .d-flex.align-items-center h5.card-title {
+  text-decoration: none !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-decoration-line: none !important;
+  text-decoration-style: none !important;
+  text-decoration-color: transparent !important;
+}
+
+.card-body .d-flex.align-items-center h5.card-title.text-danger,
+.card-body .d-flex.align-items-center h5.card-title.text-primary {
+  text-decoration: none !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-decoration-line: none !important;
+  text-decoration-style: none !important;
+  text-decoration-color: transparent !important;
+}
+
+/* Perfect icon-text alignment */
+.d-flex.align-items-center {
+  align-items: center !important;
+}
+
+.d-flex.align-items-center svg,
+.d-flex.align-items-center i {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  flex-shrink: 0 !important;
+}
+
+.d-flex.align-items-center h5,
+.d-flex.align-items-center h6 {
+  display: flex !important;
+  align-items: center !important;
+  margin-bottom: 0 !important;
+  line-height: 1.2 !important;
+}
+
+/* Ensure all section heading containers have consistent spacing */
+.card-body > .d-flex.align-items-center {
+  min-height: 32px !important;
+}
+
 .women-support-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -270,4 +407,218 @@
 .spinner-border {
   width: 3rem;
   height: 3rem;
+}
+
+/* Page-specific alignment fixes for Women Vendor Support Page */
+
+/* Perfect icon-text alignment for section headers */
+.card-body .d-flex.align-items-center svg {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-body .d-flex.align-items-center h5,
+.card-body .d-flex.align-items-center h5.card-title {
+  margin-bottom: 0;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+}
+
+/* Card content alignment */
+.card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-body .d-flex.align-items-center {
+  flex-shrink: 0;
+}
+
+/* Badge alignment in cards */
+.card-body .badge {
+  align-self: flex-start;
+  line-height: 1.5;
+}
+
+/* Button alignment in cards */
+.card-body .btn {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Emergency SOS buttons alignment */
+.emergency-sos-card .row .col-md-4 .d-grid .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.emergency-sos-card .row .col-md-4 .d-grid .btn .badge {
+  margin-left: 0.5rem;
+  align-self: center;
+}
+
+/* Scheme cards alignment */
+.scheme-card .card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.scheme-card .card-body .d-flex {
+  flex-shrink: 0;
+}
+
+.scheme-card .card-body .btn {
+  margin-top: auto;
+}
+
+/* Mentor cards alignment */
+.mentor-card .card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mentor-card .card-body .d-flex {
+  flex-shrink: 0;
+}
+
+.mentor-card .card-body .btn {
+  margin-top: auto;
+}
+
+/* Success story cards alignment */
+.success-story-card .card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.success-story-card .card-body .d-flex {
+  flex-shrink: 0;
+}
+
+.success-story-card .card-body .btn-link {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* Safety guide items alignment */
+.safety-guide-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.safety-guide-item .flex-grow-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+.safety-guide-item .btn {
+  flex-shrink: 0;
+}
+
+/* Modal content alignment */
+.modal-body .d-flex.align-items-center {
+  flex-shrink: 0;
+}
+
+.modal-body h6 {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.modal-body p,
+.modal-body ul {
+  margin-bottom: 1rem;
+  line-height: 1.8;
+}
+
+.modal-body ul {
+  padding-left: 1.5rem;
+}
+
+.modal-body li {
+  margin-bottom: 0.5rem;
+}
+
+/* Header section alignment */
+.container .d-flex.justify-content-between.align-items-center {
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.container .d-flex.justify-content-between.align-items-center .badge {
+  flex-shrink: 0;
+}
+
+/* Ensure consistent card heights */
+.card.h-100 {
+  display: flex;
+  flex-direction: column;
+}
+
+.card.h-100 .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fix text alignment in cards */
+.card-body h6.card-title {
+  text-align: left;
+  margin-bottom: 0.5rem;
+}
+
+.card-body p.card-text {
+  text-align: left;
+  margin-bottom: 0.5rem;
+}
+
+.card-body small {
+  text-align: left;
+  display: block;
+}
+
+/* Icon circle alignment */
+.rounded-circle.d-flex.align-items-center.justify-content-center {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive alignment fixes */
+@media (max-width: 768px) {
+  .container .d-flex.justify-content-between.align-items-center {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .container .d-flex.justify-content-between.align-items-center .badge {
+    align-self: flex-start;
+  }
+
+  .safety-guide-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .safety-guide-item .btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
 }

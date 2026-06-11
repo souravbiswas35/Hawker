@@ -30,6 +30,7 @@ import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 import VendorSettingsPage from "./pages/vendor/VendorSettingsPage";
 import VendorInspectionHistoryPage from "./pages/vendor/VendorInspectionHistoryPage";
 import WomenVendorSupportPage from "./pages/vendor/WomenVendorSupportPage";
+import WomenVendorCommunityPage from "./pages/vendor/WomenVendorCommunityPage";
 import Feedback from "./pages/vendor/Feedback";
 import Announcements from "./pages/vendor/Announcements";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
@@ -49,6 +50,8 @@ import AdminWomenMentorshipApplicationsPage from "./pages/admin/AdminWomenMentor
 import AdminFeedbackPage from "./pages/admin/AdminFeedbackPage";
 import AdminAnnouncementsPage from "./pages/admin/AdminAnnouncementsPage";
 import AdminAddAnnouncement from "./pages/admin/AdminAddAnnouncement";
+import AdminSuccessStoriesPage from "./pages/admin/AdminSuccessStoriesPage";
+import AdminCommunityPostsPage from "./pages/admin/AdminCommunityPostsPage";
 
 function PageTransition({ children }) {
   const location = useLocation();
@@ -232,6 +235,14 @@ export default function App() {
             }
           />
           <Route
+            path="/vendor/women-support/community"
+            element={
+              <ProtectedRoute roles={["vendor"]}>
+                <WomenVendorCommunityPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/vendor/women-support/schemes/:schemeId"
             element={
               <ProtectedRoute roles={["vendor"]}>
@@ -381,6 +392,22 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminAddAnnouncement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/women-support/success-stories"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminSuccessStoriesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/women-support/community-posts"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminCommunityPostsPage />
               </ProtectedRoute>
             }
           />

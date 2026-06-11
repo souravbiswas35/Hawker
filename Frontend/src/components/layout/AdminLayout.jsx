@@ -135,6 +135,14 @@ export default function AdminLayout({ children }) {
           title: "Mentorship Applications",
           path: "/admin/women-support/mentorship-applications",
         },
+        {
+          title: "Success Stories",
+          path: "/admin/women-support/success-stories",
+        },
+        {
+          title: "Community Posts",
+          path: "/admin/women-support/community-posts",
+        },
       ],
     },
   ];

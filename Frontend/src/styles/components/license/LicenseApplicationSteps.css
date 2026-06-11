@@ -62,6 +62,46 @@
   border-color: #ffc107 !important;
 }
 
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .license-selection-card.selected {
+    background: linear-gradient(135deg, #4a3f00 0%, #2d2d2d 100%) !important;
+  }
+
+  .license-selection-card.selected-alternate {
+    background: linear-gradient(135deg, #0a3d4a 0%, #2d2d2d 100%) !important;
+  }
+
+  .license-selection-card:not(.selected):not(.selected-alternate) {
+    background: #2d2d2d !important;
+    border-color: #495057 !important;
+  }
+
+  .license-selection-card:not(.selected):not(.selected-alternate):hover {
+    border-color: #ffc107 !important;
+    background: #3d3d3d !important;
+  }
+}
+
+/* Dark mode via data attribute */
+[data-theme="dark"] .license-selection-card.selected {
+  background: linear-gradient(135deg, #4a3f00 0%, #2d2d2d 100%) !important;
+}
+
+[data-theme="dark"] .license-selection-card.selected-alternate {
+  background: linear-gradient(135deg, #0a3d4a 0%, #2d2d2d 100%) !important;
+}
+
+[data-theme="dark"] .license-selection-card:not(.selected):not(.selected-alternate) {
+  background: #2d2d2d !important;
+  border-color: #495057 !important;
+}
+
+[data-theme="dark"] .license-selection-card:not(.selected):not(.selected-alternate):hover {
+  border-color: #ffc107 !important;
+  background: #3d3d3d !important;
+}
+
 /* Checkmark animation for selected items */
 .selection-checkmark {
   animation: checkmarkPop 0.3s ease-out;

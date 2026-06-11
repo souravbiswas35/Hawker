@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 import api from "../../api/client";
+import VendorLayout from "../../components/layout/VendorLayout";
 
 export default function SchemeDetailPage() {
   const { schemeId } = useParams();
@@ -69,30 +70,35 @@ export default function SchemeDetailPage() {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
+      <VendorLayout>
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
         </div>
-      </div>
+      </VendorLayout>
     );
   }
 
   if (!scheme) {
     return (
-      <div className="container py-5">
-        <div className="alert alert-warning" role="alert">
-          Scheme not found
+      <VendorLayout>
+        <div className="container py-5">
+          <div className="alert alert-warning" role="alert">
+            Scheme not found
+          </div>
+          <button className="btn btn-primary" onClick={() => navigate("/vendor/women-support")}>
+            <FiArrowLeft className="me-2" />
+            Back to Women Support
+          </button>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate("/vendor/women-support")}>
-          <FiArrowLeft className="me-2" />
-          Back to Women Support
-        </button>
-      </div>
+      </VendorLayout>
     );
   }
 
   return (
-    <div className="container py-4">
+    <VendorLayout>
+      <div className="container py-4">
       <button
         className="btn btn-outline-secondary mb-4"
         onClick={() => navigate("/vendor/women-support")}
@@ -264,5 +270,6 @@ export default function SchemeDetailPage() {
         </div>
       </div>
     </div>
+    </VendorLayout>
   );
 }

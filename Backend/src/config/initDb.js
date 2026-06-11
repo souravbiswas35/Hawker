@@ -118,6 +118,93 @@ async function initializeDatabase() {
       console.log("Sample notifications added successfully");
     }
 
+    console.log("Checking women_success_stories table...");
+
+    // Drop and recreate women_success_stories table to ensure correct schema
+    await pool.query("DROP TABLE IF EXISTS women_success_stories");
+    console.log("Dropped existing women_success_stories table");
+    
+    console.log("Creating women_success_stories table...");
+    await pool.query(`
+      CREATE TABLE women_success_stories (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        vendor_name VARCHAR(255) NOT NULL,
+        business_category VARCHAR(255) NOT NULL,
+        earnings_monthly VARCHAR(255) NOT NULL,
+        story_title VARCHAR(255) NOT NULL,
+        full_story TEXT NOT NULL,
+        business_journey TEXT NOT NULL,
+        is_approved TINYINT(1) NOT NULL DEFAULT 0,
+        created_by BIGINT UNSIGNED NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_stories_approved (is_approved),
+        KEY idx_stories_created_by (created_by),
+        CONSTRAINT fk_stories_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE CASCADE
+      ) ENGINE = InnoDB
+    `);
+    console.log("women_success_stories table created successfully");
+
+    // Insert sample success stories if none exist
+    const [storiesCount] = await pool.query("SELECT COUNT(*) as count FROM women_success_stories");
+    if (storiesCount[0].count === 0) {
+      console.log("Adding sample success stories...");
+      await pool.query(`
+        INSERT INTO women_success_stories (vendor_name, business_category, earnings_monthly, story_title, full_story, business_journey, is_approved, created_by)
+        VALUES 
+          ('Afifa Tasnim', 'Handicrafts', '৳ 1 Lac/month', 'From Home to Market', 'Afifa started her handicraft business from her small home in Dhaka. With the help of the women vendor support program, she got a subsidy for her materials and training on business management. Today she runs a successful stall at Central Market Plaza.', 'Started with homemade crafts, received training and subsidy, expanded to market stall, now earning stable income.', 1, 2),
+          ('Rashida Akter', 'Food & Beverages', '৳ 80,000/month', 'Street Food Success', 'Rashida began selling traditional snacks from her home. After getting her vending license through Hawker, she secured a prime location at Jatra Bari Bus Stand. Her authentic recipes have made her a local favorite.', 'Home-based food business, got license through Hawker, secured prime location, became local favorite.', 1, 2),
+          ('Fatima Rahman', 'Clothing', '৳ 1.2 Lac/month', 'Fashion Forward', 'Fatima had a passion for fashion but no capital. The women vendor mentorship program connected her with experienced mentors who guided her business planning. She now operates a successful clothing stall.', 'Passion for fashion, joined mentorship program, got business guidance, successful clothing stall.', 1, 3)
+      `);
+      console.log("Sample success stories added successfully");
+    }
+
+    console.log("Checking women_community_posts table...");
+
+    // Drop and recreate women_community_posts table to ensure correct schema
+    await pool.query("DROP TABLE IF EXISTS women_community_posts");
+    console.log("Dropped existing women_community_posts table");
+    
+    console.log("Creating women_community_posts table...");
+    await pool.query(`
+      CREATE TABLE women_community_posts (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        author_id BIGINT UNSIGNED NOT NULL,
+        author_name VARCHAR(255) NOT NULL,
+        business_category VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        category ENUM('general', 'business', 'support', 'success', 'events') NOT NULL DEFAULT 'general',
+        likes_count INT NOT NULL DEFAULT 0,
+        comments_count INT NOT NULL DEFAULT 0,
+        is_approved TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_posts_author (author_id),
+        KEY idx_posts_category (category),
+        KEY idx_posts_approved (is_approved),
+        CONSTRAINT fk_posts_author FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE
+      ) ENGINE = InnoDB
+    `);
+    console.log("women_community_posts table created successfully");
+
+    // Insert sample community posts if none exist
+    const [postsCount] = await pool.query("SELECT COUNT(*) as count FROM women_community_posts");
+    if (postsCount[0].count === 0) {
+      console.log("Adding sample community posts...");
+      await pool.query(`
+        INSERT INTO women_community_posts (author_id, author_name, business_category, content, category, likes_count, comments_count, is_approved)
+        VALUES 
+          (2, 'Fatima Rahman', 'Food & Beverages', 'Just got my first vending license! Thanks to the Hawker platform, the process was so smooth. Any tips for a beginner?', 'success', 24, 8, 1),
+          (3, 'Ayesha Begum', 'Handicrafts', 'Does anyone know which zones have the best foot traffic for handicrafts? Looking to expand to a new location.', 'business', 15, 12, 1),
+          (2, 'Rashida Akter', 'Clothing', 'Great news! The women vendor support program helped me get a subsidy for my new stall. Highly recommend applying!', 'success', 42, 5, 1),
+          (3, 'Nusrat Jahan', 'Food & Beverages', 'Looking for advice on managing inventory during peak hours. How do you handle the rush?', 'support', 18, 9, 1),
+          (2, 'Shamima Akter', 'Handicrafts', 'Joining this community has been amazing! Learned so much from fellow women entrepreneurs. Let us support each other! 💪', 'general', 56, 14, 1)
+      `);
+      console.log("Sample community posts added successfully");
+    }
+
     console.log("Database initialization complete");
   } catch (err) {
     console.error("Error initializing database:", err);

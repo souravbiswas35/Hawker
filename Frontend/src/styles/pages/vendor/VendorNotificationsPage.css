@@ -138,13 +138,162 @@ input:checked + .slider:before {
   .preferences-card .card-body {
     padding: 1rem;
   }
-  
+
   .notification-stat-icon {
     width: 48px;
     height: 48px;
   }
-  
+
   .notification-stat-card h3 {
     font-size: 1.5rem;
   }
+}
+
+/* Category Preferences Alignment */
+.category-preferences {
+  margin-top: 1.5rem;
+}
+
+.category-preferences .d-flex.align-items-center {
+  margin-bottom: 1rem;
+}
+
+.category-preferences h5 {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.category-preferences .form-check {
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.category-preferences .form-check-input {
+  width: 3em;
+  height: 1.5em;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.category-preferences .form-check-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.category-preferences .form-check-label:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.category-preferences .form-check-label span {
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* Preferences Card Header Alignment */
+.preferences-card .d-flex.align-items-center {
+  margin-bottom: 1.5rem;
+}
+
+.preferences-card .d-flex.align-items-center svg {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.preferences-card h5 {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.preferences-card .text-muted.small {
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+/* Preference Items Alignment */
+.preference-group .preference-item {
+  padding: 1rem 0;
+}
+
+.preference-group .preference-item > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.preference-group .preference-item strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.preference-group .preference-item .text-muted.small {
+  line-height: 1.4;
+}
+
+/* Switch Toggle Alignment */
+.preference-item .switch {
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+/* Category Preferences Section Header */
+.category-preferences .d-flex.align-items-center svg {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.category-preferences .d-flex.align-items-center {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.category-preferences .d-flex.align-items-center h5 {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.category-preferences .d-flex.align-items-center .text-muted.small {
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+/* Form Check Switch Alignment */
+.category-preferences .form-check.form-switch {
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.category-preferences .form-check.form-switch .form-check-input {
+  margin-left: auto;
+  width: 3em;
+  height: 1.5em;
+}
+
+.category-preferences .form-check.form-switch .form-check-label {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.category-preferences .form-check.form-switch .form-check-label:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.category-preferences .form-check.form-switch .form-check-label span {
+  flex: 1;
+  line-height: 1.5;
 }

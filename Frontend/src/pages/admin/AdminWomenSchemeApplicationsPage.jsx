@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiCheck, FiX, FiEye, FiFilter } from "react-icons/fi";
 import api from "../../api/client";
+import AdminLayout from "../../components/layout/AdminLayout";
 
 export default function AdminWomenSchemeApplicationsPage() {
   const [applications, setApplications] = useState([]);
@@ -74,12 +75,13 @@ export default function AdminWomenSchemeApplicationsPage() {
   }
 
   return (
-    <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 className="fw-bold mb-1">Scheme Applications</h2>
-          <p className="text-muted mb-0">Women Vendor Support - Manage scheme applications</p>
-        </div>
+    <AdminLayout>
+      <div className="container py-4">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 className="fw-bold mb-1">Scheme Applications</h2>
+            <p className="text-muted mb-0">Women Vendor Support - Manage scheme applications</p>
+          </div>
         <div className="d-flex align-items-center gap-2">
           <FiFilter className="text-muted" />
           <select
@@ -275,5 +277,6 @@ export default function AdminWomenSchemeApplicationsPage() {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 }

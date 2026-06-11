@@ -14,7 +14,7 @@ async function start() {
       console.log(`Hawker backend is running on port ${port}`);
     });
   } catch (err) {
-    console.error("Failed to start server:", err.message);
+    console.error("Failed to start server:", err);
     process.exit(1);
   }
 }
