@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiPhone, FiShield, FiUsers, FiAward, FiBookOpen, FiAlertTriangle, FiDownload, FiArrowRight, FiCheckCircle } from "react-icons/fi";
+import { FiPhone, FiShield, FiUsers, FiAward, FiBookOpen, FiAlertTriangle, FiDownload, FiArrowRight, FiCheckCircle, FiHeart } from "react-icons/fi";
 import api from "../../api/client";
+import PageTitle from "../../components/common/PageTitle";
 import VendorLayout from "../../components/layout/VendorLayout";
 import "../../styles/pages/vendor/WomenVendorSupportPage.css";
 
@@ -94,25 +95,29 @@ export default function WomenVendorSupportPage() {
 
   if (!canAccess) {
     return (
-      <div className="container py-5">
-        <div className="row justify-content-center">
-          <div className="col-md-8">
-            <div className="card shadow-sm border-0">
-              <div className="card-body text-center py-5">
-                <FiShield className="text-warning mb-3" style={{ fontSize: "4rem" }} />
-                <h3 className="card-title mb-3">Access Restricted</h3>
-                <p className="card-text text-muted fs-5">{accessMessage}</p>
-                <button
-                  className="btn btn-primary mt-3"
-                  onClick={() => navigate("/vendor/dashboard")}
-                >
-                  Return to Dashboard
-                </button>
+      <VendorLayout>
+        <div className="container py-5">
+          <div className="row justify-content-center">
+            <div className="col-md-8">
+              <div className="card shadow-sm border-0">
+                <div className="card-body text-center py-5">
+                  <div className="d-flex justify-content-center mb-3">
+                    <FiShield className="text-warning" style={{ fontSize: "4rem" }} />
+                  </div>
+                  <h3 className="card-title mb-3">Access Restricted</h3>
+                  <p className="card-text text-muted fs-5">{accessMessage}</p>
+                  <button
+                    className="btn btn-primary mt-3"
+                    onClick={() => navigate("/vendor/dashboard")}
+                  >
+                    Return to Dashboard
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </VendorLayout>
     );
   }
 
@@ -128,14 +133,15 @@ export default function WomenVendorSupportPage() {
 
   return (
     <VendorLayout>
+      <PageTitle
+        title="Women Vendor Support"
+        subtitle="Special features and support for women entrepreneurs"
+        icon={FiHeart}
+        iconSize={62}
+        className="mb-4"
+      />
       <div className="container py-4">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 className="fw-bold mb-1" style={{ color: "var(--hawker-ink)" }}>
-              Women Vendor Support
-            </h2>
-            <p className="text-muted mb-0">Special features and support for women entrepreneurs</p>
-          </div>
+        <div className="d-flex justify-content-end align-items-center mb-4">
           <span className="badge bg-success fs-6">Special Feature</span>
         </div>
 

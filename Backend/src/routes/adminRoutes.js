@@ -18,6 +18,7 @@ const {
 const inspectionController = require("../controllers/inspectionController");
 const {
   getReportsOverview,
+  getReportData,
   generateReport,
   listNotifications,
   createNotification,
@@ -43,6 +44,7 @@ router.get("/applications/:id", getApplicationDetails);
 router.patch("/applications/:id/review", reviewApplication);
 
 router.get("/reports/overview", getReportsOverview);
+router.get("/reports/data", getReportData);
 router.post("/reports/generate", generateReport);
 
 router.get("/notifications", listNotifications);

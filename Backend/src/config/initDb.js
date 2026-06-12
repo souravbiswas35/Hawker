@@ -120,6 +120,9 @@ async function initializeDatabase() {
 
     console.log("Checking women_success_stories table...");
 
+    // Disable foreign key checks to allow dropping tables
+    await pool.query("SET FOREIGN_KEY_CHECKS = 0");
+
     // Drop and recreate women_success_stories table to ensure correct schema
     await pool.query("DROP TABLE IF EXISTS women_success_stories");
     console.log("Dropped existing women_success_stories table");
@@ -204,6 +207,9 @@ async function initializeDatabase() {
       `);
       console.log("Sample community posts added successfully");
     }
+
+    // Re-enable foreign key checks
+    await pool.query("SET FOREIGN_KEY_CHECKS = 1");
 
     console.log("Database initialization complete");
   } catch (err) {

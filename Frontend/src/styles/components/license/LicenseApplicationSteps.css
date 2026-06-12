@@ -5,11 +5,14 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
+  background: #ffffff !important;
+  border: 2px solid #dee2e6 !important;
 }
 
 .license-selection-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(255, 193, 7, 0.2);
+  background: #ffffff !important;
 }
 
 /* Selected state - prominent border and pop-up effect */
@@ -60,10 +63,21 @@
 
 .license-selection-card:not(.selected):not(.selected-alternate):hover {
   border-color: #ffc107 !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
 }
 
 /* Light mode explicit styles */
 @media (prefers-color-scheme: light) {
+  .license-selection-card {
+    background: #ffffff !important;
+    border-color: #dee2e6 !important;
+  }
+
+  .license-selection-card:hover {
+    background: #ffffff !important;
+  }
+
   .license-selection-card.selected {
     background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%) !important;
   }
@@ -76,6 +90,19 @@
     background: #ffffff !important;
     border-color: #dee2e6 !important;
   }
+
+  .license-selection-card:not(.selected):not(.selected-alternate):hover {
+    background: #ffffff !important;
+  }
+}
+
+[data-theme="light"] .license-selection-card {
+  background: #ffffff !important;
+  border-color: #dee2e6 !important;
+}
+
+[data-theme="light"] .license-selection-card:hover {
+  background: #ffffff !important;
 }
 
 [data-theme="light"] .license-selection-card.selected {
@@ -91,8 +118,17 @@
   border-color: #dee2e6 !important;
 }
 
+[data-theme="light"] .license-selection-card:not(.selected):not(.selected-alternate):hover {
+  background: #ffffff !important;
+}
+
 /* Dark mode styles */
 @media (prefers-color-scheme: dark) {
+  .license-selection-card {
+    background: #2d2d2d !important;
+    border-color: #495057 !important;
+  }
+
   .license-selection-card.selected {
     background: linear-gradient(135deg, #4a3f00 0%, #2d2d2d 100%) !important;
   }
@@ -113,6 +149,11 @@
 }
 
 /* Dark mode via data attribute */
+[data-theme="dark"] .license-selection-card {
+  background: #2d2d2d !important;
+  border-color: #495057 !important;
+}
+
 [data-theme="dark"] .license-selection-card.selected {
   background: linear-gradient(135deg, #4a3f00 0%, #2d2d2d 100%) !important;
 }
@@ -154,21 +195,22 @@
 .license-selection-card::after {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 193, 7, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.4s, height 0.4s, opacity 0.4s;
+  top:0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  background: rgba(255, 169, 70, 0.2);
   opacity: 0;
-  pointer-events: none;
+  pointer-events: auto;
+  transition: opacity 0.5s ease;
 }
 
 .license-selection-card:active::after {
-  width: 200%;
-  height: 200%;
-  opacity: 1;
-  transition: 0s;
+  width: 1%;
+  height: 1%;
+  opacity: 50;
+  transition: 0s
 }

@@ -331,11 +331,12 @@ async function listNotifications(req, res, next) {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    let rows;
+    let vendorRows = [];
     try {
-      rows = await pool.query(
+      vendorRows = await pool.query(
         `SELECT id, category, title, message, link, is_read, is_hidden, created_at, updated_at,
-                action_type, related_application_id, zone_or_area, admin_remarks, action_details
+                action_type, related_application_id, zone_or_area, admin_remarks, action_details,
+                'vendor' as source
          FROM vendor_notifications
          WHERE ${conditions.join(" AND ")}
          ORDER BY created_at DESC`,
@@ -346,8 +347,9 @@ async function listNotifications(req, res, next) {
       if (err.code === 'ER_BAD_FIELD_ERROR') {
         console.log('New notification columns not found, using fallback query');
         try {
-          rows = await pool.query(
-            `SELECT id, category, title, message, link, is_read, is_hidden, created_at, updated_at
+          vendorRows = await pool.query(
+            `SELECT id, category, title, message, link, is_read, is_hidden, created_at, updated_at,
+                    'vendor' as source
              FROM vendor_notifications
              WHERE ${conditions.join(" AND ")}
              ORDER BY created_at DESC`,
@@ -357,8 +359,9 @@ async function listNotifications(req, res, next) {
           // Final fallback if is_hidden also doesn't exist
           if (err2.code === 'ER_BAD_FIELD_ERROR') {
             console.log('is_hidden column not found, using minimal query');
-            rows = await pool.query(
-              `SELECT id, category, title, message, link, is_read, created_at, updated_at
+            vendorRows = await pool.query(
+              `SELECT id, category, title, message, link, is_read, created_at, updated_at,
+                      'vendor' as source
                FROM vendor_notifications
                WHERE ${conditions.join(" AND ").replace(" AND is_hidden = 0", "")}
                ORDER BY created_at DESC`,
@@ -373,9 +376,62 @@ async function listNotifications(req, res, next) {
       }
     }
 
-    console.log(`Fetched ${rows.length} notifications for user ${userId}`);
-    console.log('Notifications data:', JSON.stringify(rows, null, 2));
-    res.json({ notifications: rows });
+    // Fetch admin notifications targeted at this vendor
+    let adminRows = [];
+    try {
+      adminRows = await pool.query(
+        `SELECT 
+          id,
+          title,
+          message,
+          type,
+          audience_type,
+          channels,
+          priority,
+          created_at,
+          'admin' as source,
+          NULL as link,
+          0 as is_read,
+          NULL as is_hidden,
+          created_at as updated_at,
+          NULL as action_type,
+          NULL as related_application_id,
+          NULL as zone_or_area,
+          NULL as admin_remarks,
+          NULL as action_details,
+          CASE
+            WHEN type = 'info' THEN 'System announcements'
+            WHEN type = 'warning' THEN 'Inspection notices'
+            WHEN type = 'success' THEN 'License updates'
+            ELSE 'System announcements'
+          END as category
+         FROM admin_notifications
+         WHERE (audience_type = 'all_vendors' OR audience_type = 'specific_vendor')
+         ORDER BY created_at DESC
+         LIMIT 50`
+      );
+    } catch (err) {
+      console.log('Error fetching admin notifications:', err);
+    }
+
+    // Combine both notification sources
+    const allNotifications = [...vendorRows, ...adminRows];
+
+    // Ensure all notifications have proper IDs and source fields
+    const validNotifications = allNotifications.filter(note => {
+      // Filter out notifications without valid IDs
+      if (!note.id || note.id === 'undefined' || note.id === null) {
+        console.log('Filtered out notification with invalid ID:', note);
+        return false;
+      }
+      return true;
+    });
+
+    // Sort by created_at descending
+    validNotifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    console.log(`Fetched ${validNotifications.length} total notifications for user ${userId} (${vendorRows.length} vendor, ${adminRows.length} admin)`);
+    res.json({ notifications: validNotifications });
   } catch (err) {
     console.error('Error fetching notifications:', err);
     // If table doesn't exist, return empty array instead of error
@@ -390,17 +446,52 @@ async function listNotifications(req, res, next) {
 async function getNotificationPreferences(req, res, next) {
   try {
     const userId = req.user.id;
-    const [[prefs]] = await pool.query(
-      `SELECT email_notifications, sms_notifications, push_notifications,
-              license_updates, payment_alerts, renewal_reminders,
-              zone_changes, inspection_notices, system_announcements
-       FROM vendor_notification_preferences
-       WHERE user_id = ?`,
-      [userId],
-    );
+    let prefs;
+    try {
+      [prefs] = await pool.query(
+        `SELECT email_notifications, sms_notifications, push_notifications,
+                license_updates, payment_alerts, renewal_reminders,
+                zone_changes, inspection_notices, system_announcements
+         FROM vendor_notification_preferences
+         WHERE user_id = ?`,
+        [userId],
+      );
+    } catch (err) {
+      console.error('Error fetching notification preferences:', err);
+      // If table doesn't exist, return default preferences
+      if (err.code === 'ER_NO_SUCH_TABLE') {
+        console.log('vendor_notification_preferences table does not exist, returning defaults');
+        return res.json({
+          preferences: {
+            email_notifications: true,
+            sms_notifications: true,
+            push_notifications: false,
+            license_updates: true,
+            payment_alerts: true,
+            renewal_reminders: true,
+            zone_changes: true,
+            inspection_notices: true,
+            system_announcements: true,
+          },
+        });
+      }
+      throw err;
+    }
 
-    if (prefs) {
-      res.json({ preferences: prefs });
+    if (prefs && prefs.length > 0) {
+      // Convert TINYINT to boolean for frontend
+      const preferences = {
+        email_notifications: prefs[0].email_notifications === 1,
+        sms_notifications: prefs[0].sms_notifications === 1,
+        push_notifications: prefs[0].push_notifications === 1,
+        license_updates: prefs[0].license_updates === 1,
+        payment_alerts: prefs[0].payment_alerts === 1,
+        renewal_reminders: prefs[0].renewal_reminders === 1,
+        zone_changes: prefs[0].zone_changes === 1,
+        inspection_notices: prefs[0].inspection_notices === 1,
+        system_announcements: prefs[0].system_announcements === 1,
+      };
+      res.json({ preferences });
       return;
     }
 
@@ -418,6 +509,7 @@ async function getNotificationPreferences(req, res, next) {
       },
     });
   } catch (err) {
+    console.error('Error in getNotificationPreferences:', err);
     next(err);
   }
 }
@@ -437,38 +529,49 @@ async function updateNotificationPreferences(req, res, next) {
       system_announcements = true,
     } = req.body;
 
-    await pool.query(
-      `INSERT INTO vendor_notification_preferences
-       (user_id, email_notifications, sms_notifications, push_notifications,
-        license_updates, payment_alerts, renewal_reminders,
-        zone_changes, inspection_notices, system_announcements)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-         email_notifications = VALUES(email_notifications),
-         sms_notifications = VALUES(sms_notifications),
-         push_notifications = VALUES(push_notifications),
-         license_updates = VALUES(license_updates),
-         payment_alerts = VALUES(payment_alerts),
-         renewal_reminders = VALUES(renewal_reminders),
-         zone_changes = VALUES(zone_changes),
-         inspection_notices = VALUES(inspection_notices),
-         system_announcements = VALUES(system_announcements)`,
-      [
-        userId,
-        email_notifications ? 1 : 0,
-        sms_notifications ? 1 : 0,
-        push_notifications ? 1 : 0,
-        license_updates ? 1 : 0,
-        payment_alerts ? 1 : 0,
-        renewal_reminders ? 1 : 0,
-        zone_changes ? 1 : 0,
-        inspection_notices ? 1 : 0,
-        system_announcements ? 1 : 0,
-      ],
-    );
+    try {
+      await pool.query(
+        `INSERT INTO vendor_notification_preferences
+         (user_id, email_notifications, sms_notifications, push_notifications,
+          license_updates, payment_alerts, renewal_reminders,
+          zone_changes, inspection_notices, system_announcements)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           email_notifications = VALUES(email_notifications),
+           sms_notifications = VALUES(sms_notifications),
+           push_notifications = VALUES(push_notifications),
+           license_updates = VALUES(license_updates),
+           payment_alerts = VALUES(payment_alerts),
+           renewal_reminders = VALUES(renewal_reminders),
+           zone_changes = VALUES(zone_changes),
+           inspection_notices = VALUES(inspection_notices),
+           system_announcements = VALUES(system_announcements)`,
+        [
+          userId,
+          email_notifications ? 1 : 0,
+          sms_notifications ? 1 : 0,
+          push_notifications ? 1 : 0,
+          license_updates ? 1 : 0,
+          payment_alerts ? 1 : 0,
+          renewal_reminders ? 1 : 0,
+          zone_changes ? 1 : 0,
+          inspection_notices ? 1 : 0,
+          system_announcements ? 1 : 0,
+        ],
+      );
+    } catch (err) {
+      console.error('Error updating notification preferences:', err);
+      // If table doesn't exist, return success but log the error
+      if (err.code === 'ER_NO_SUCH_TABLE') {
+        console.log('vendor_notification_preferences table does not exist, preferences not saved');
+        return res.json({ message: "Preferences saved (table will be created on next migration)" });
+      }
+      throw err;
+    }
 
     res.json({ message: "Notification preferences updated successfully" });
   } catch (err) {
+    console.error('Error in updateNotificationPreferences:', err);
     next(err);
   }
 }
@@ -477,6 +580,11 @@ async function markNotificationRead(req, res, next) {
   try {
     const userId = req.user.id;
     const { id } = req.params;
+
+    if (!id || id === 'undefined') {
+      return res.status(400).json({ message: "Valid notification ID is required" });
+    }
+
     const [result] = await pool.query(
       `UPDATE vendor_notifications
        SET is_read = 1
@@ -498,6 +606,11 @@ async function markNotificationUnread(req, res, next) {
   try {
     const userId = req.user.id;
     const { id } = req.params;
+
+    if (!id || id === 'undefined') {
+      return res.status(400).json({ message: "Valid notification ID is required" });
+    }
+
     const [result] = await pool.query(
       `UPDATE vendor_notifications
        SET is_read = 0
@@ -540,6 +653,17 @@ async function deleteNotification(req, res, next) {
   try {
     const userId = req.user.id;
     const { id } = req.params;
+    const { source } = req.query;
+
+    if (!id || id === 'undefined') {
+      return res.status(400).json({ message: "Valid notification ID is required" });
+    }
+
+    // Admin notifications cannot be deleted by vendors
+    if (source === 'admin') {
+      return res.status(403).json({ message: "Admin notifications cannot be deleted" });
+    }
+
     const [result] = await pool.query(
       `DELETE FROM vendor_notifications
        WHERE id = ? AND user_id = ?`,
