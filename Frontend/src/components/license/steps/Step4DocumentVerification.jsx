@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { FiUpload, FiFile, FiCheck, FiAlertCircle, FiDownload } from "react-icons/fi";
 import api from "../../../api/client";
-import "../../../styles/components/license/LicenseApplicationSteps.css";
 
 const requiredDocuments = [
   { id: 'national_id', name: 'National ID', required: true, description: 'Front and back of your national ID card' },
@@ -149,7 +148,7 @@ export default function Step4DocumentVerification({ onSubmit, data, loading, onV
 
             return (
               <div key={doc.id} className="col-md-6">
-                <div className={`card h-100 license-selection-card ${isUploaded ? 'selected' : ''}`}>
+                <div className={`card h-100 ${isUploaded ? 'border-success bg-light' : 'border-secondary'}`}>
                   <div className="card-body">
                     <div className="d-flex justify-content-between align-items-start mb-2">
                       <div>
@@ -159,7 +158,7 @@ export default function Step4DocumentVerification({ onSubmit, data, loading, onV
                         </h6>
                         <small className="text-muted">{doc.description}</small>
                       </div>
-                      {isUploaded && <FiCheck className="text-success selection-checkmark" />}
+                      {isUploaded && <FiCheck className="text-success" />}
                     </div>
 
                     {existingDoc ? (
@@ -173,7 +172,7 @@ export default function Step4DocumentVerification({ onSubmit, data, loading, onV
                         <small>Uploaded: {documents[doc.id].fileName}</small>
                       </div>
                     ) : (
-                      <div className="text-center py-3 border border-dashed rounded mb-2">
+                      <div className="border border-dashed rounded mb-2 p-3">
                         <input
                           type="file"
                           id={`file-${doc.id}`}
@@ -182,25 +181,25 @@ export default function Step4DocumentVerification({ onSubmit, data, loading, onV
                           onChange={(e) => handleFileUpload(doc.id, e.target.files)}
                           disabled={isCurrentlyUploading}
                         />
-                        <label
-                          htmlFor={`file-${doc.id}`}
-                          className={`cursor-pointer ${isCurrentlyUploading ? 'text-muted' : 'text-warning'}`}
+                        <button
+                          type="button"
+                          className="btn btn-outline-warning w-100"
+                          onClick={() => document.getElementById(`file-${doc.id}`).click()}
+                          disabled={isCurrentlyUploading}
                         >
                           {isCurrentlyUploading ? (
-                            <div>
-                              <div className="spinner-border spinner-border-sm me-2" />
-                              <small>Uploading...</small>
-                            </div>
+                            <span>
+                              <div className="spinner-border spinner-border-sm me-2 d-inline-block" />
+                              Uploading...
+                            </span>
                           ) : (
-                            <div>
-                              <FiUpload size={24} className="mb-2" />
-                              <br />
-                              <small>Click to upload</small>
-                              <br />
-                              <small className="text-muted">PNG, JPG, PDF (Max 5MB)</small>
-                            </div>
+                            <span>
+                              <FiUpload className="me-2" />
+                              Upload Document
+                            </span>
                           )}
-                        </label>
+                        </button>
+                        <small className="text-muted d-block text-center mt-2">PNG, JPG, PDF (Max 5MB)</small>
                       </div>
                     )}
 

@@ -1,5 +1,7 @@
 const pool = require("../config/db");
 const ApiError = require("../utils/apiError");
+const fs = require("fs");
+const path = require("path");
 
 function buildTrackingNumber() {
   const timestamp = Date.now().toString().slice(-6);
@@ -158,12 +160,14 @@ async function updateApplicationStep(req, res, next) {
           break;
 
         case 4: // Document Verification
+          // Don't overwrite document_verification - it's already updated by the upload endpoint
+          // Just update the step progress
           await connection.query(
             `UPDATE license_applications 
-            SET document_verification = ?, current_step = 5,
+            SET current_step = 5,
                 completed_steps = JSON_ARRAY_APPEND(completed_steps, '$', 'document_verification')
             WHERE id = ?`,
-            [JSON.stringify(data), applicationId]
+            [applicationId]
           );
           break;
 
@@ -288,11 +292,76 @@ async function getUserApplications(req, res, next) {
   }
 }
 
+// Upload document for license application
+async function uploadApplicationDocument(req, res, next) {
+  try {
+    const { applicationId } = req.params;
+    const { documentType } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      throw new ApiError(400, "Please upload a document");
+    }
+
+    if (!documentType) {
+      throw new ApiError(400, "Document type is required");
+    }
+
+    // Verify application belongs to user
+    const [[application]] = await pool.query(
+      "SELECT * FROM license_applications WHERE id = ? AND user_id = ?",
+      [applicationId, req.user.id]
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    // Get existing document verification data
+    let documentVerification = {};
+    if (application.document_verification) {
+      try {
+        documentVerification = JSON.parse(application.document_verification);
+      } catch (e) {
+        documentVerification = {};
+      }
+    }
+
+    // Update document verification with file info
+    documentVerification[documentType] = {
+      fileName: file.originalname,
+      storedName: file.filename,
+      mimeType: file.mimetype,
+      fileSize: file.size,
+      uploadedAt: new Date().toISOString(),
+      uploaded: true
+    };
+
+    // Update the application with new document verification data
+    await pool.query(
+      `UPDATE license_applications 
+       SET document_verification = ? 
+       WHERE id = ?`,
+      [JSON.stringify(documentVerification), applicationId]
+    );
+
+    res.json({
+      message: "Document uploaded successfully",
+      documentType,
+      fileName: file.originalname,
+      storedName: file.filename
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getLicenseTypes,
   getVendingZones,
   createApplication,
   updateApplicationStep,
   getApplication,
-  getUserApplications
+  getUserApplications,
+  uploadApplicationDocument
 };

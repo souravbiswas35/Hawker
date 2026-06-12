@@ -117,7 +117,7 @@ export default function LicenseApplication() {
   const renderStep = () => {
     const stepProps = {
       onSubmit: handleStepSubmit,
-      data: applicationData,
+      data: { ...applicationData, applicationId },
       licenseTypes,
       zones,
       loading,
@@ -245,7 +245,7 @@ export default function LicenseApplication() {
             )}
             {currentStep < 6 && (
               <button
-                className="btn btn-warning px-4 rounded-pill"
+                className="btn btn-warning px-4 rounded-pill ms-auto"
                 onClick={handleContinue}
                 disabled={!stepValid || loading}
               >
