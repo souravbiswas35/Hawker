@@ -203,10 +203,10 @@ export default function LicenseApplication() {
                     onClick={() => step.id < currentStep && setCurrentStep(step.id)}
                   >
                     <div
-                      className={`d-inline-flex align-items-center justify-content-center rounded-circle mb-1 ${
-                        isActive ? "bg-warning text-dark" : isCompleted ? "bg-success text-white" : "bg-secondary"
+                      className={`d-inline-flex align-items-center justify-content-center mb-1 ${
+                        isActive ? "bg-warning text-dark" : isCompleted ? "bg-success text-white" : "bg-light border"
                       }`}
-                      style={{ width: "32px", height: "32px" }}
+                      style={{ width: "32px", height: "32px", borderRadius: "4px" }}
                     >
                       {isCompleted ? <FiCheck size={16} /> : <Icon size={16} />}
                     </div>

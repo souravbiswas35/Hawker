@@ -80,6 +80,159 @@
   font-size: 0.8rem;
 }
 
+/* Post card alignment improvements */
+.community-post-card .card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.community-post-card .d-flex.align-items-start {
+  flex-shrink: 0;
+}
+
+.community-post-card .flex-grow-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Stats cards alignment */
+.community-stats-card .card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.community-stats-card h3 {
+  margin: 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.community-stats-card small {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Search and filter section */
+.search-filter-section .card-body {
+  padding: 1rem;
+}
+
+.search-filter-section .form-control,
+.search-filter-section .form-select {
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+/* Comments section styling */
+.comments-section {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.comment-item {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.comment-item .d-flex {
+  gap: 0.5rem;
+}
+
+.comment-input-section {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.comment-input-section .form-control {
+  flex: 1;
+}
+
+/* Share modal styling */
+.share-modal .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 2px solid !important;
+}
+
+.share-modal .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.share-modal .btn-outline-primary {
+  border-color: #1877f2 !important;
+  color: #1877f2 !important;
+}
+
+.share-modal .btn-outline-primary:hover {
+  background-color: #1877f2 !important;
+  color: white !important;
+}
+
+.share-modal .btn-outline-success {
+  border-color: #25d366 !important;
+  color: #25d366 !important;
+}
+
+.share-modal .btn-outline-success:hover {
+  background-color: #25d366 !important;
+  color: white !important;
+}
+
+.share-modal .btn-outline-info {
+  border-color: #1da1f2 !important;
+  color: #1da1f2 !important;
+}
+
+.share-modal .btn-outline-info:hover {
+  background-color: #1da1f2 !important;
+  color: white !important;
+}
+
+.share-modal .btn-outline-secondary {
+  border-color: #6c757d !important;
+  color: #6c757d !important;
+}
+
+.share-modal .btn-outline-secondary:hover {
+  background-color: #6c757d !important;
+  color: white !important;
+}
+
+/* Sidebar cards alignment */
+.community-sidebar-card .card-body {
+  padding: 1rem;
+}
+
+.community-sidebar-card h6 {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.community-sidebar-card .badge {
+  margin: 0.25rem;
+  font-size: 0.875rem;
+}
+
+/* Active members section */
+.active-members-section .d-flex {
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .community-header {
@@ -92,6 +245,25 @@
 
   .community-stats-card {
     margin-bottom: 1rem;
+  }
+
+  .post-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .post-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .comment-input-section {
+    flex-direction: column;
+  }
+
+  .comment-input-section .btn {
+    width: 100%;
   }
 }
 
@@ -109,4 +281,23 @@
 
 .community-post-card {
   animation: fadeIn 0.5s ease-out;
+}
+
+/* Like button active state */
+.post-actions button.text-primary {
+  color: #667eea !important;
+}
+
+/* Save button active state */
+.post-actions button.text-warning {
+  color: #ffc107 !important;
+}
+
+/* Modal improvements */
+.modal-dialog {
+  max-width: 500px;
+}
+
+.modal-body .d-grid {
+  gap: 0.5rem;
 }

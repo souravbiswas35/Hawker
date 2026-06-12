@@ -145,6 +145,13 @@ export default function AdminLayout({ children }) {
         },
       ],
     },
+    {
+      title: "Logout",
+      icon: FiLogOut,
+      path: "/logout",
+      badge: null,
+      isLogout: true,
+    },
   ];
 
   return (
@@ -185,6 +192,29 @@ export default function AdminLayout({ children }) {
             const hasSubItems = item.subItems && item.subItems.length > 0;
             const isExpanded = expandedItems[item.title] || isAnySubItemActive(item.subItems);
             const isItemActive = isActive(item.path);
+            const isLogout = item.isLogout;
+
+            if (isLogout) {
+              return (
+                <button
+                  key={index}
+                  className="admin-nav-item text-danger border-0 bg-transparent w-100 text-start"
+                  onClick={handleLogout}
+                  style={{
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = "rgba(220, 53, 69, 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = "transparent";
+                  }}
+                >
+                  <item.icon className="admin-nav-icon" />
+                  <span className="admin-nav-text">{item.title}</span>
+                </button>
+              );
+            }
 
             if (hasSubItems) {
               return (
@@ -234,57 +264,6 @@ export default function AdminLayout({ children }) {
             );
           })}
         </nav>
-
-        <div className="admin-sidebar-footer">
-          <div className="d-flex align-items-center gap-2 mb-2">
-            <div
-              className="position-relative"
-              style={{ cursor: "pointer" }}
-              onClick={() => navigate("/admin/dashboard")}
-              title="Admin"
-            >
-              <div
-                className="rounded-circle d-flex align-items-center justify-content-center bg-light"
-                style={{
-                  width: "30px",
-                  height: "30px",
-                  border: "2px solid rgba(31, 122, 159, 0.3)",
-                }}
-              >
-                <FiUser />
-              </div>
-              <span
-                className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
-                style={{
-                  fontSize: "0.65rem",
-                  padding: "0.25rem 0.5rem",
-                  opacity: 0,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => e.target.style.opacity = "1"}
-                onMouseLeave={(e) => e.target.style.opacity = "0"}
-              >
-                Admin
-              </span>
-            </div>
-          </div>
-          <button
-            className="admin-nav-item text-danger border-0 bg-transparent w-100 text-start"
-            onClick={handleLogout}
-            style={{
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "rgba(220, 53, 69, 0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "transparent";
-            }}
-          >
-            <FiLogOut className="admin-nav-icon" />
-            <span className="admin-nav-text">Logout</span>
-          </button>
-        </div>
       </div>
 
       {/* Main Content */}

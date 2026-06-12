@@ -88,6 +88,15 @@ export default function VendorNotificationsPage() {
     fetchNotifications();
   }, [currentCategory, searchText, statusFilter]);
 
+  // Real-time notification refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [currentCategory, searchText, statusFilter]);
+
   const updatePreference = (key, value) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
@@ -104,6 +113,16 @@ export default function VendorNotificationsPage() {
   };
 
   const toggleRead = async (notification) => {
+    // Admin notifications cannot be marked as read/unread
+    if (notification.source === 'admin' || !notification.source) {
+      return;
+    }
+    
+    if (!notification.id || notification.id === 'undefined') {
+      setError("Notification ID is missing");
+      return;
+    }
+    
     try {
       await api.patch(
         `/vendor/notifications/${notification.id}/${notification.is_read ? "unread" : "read"}`,
@@ -114,9 +133,19 @@ export default function VendorNotificationsPage() {
     }
   };
 
-  const deleteNotification = async (id) => {
+  const deleteNotification = async (id, source) => {
+    // Admin notifications cannot be deleted
+    if (source === 'admin' || !source) {
+      return;
+    }
+    
+    if (!id || id === 'undefined') {
+      setError("Notification ID is missing");
+      return;
+    }
+    
     try {
-      await api.delete(`/vendor/notifications/${id}`);
+      await api.delete(`/vendor/notifications/${id}`, { params: { source } });
       setNotifications((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       setError(err.response?.data?.message || "Unable to delete notification.");
@@ -314,26 +343,30 @@ export default function VendorNotificationsPage() {
                           <div className="d-flex gap-3 text-muted small">
                             <span>
                               <FiCalendar className="me-1" />
-                              {new Date(note.created_at).toLocaleDateString()}
+                              {note.created_at ? new Date(note.created_at).toLocaleDateString() : 'N/A'}
                             </span>
                           </div>
                           <div className="d-flex gap-2">
-                            <button
-                              className="btn btn-sm btn-outline-primary"
-                              onClick={() => toggleRead(note)}
-                            >
-                              {note.is_read ? (
-                                <><FiCircle className="me-1" /> Mark unread</>
-                              ) : (
-                                <><FiCheckCircle className="me-1" /> Mark read</>
-                              )}
-                            </button>
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => deleteNotification(note.id)}
-                            >
-                              <FiTrash2 />
-                            </button>
+                            {note.source !== 'admin' && (
+                              <button
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => toggleRead(note)}
+                              >
+                                {note.is_read ? (
+                                  <><FiCircle className="me-1" /> Mark unread</>
+                                ) : (
+                                  <><FiCheckCircle className="me-1" /> Mark read</>
+                                )}
+                              </button>
+                            )}
+                            {note.source !== 'admin' && (
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => deleteNotification(note.id, note.source)}
+                              >
+                                <FiTrash2 />
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

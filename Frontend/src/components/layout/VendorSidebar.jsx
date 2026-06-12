@@ -209,52 +209,6 @@ export default function VendorSidebar({ isOpen, onClose }) {
 
       {/* Footer */}
       <div className="admin-sidebar-footer">
-        <div className="d-flex align-items-center gap-2 mb-2">
-          <div
-            className="position-relative"
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/vendor/profile")}
-            title="Vendor"
-          >
-            {profilePictureUrl ? (
-              <img
-                src={profilePictureUrl}
-                alt="Profile"
-                className="rounded-circle"
-                style={{
-                  width: "30px",
-                  height: "30px",
-                  objectFit: "cover",
-                  border: "2px solid rgba(31, 122, 159, 0.3)",
-                }}
-              />
-            ) : (
-              <div
-                className="rounded-circle d-flex align-items-center justify-content-center bg-light"
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  border: "2px solid rgba(31, 122, 159, 0.3)",
-                }}
-              >
-                <FiUser />
-              </div>
-            )}
-            <span
-              className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
-              style={{
-                fontSize: "0.65rem",
-                padding: "0.25rem 0.5rem",
-                opacity: 0,
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => e.target.style.opacity = "1"}
-              onMouseLeave={(e) => e.target.style.opacity = "0"}
-            >
-              Vendor
-            </span>
-          </div>
-        </div>
         <button
           className="admin-nav-item text-danger w-100 border-0 bg-transparent text-start"
           onClick={handleLogout}
