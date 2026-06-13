@@ -1,5 +1,8 @@
 -- Hawker Urban Vending System - Full Database Schema
 -- Run this file first.
+-- MUST RUN FIRST: This is the base schema file. All other files depend on this.
+-- BEFORE: Nothing - this is the foundation
+-- AFTER: All schema and migration files can run after this
 
 DROP DATABASE IF EXISTS hawker;
 

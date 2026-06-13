@@ -126,6 +126,14 @@ export default function App() {
             }
           />
           <Route
+            path="/vendor/total-applications"
+            element={
+              <ProtectedRoute roles={["vendor"]}>
+                <VendorApplicationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/vendor/renew-license"
             element={
               <ProtectedRoute roles={["vendor"]}>

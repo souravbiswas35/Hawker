@@ -155,9 +155,12 @@ export default function AdminLayout({ children }) {
   ];
 
   return (
-    <div className="admin-layout">
+    <div className="admin-layout admin-layout-fixed">
       {/* Mobile Header */}
-      <div className="d-lg-none position-fixed top-0 start-0 end-0 z-1050 hawker-nav p-3 d-flex align-items-center justify-content-between" style={{ zIndex: 1050 }}>
+      <div
+        className="d-lg-none position-fixed top-0 start-0 end-0 z-1050 hawker-nav p-3 d-flex align-items-center justify-content-between"
+        style={{ zIndex: 1050 }}
+      >
         <button
           className="btn btn-link text-light"
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -177,7 +180,7 @@ export default function AdminLayout({ children }) {
 
       {/* Mobile Overlay */}
       <div
-        className={`admin-sidebar-overlay d-lg-none ${sidebarOpen ? 'show' : ''}`}
+        className={`admin-sidebar-overlay d-lg-none ${sidebarOpen ? "show" : ""}`}
         onClick={() => setSidebarOpen(false)}
       ></div>
 
@@ -190,7 +193,8 @@ export default function AdminLayout({ children }) {
         <nav className="admin-nav">
           {menuItems.map((item, index) => {
             const hasSubItems = item.subItems && item.subItems.length > 0;
-            const isExpanded = expandedItems[item.title] || isAnySubItemActive(item.subItems);
+            const isExpanded =
+              expandedItems[item.title] || isAnySubItemActive(item.subItems);
             const isItemActive = isActive(item.path);
             const isLogout = item.isLogout;
 
@@ -222,7 +226,13 @@ export default function AdminLayout({ children }) {
                   <button
                     className={`admin-nav-item ${isAnySubItemActive(item.subItems) ? "active" : ""}`}
                     onClick={() => toggleExpand(item.title)}
-                    style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer" }}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
                   >
                     <item.icon className="admin-nav-icon" />
                     <span className="admin-nav-text">{item.title}</span>

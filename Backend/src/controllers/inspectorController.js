@@ -13,7 +13,7 @@ async function getInspectorDashboard(req, res, next) {
         (SELECT COUNT(*) FROM license_applications WHERE inspection_assigned_to = ? AND inspection_status = 'conducted') AS conducted_inspections,
         (SELECT COUNT(*) FROM license_applications WHERE inspection_assigned_to = ? AND inspection_status = 'passed') AS passed_inspections,
         (SELECT COUNT(*) FROM license_applications WHERE inspection_assigned_to = ? AND inspection_status = 'failed') AS failed_inspections`,
-      [inspectorId, inspectorId, inspectorId, inspectorId, inspectorId]
+      [inspectorId, inspectorId, inspectorId, inspectorId, inspectorId],
     );
 
     const [scheduledInspections] = await pool.query(
@@ -28,7 +28,7 @@ async function getInspectorDashboard(req, res, next) {
        WHERE la.inspection_assigned_to = ? AND la.inspection_status = 'scheduled'
        ORDER BY la.inspection_date ASC
        LIMIT 10`,
-      [inspectorId]
+      [inspectorId],
     );
 
     const [recentActivity] = await pool.query(
@@ -40,7 +40,7 @@ async function getInspectorDashboard(req, res, next) {
        WHERE la.inspection_assigned_to = ? AND la.inspection_status IN ('conducted', 'passed', 'failed')
        ORDER BY la.inspection_conducted_at DESC
        LIMIT 8`,
-      [inspectorId]
+      [inspectorId],
     );
 
     res.json({
@@ -109,7 +109,7 @@ async function getInspectionDetails(req, res, next) {
        LEFT JOIN vending_zones az ON az.id = la.alternate_zone_id
        LEFT JOIN inspector_profiles ip ON ip.user_id = la.inspection_assigned_to
        WHERE la.id = ? AND la.inspection_assigned_to = ?`,
-      [inspectionId, inspectorId]
+      [inspectionId, inspectorId],
     );
 
     if (!inspection) {
@@ -120,16 +120,20 @@ async function getInspectionDetails(req, res, next) {
     let businessDetails = {};
     if (inspection.business_details) {
       try {
-        businessDetails = typeof inspection.business_details === 'string'
-          ? JSON.parse(inspection.business_details)
-          : inspection.business_details;
+        businessDetails =
+          typeof inspection.business_details === "string"
+            ? JSON.parse(inspection.business_details)
+            : inspection.business_details;
       } catch (e) {
         businessDetails = {};
       }
     }
 
     inspection.business_details_parsed = businessDetails;
-    inspection.business_name = inspection.business_name || inspection.profile_business_name || "Not provided";
+    inspection.business_name =
+      inspection.business_name ||
+      inspection.profile_business_name ||
+      "Not provided";
 
     res.json({ inspection });
   } catch (err) {
@@ -144,7 +148,7 @@ async function conductInspection(req, res, next) {
     const inspectorId = req.user.id;
     const { status, remarks, inspection_photos, compliance_score } = req.body;
 
-    const allowed = ['passed', 'failed'];
+    const allowed = ["passed", "failed"];
     if (!allowed.includes(status)) {
       throw new ApiError(400, "Invalid status. Use passed or failed");
     }
@@ -152,14 +156,14 @@ async function conductInspection(req, res, next) {
     // Verify inspection is assigned to this inspector
     const [[inspection]] = await pool.query(
       "SELECT * FROM license_applications WHERE id = ? AND inspection_assigned_to = ?",
-      [inspectionId, inspectorId]
+      [inspectionId, inspectorId],
     );
 
     if (!inspection) {
       throw new ApiError(404, "Inspection not found or not assigned to you");
     }
 
-    if (inspection.inspection_status !== 'scheduled') {
+    if (inspection.inspection_status !== "scheduled") {
       throw new ApiError(400, "Inspection must be scheduled before conducting");
     }
 
@@ -174,27 +178,32 @@ async function conductInspection(req, res, next) {
              inspection_conducted_at = NOW(),
              inspection_remarks = ?
          WHERE id = ?`,
-        [remarks || null, inspectionId]
+        [remarks || null, inspectionId],
       );
 
       // Add audit log
       await connection.query(
         `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
          VALUES (?, ?, ?, ?)`,
-        [inspectionId, inspectorId, `inspection_${status}`, remarks || `Inspection marked as ${status}`]
+        [
+          inspectionId,
+          inspectorId,
+          "updated",
+          remarks || `Inspection marked as ${status}`,
+        ],
       );
 
       // Create notification for vendor
       await connection.query(
         `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id)
-         VALUES (?, 'Inspection notices', ?, ?, CONCAT('/vendor/track/', ?), 'inspection_conducted', ?)`,
+         VALUES (?, 'Inspection notices', ?, ?, CONCAT('/vendor/track/', ?), 'inspection', ?)`,
         [
           inspection.user_id,
           `Inspection Conducted for ${inspection.application_ref}`,
-          `Your field inspection has been conducted. ${status === 'passed' ? 'The inspector has marked it as passed. It will be reviewed by the City Corporation.' : 'The inspector has marked it as failed. Please review the remarks.'}`,
+          `Your field inspection has been conducted. ${status === "passed" ? "The inspector has marked it as passed. It will be reviewed by the City Corporation." : "The inspector has marked it as failed. Please review the remarks."}`,
           inspectionId,
-          inspectionId
-        ]
+          inspectionId,
+        ],
       );
 
       await connection.commit();
@@ -219,15 +228,18 @@ async function passToCityCorp(req, res, next) {
     // Verify inspection is assigned to this inspector
     const [[inspection]] = await pool.query(
       "SELECT * FROM license_applications WHERE id = ? AND inspection_assigned_to = ?",
-      [inspectionId, inspectorId]
+      [inspectionId, inspectorId],
     );
 
     if (!inspection) {
       throw new ApiError(404, "Inspection not found or not assigned to you");
     }
 
-    if (inspection.inspection_status !== 'conducted') {
-      throw new ApiError(400, "Inspection must be conducted before passing to city corporation");
+    if (inspection.inspection_status !== "conducted") {
+      throw new ApiError(
+        400,
+        "Inspection must be conducted before passing to city corporation",
+      );
     }
 
     const connection = await pool.getConnection();
@@ -240,53 +252,60 @@ async function passToCityCorp(req, res, next) {
          SET inspection_status = 'passed',
              city_corp_review_status = 'pending'
          WHERE id = ?`,
-        [inspectionId]
+        [inspectionId],
       );
 
       // Add audit log
       await connection.query(
         `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
          VALUES (?, ?, ?, ?)`,
-        [inspectionId, inspectorId, 'passed_to_city_corp', 'Inspection passed to City Corporation for final review']
+        [
+          inspectionId,
+          inspectorId,
+          "updated",
+          "Inspection passed to City Corporation for final review",
+        ],
       );
 
       // Create notification for city corporation admin
       try {
         const [cityCorpAdmins] = await connection.query(
-          "SELECT user_id FROM city_corp_admin_profiles WHERE is_active = 1"
+          "SELECT user_id FROM city_corp_admin_profiles WHERE is_active = 1",
         );
 
         for (const admin of cityCorpAdmins) {
           await connection.query(
             `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id)
-             VALUES (?, 'Inspection notices', ?, ?, '/city-corp/applications', 'inspection_passed', ?)`,
+             VALUES (?, 'Inspection notices', ?, ?, '/city-corp/applications', 'inspection', ?)`,
             [
               admin.user_id,
               `Inspection Passed for ${inspection.application_ref}`,
               `Field inspection for application ${inspection.application_ref} has been passed. Ready for final review.`,
-              inspectionId
-            ]
+              inspectionId,
+            ],
           );
         }
       } catch (notifErr) {
-        console.error('Failed to create notification:', notifErr);
+        console.error("Failed to create notification:", notifErr);
       }
 
       // Create notification for vendor
       await connection.query(
         `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id)
-         VALUES (?, 'Inspection notices', ?, ?, CONCAT('/vendor/track/', ?), 'inspection_passed', ?)`,
+         VALUES (?, 'Inspection notices', ?, ?, CONCAT('/vendor/track/', ?), 'inspection', ?)`,
         [
           inspection.user_id,
           `Inspection Passed for ${inspection.application_ref}`,
           `Your field inspection has been passed successfully. Your application is now with the City Corporation for final approval.`,
           inspectionId,
-          inspectionId
-        ]
+          inspectionId,
+        ],
       );
 
       await connection.commit();
-      res.json({ message: "Inspection passed to City Corporation successfully" });
+      res.json({
+        message: "Inspection passed to City Corporation successfully",
+      });
     } catch (err) {
       await connection.rollback();
       throw err;
@@ -308,7 +327,7 @@ async function getInspectorProfile(req, res, next) {
        FROM inspector_profiles ip
        JOIN users u ON u.id = ip.user_id
        WHERE ip.user_id = ?`,
-      [inspectorId]
+      [inspectorId],
     );
 
     if (!profile) {

@@ -1,13 +1,19 @@
 -- Inspections schema
 -- Run this file after 24_vendor_settings_schema.sql
+-- BEFORE: Inspection-dependent features
+-- AFTER: 24_vendor_settings_schema.sql (Required)
 
 USE hawker;
 
 -- Drop tables if they exist (in reverse order of dependencies)
 SET FOREIGN_KEY_CHECKS = 0;
+
 DROP TABLE IF EXISTS inspections;
+
 DROP TABLE IF EXISTS inspection_templates;
+
 DROP TABLE IF EXISTS inspectors;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Create inspectors table
@@ -43,12 +49,30 @@ CREATE TABLE inspections (
     user_id BIGINT UNSIGNED NOT NULL,
     inspector_id BIGINT UNSIGNED NOT NULL,
     template_id BIGINT UNSIGNED,
-    type ENUM('routine', 'license_verification', 'initial_setup', 'complaint', 'follow_up') NOT NULL DEFAULT 'routine',
+    type ENUM(
+        'routine',
+        'license_verification',
+        'initial_setup',
+        'complaint',
+        'follow_up'
+    ) NOT NULL DEFAULT 'routine',
     scheduled_date DATETIME NOT NULL,
     completed_date DATETIME,
-    status ENUM('scheduled', 'in_progress', 'completed', 'cancelled', 'rescheduled') NOT NULL DEFAULT 'scheduled',
-    outcome ENUM('passed', 'minor_issues', 'warnings', 'failed', 'pending') DEFAULT 'pending',
-    compliance_rate DECIMAL(5,2) DEFAULT 0.00,
+    status ENUM(
+        'scheduled',
+        'in_progress',
+        'completed',
+        'cancelled',
+        'rescheduled'
+    ) NOT NULL DEFAULT 'scheduled',
+    outcome ENUM(
+        'passed',
+        'minor_issues',
+        'warnings',
+        'failed',
+        'pending'
+    ) DEFAULT 'pending',
+    compliance_rate DECIMAL(5, 2) DEFAULT 0.00,
     checklist_results JSON,
     photos JSON,
     gps_coordinates VARCHAR(100),
@@ -68,27 +92,129 @@ CREATE TABLE inspections (
 ) ENGINE = InnoDB;
 
 -- Insert default inspection templates
-INSERT INTO inspection_templates (name, description, checklist_items) VALUES
-('Routine Inspection', 'Standard routine inspection for street vendors', JSON_ARRAY(
-    JSON_OBJECT('item', 'License Displayed', 'category', 'compliance'),
-    JSON_OBJECT('item', 'Zone Boundaries Respected', 'category', 'compliance'),
-    JSON_OBJECT('item', 'Hygiene Standards', 'category', 'hygiene'),
-    JSON_OBJECT('item', 'Safety Compliance', 'category', 'safety'),
-    JSON_OBJECT('item', 'Authorized Goods Only', 'category', 'compliance'),
-    JSON_OBJECT('item', 'Operating Hours Compliance', 'category', 'compliance'),
-    JSON_OBJECT('item', 'Waste Management', 'category', 'hygiene'),
-    JSON_OBJECT('item', 'Fire Safety Equipment', 'category', 'safety')
-)),
-('License Verification', 'Verification of vendor license validity', JSON_ARRAY(
-    JSON_OBJECT('item', 'Valid License Present', 'category', 'compliance'),
-    JSON_OBJECT('item', 'License Photo Matches Vendor', 'category', 'compliance'),
-    JSON_OBJECT('item', 'License Not Expired', 'category', 'compliance'),
-    JSON_OBJECT('item', 'Correct Zone Assignment', 'category', 'compliance')
-)),
-('Initial Setup', 'Initial inspection for new vendor setup', JSON_ARRAY(
-    JSON_OBJECT('item', 'Vendor Identity Verified', 'category', 'compliance'),
-    JSON_OBJECT('item', 'Zone Assignment Confirmed', 'category', 'compliance'),
-    JSON_OBJECT('item', 'Equipment Setup Complete', 'category', 'safety'),
-    JSON_OBJECT('item', 'Hygiene Training Completed', 'category', 'hygiene'),
-    JSON_OBJECT('item', 'Operating Hours Set', 'category', 'compliance')
-));
+INSERT INTO
+    inspection_templates (
+        name,
+        description,
+        checklist_items
+    )
+VALUES (
+        'Routine Inspection',
+        'Standard routine inspection for street vendors',
+        JSON_ARRAY(
+            JSON_OBJECT(
+                'item',
+                'License Displayed',
+                'category',
+                'compliance'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Zone Boundaries Respected',
+                'category',
+                'compliance'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Hygiene Standards',
+                'category',
+                'hygiene'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Safety Compliance',
+                'category',
+                'safety'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Authorized Goods Only',
+                'category',
+                'compliance'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Operating Hours Compliance',
+                'category',
+                'compliance'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Waste Management',
+                'category',
+                'hygiene'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Fire Safety Equipment',
+                'category',
+                'safety'
+            )
+        )
+    ),
+    (
+        'License Verification',
+        'Verification of vendor license validity',
+        JSON_ARRAY(
+            JSON_OBJECT(
+                'item',
+                'Valid License Present',
+                'category',
+                'compliance'
+            ),
+            JSON_OBJECT(
+                'item',
+                'License Photo Matches Vendor',
+                'category',
+                'compliance'
+            ),
+            JSON_OBJECT(
+                'item',
+                'License Not Expired',
+                'category',
+                'compliance'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Correct Zone Assignment',
+                'category',
+                'compliance'
+            )
+        )
+    ),
+    (
+        'Initial Setup',
+        'Initial inspection for new vendor setup',
+        JSON_ARRAY(
+            JSON_OBJECT(
+                'item',
+                'Vendor Identity Verified',
+                'category',
+                'compliance'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Zone Assignment Confirmed',
+                'category',
+                'compliance'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Equipment Setup Complete',
+                'category',
+                'safety'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Hygiene Training Completed',
+                'category',
+                'hygiene'
+            ),
+            JSON_OBJECT(
+                'item',
+                'Operating Hours Set',
+                'category',
+                'compliance'
+            )
+        )
+    );

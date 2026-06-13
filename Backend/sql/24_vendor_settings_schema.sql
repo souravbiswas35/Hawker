@@ -1,5 +1,7 @@
 -- Vendor settings schema
 -- Run this file after 09_vendor_notifications_schema.sql
+-- BEFORE: 25_inspections_schema.sql
+-- AFTER: 09_vendor_notifications_schema.sql, 08_final_admin_setup.sql (Required)
 
 USE hawker;
 
@@ -25,33 +27,26 @@ CREATE TABLE IF NOT EXISTS vendor_settings (
 ) ENGINE = InnoDB;
 
 -- Insert default settings for existing vendors
-INSERT INTO vendor_settings (
-    user_id,
-    theme,
-    language,
-    high_contrast_mode,
-    large_text,
-    screen_reader_support,
-    profile_visibility,
-    auto_renewal,
-    save_payment_methods,
-    email_receipts,
-    two_factor_auth,
-    marketing_communications
-)
-SELECT 
-    id,
-    'light',
-    'english',
-    0,
-    0,
-    0,
-    1,
-    1,
-    1,
-    1,
-    0,
-    0
+INSERT INTO
+    vendor_settings (
+        user_id,
+        theme,
+        language,
+        high_contrast_mode,
+        large_text,
+        screen_reader_support,
+        profile_visibility,
+        auto_renewal,
+        save_payment_methods,
+        email_receipts,
+        two_factor_auth,
+        marketing_communications
+    )
+SELECT id, 'light', 'english', 0, 0, 0, 1, 1, 1, 1, 0, 0
 FROM users
-WHERE role = 'vendor'
-AND id NOT IN (SELECT user_id FROM vendor_settings);
+WHERE
+    role = 'vendor'
+    AND id NOT IN(
+        SELECT user_id
+        FROM vendor_settings
+    );

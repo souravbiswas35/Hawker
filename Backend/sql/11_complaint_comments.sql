@@ -1,3 +1,8 @@
+-- Complaint Comments Schema
+-- Add this to support comments on vendor complaints
+-- BEFORE: 14, 23
+-- AFTER: 10_vendor_complaints_evidence.sql (Required)
+
 USE hawker;
 
 CREATE TABLE IF NOT EXISTS complaint_comments (

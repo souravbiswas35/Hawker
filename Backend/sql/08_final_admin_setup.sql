@@ -1,5 +1,7 @@
 -- Final Admin Setup Migration
 -- This script safely adds all required admin functionality
+-- BEFORE: 09_vendor_license_renewal_schema.sql, 09_vendor_notifications_schema.sql, 24
+-- AFTER: 07_admin_feature_schema.sql (Required)
 
 USE hawker;
 

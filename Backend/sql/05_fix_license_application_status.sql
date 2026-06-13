@@ -1,5 +1,7 @@
 -- Fix license_applications status column to support multi-step application process
 -- This script updates the ENUM to include all necessary status values
+-- BEFORE: 12, 13
+-- AFTER: 01_hawker_schema.sql (Required)
 
 USE hawker;
 

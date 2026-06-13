@@ -1,5 +1,7 @@
 -- Enhanced Schema for 6-Step License Application Process
 -- Run this after the base schema to add multi-step support
+-- BEFORE: 04, 07, 12, 18, 37, 35
+-- AFTER: 01_hawker_schema.sql (Required)
 
 USE hawker;
 
@@ -8,9 +10,9 @@ CREATE TABLE license_types (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
     duration_days INT NOT NULL,
-    base_price DECIMAL(10,2) NOT NULL,
-    security_deposit DECIMAL(10,2) NOT NULL,
-    processing_fee DECIMAL(10,2) NOT NULL DEFAULT 100.00,
+    base_price DECIMAL(10, 2) NOT NULL,
+    security_deposit DECIMAL(10, 2) NOT NULL,
+    processing_fee DECIMAL(10, 2) NOT NULL DEFAULT 100.00,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -30,10 +32,15 @@ CREATE TABLE vending_zones (
     has_electricity TINYINT(1) NOT NULL DEFAULT 0,
     has_water TINYINT(1) NOT NULL DEFAULT 0,
     has_shade TINYINT(1) NOT NULL DEFAULT 0,
-    zone_type ENUM('commercial', 'residential', 'mixed', 'transport') NOT NULL,
+    zone_type ENUM(
+        'commercial',
+        'residential',
+        'mixed',
+        'transport'
+    ) NOT NULL,
     traffic_level ENUM('low', 'medium', 'high') NOT NULL,
-    latitude DECIMAL(10,8) NULL,
-    longitude DECIMAL(11,8) NULL,
+    latitude DECIMAL(10, 8) NULL,
+    longitude DECIMAL(11, 8) NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -44,7 +51,7 @@ CREATE TABLE vending_zones (
 ) ENGINE = InnoDB;
 
 -- Enhanced license applications table
-ALTER TABLE license_applications 
+ALTER TABLE license_applications
 ADD COLUMN license_type_id BIGINT UNSIGNED NULL AFTER application_ref,
 ADD COLUMN primary_zone_id BIGINT UNSIGNED NULL AFTER desired_zone,
 ADD COLUMN alternate_zone_id BIGINT UNSIGNED NULL AFTER primary_zone_id,
@@ -68,12 +75,24 @@ ADD CONSTRAINT fk_license_applications_alternate_zone FOREIGN KEY (alternate_zon
 CREATE TABLE application_payments (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     application_id BIGINT UNSIGNED NOT NULL,
-    payment_method ENUM('bkash', 'nagad', 'visa', 'mastercard', 'cash', 'pay_later') NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
+    payment_method ENUM(
+        'bkash',
+        'nagad',
+        'visa',
+        'mastercard',
+        'cash',
+        'pay_later'
+    ) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
     transaction_id VARCHAR(100) NULL,
-    payment_status ENUM('pending', 'completed', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
+    payment_status ENUM(
+        'pending',
+        'completed',
+        'failed',
+        'refunded'
+    ) NOT NULL DEFAULT 'pending',
     cashback_eligible TINYINT(1) NOT NULL DEFAULT 0,
-    cashback_amount DECIMAL(10,2) NULL,
+    cashback_amount DECIMAL(10, 2) NULL,
     paid_at DATETIME NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -88,7 +107,11 @@ CREATE TABLE application_step_progress (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     application_id BIGINT UNSIGNED NOT NULL,
     step_number TINYINT NOT NULL,
-    step_status ENUM('pending', 'in_progress', 'completed') NOT NULL DEFAULT 'pending',
+    step_status ENUM(
+        'pending',
+        'in_progress',
+        'completed'
+    ) NOT NULL DEFAULT 'pending',
     step_data JSON NULL,
     started_at DATETIME NULL,
     completed_at DATETIME NULL,

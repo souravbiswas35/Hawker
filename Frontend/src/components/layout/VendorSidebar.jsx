@@ -28,6 +28,7 @@ const navigationCategories = [
     icon: FiUser,
     subItems: [
       { title: "My Profile", path: "/vendor/profile" },
+      { title: "Total Applications", path: "/vendor/total-applications" },
       { title: "Settings & Preferences", path: "/vendor/settings" },
       { title: "Document Vault", path: "/vendor/documents" },
     ],
@@ -40,7 +41,7 @@ const navigationCategories = [
       { title: "Apply License", path: "/vendor/apply" },
       { title: "My License", path: "/vendor/my-license" },
       { title: "Renew License", path: "/vendor/renew-license" },
-      { title: "Track My Application", path: "/vendor/applications" },
+      // { title: "Track My Application", path: "/vendor/applications" },
     ],
   },
   {
@@ -99,7 +100,7 @@ export default function VendorSidebar({ isOpen, onClose }) {
         if (res.data.profile?.profile_picture_url) {
           try {
             const imgRes = await api.get("/vendor/profile-picture", {
-              responseType: 'blob'
+              responseType: "blob",
             });
             const imageUrl = URL.createObjectURL(imgRes.data);
             setProfilePictureUrl(imageUrl);
@@ -126,7 +127,7 @@ export default function VendorSidebar({ isOpen, onClose }) {
   };
 
   return (
-    <aside className={`vendor-sidebar ${isOpen ? 'show' : ''}`}>
+    <aside className={`vendor-sidebar ${isOpen ? "show" : ""}`}>
       {/* Header */}
       {/* <div className="admin-sidebar-header">
         <Link

@@ -1,0 +1,85 @@
+Migration Log - Sun 14/06/2026  0:57:57.35
+============================================================================
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Foundation: Create Database Schema" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Foundation: Insert Demo Data" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Core: License Application Schema" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Core: License Application Demo Data" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Core: Fix License Status ENUM" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Core: Add Profile Picture Support" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Admin: Feature Schema" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Admin: Final Setup" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Admin: License Renewal Schema" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Admin: Notifications Schema" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Admin: Complaint Evidence" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Admin: Complaint Comments" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "License: Add License Fields" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "License: Fix Approved Licenses" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Verify and Populate" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Add Hidden Field" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Populate Vending Zones" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Add Profile Picture BLOB" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Enhance Schema" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Fix License Fields" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Update Existing" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Insert Test Data" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Sync Profile Data" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Notifications: Add Zone Details" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Payment: Schema Setup" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Payment: Create Missing Tables" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Payment: Insert Discount Codes" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Payment: Link to Licenses" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Settings: Vendor Settings" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Settings: Inspections Schema" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Women: Support Schema" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Women: Add Gender Column" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Women: Enhance Scheme Applications" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Women: Community Features" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Women: Community Post Counts" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Feedback: System Setup" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Feedback: Announcement System" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Advanced: Fix Corrupted Notifications" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Advanced: Multi-Step Approval Workflow" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1265 (01000) at line 31: Data truncated for column 'action_type' at row 17
+  [FAILED] "Advanced: Update Action Types" 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+  [SUCCESS] "Advanced: Add Zone Coordinates" 

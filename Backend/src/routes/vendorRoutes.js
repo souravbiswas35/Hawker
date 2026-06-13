@@ -12,7 +12,10 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (req.path.includes("profile-picture")) {
       cb(null, path.join(__dirname, "../../uploads/profile-pictures"));
-    } else if (req.path.includes("complaints") || req.path.includes("evidence")) {
+    } else if (
+      req.path.includes("complaints") ||
+      req.path.includes("evidence")
+    ) {
       cb(null, path.join(__dirname, "../../uploads/complaints"));
     } else {
       cb(null, path.join(__dirname, "../../uploads/documents"));
@@ -24,7 +27,13 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedMimes = ["application/pdf", "image/jpeg", "image/png", "video/mp4", "video/quicktime"];
+const allowedMimes = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "video/mp4",
+  "video/quicktime",
+];
 const allowedImageMimes = ["image/jpeg", "image/png"];
 
 const upload = multer({
@@ -49,6 +58,15 @@ const upload = multer({
 router.use(requireAuth, requireRole("vendor"));
 
 router.get("/dashboard", vendorController.getDashboard);
+router.get("/total-applications", vendorController.getTotalApplications);
+router.delete(
+  "/applications/:applicationId",
+  vendorController.deleteDraftApplication,
+);
+router.patch(
+  "/applications/:applicationId/switch-zone",
+  vendorController.switchApprovedZone,
+);
 router.get("/profile", vendorController.getDashboard);
 router.put("/profile", vendorController.upsertProfile);
 router.get("/license-renewal", licenseRenewalController.getRenewalDetails);
@@ -63,10 +81,19 @@ router.post(
   licenseRenewalController.submitRenewal,
 );
 router.get("/notifications", vendorController.listNotifications);
-router.get("/notifications/preferences", vendorController.getNotificationPreferences);
-router.put("/notifications/preferences", vendorController.updateNotificationPreferences);
+router.get(
+  "/notifications/preferences",
+  vendorController.getNotificationPreferences,
+);
+router.put(
+  "/notifications/preferences",
+  vendorController.updateNotificationPreferences,
+);
 router.patch("/notifications/:id/read", vendorController.markNotificationRead);
-router.patch("/notifications/:id/unread", vendorController.markNotificationUnread);
+router.patch(
+  "/notifications/:id/unread",
+  vendorController.markNotificationUnread,
+);
 router.patch("/notifications/:id/hide", vendorController.hideNotification);
 router.delete("/notifications/:id", vendorController.deleteNotification);
 router.post(
@@ -117,11 +144,25 @@ router.put("/settings", vendorController.updateSettings);
 // Women Vendor Support routes
 router.get("/women-support/access", vendorController.checkWomenSupportAccess);
 router.get("/women-support/data", vendorController.getWomenSupportData);
-router.post("/women-support/schemes/:schemeId/apply", vendorController.applyForWomenScheme);
-router.post("/women-support/mentors/:mentorId/connect", vendorController.connectWithMentor);
+router.post(
+  "/women-support/schemes/:schemeId/apply",
+  vendorController.applyForWomenScheme,
+);
+router.post(
+  "/women-support/mentors/:mentorId/connect",
+  vendorController.connectWithMentor,
+);
 
 // Inspection routes
-router.get("/inspection-history", requireAuth, inspectionController.getVendorInspectionHistory);
-router.get("/inspections/:id", requireAuth, inspectionController.getInspectionById);
+router.get(
+  "/inspection-history",
+  requireAuth,
+  inspectionController.getVendorInspectionHistory,
+);
+router.get(
+  "/inspections/:id",
+  requireAuth,
+  inspectionController.getInspectionById,
+);
 
 module.exports = router;

@@ -1,11 +1,14 @@
 -- Create missing payment tables
+-- BEFORE: 22_insert_discount_codes.sql, 23_add_license_payment_connection.sql
+-- AFTER: 20_vendor_payment_schema.sql (Required)
+
 USE hawker;
 
 -- Discount codes
 CREATE TABLE IF NOT EXISTS discount_codes (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     code VARCHAR(50) NOT NULL,
-    discount_percent DECIMAL(5,2) NOT NULL,
+    discount_percent DECIMAL(5, 2) NOT NULL,
     max_uses INT NOT NULL,
     used_count INT NOT NULL DEFAULT 0,
     valid_from DATETIME NOT NULL,
@@ -25,11 +28,16 @@ CREATE TABLE IF NOT EXISTS vendor_payments (
     payment_type_id BIGINT UNSIGNED NOT NULL,
     payment_method_id BIGINT UNSIGNED NOT NULL,
     transaction_id VARCHAR(100) NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    final_amount DECIMAL(10,2) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    discount_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    final_amount DECIMAL(10, 2) NOT NULL,
     discount_code_id BIGINT UNSIGNED NULL,
-    status ENUM('pending', 'completed', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
+    status ENUM(
+        'pending',
+        'completed',
+        'failed',
+        'refunded'
+    ) NOT NULL DEFAULT 'pending',
     payment_date DATETIME NULL,
     receipt_url VARCHAR(500) NULL,
     notes TEXT NULL,
@@ -52,7 +60,7 @@ CREATE TABLE IF NOT EXISTS vendor_dues (
     user_id BIGINT UNSIGNED NOT NULL,
     due_type VARCHAR(50) NOT NULL,
     description TEXT NULL,
-    amount DECIMAL(10,2) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
     due_date DATE NOT NULL,
     is_paid TINYINT(1) NOT NULL DEFAULT 0,
     payment_id BIGINT UNSIGNED NULL,
@@ -73,7 +81,7 @@ CREATE TABLE IF NOT EXISTS upcoming_payments (
     payment_type_id BIGINT UNSIGNED NOT NULL,
     title VARCHAR(200) NOT NULL,
     description TEXT NULL,
-    amount DECIMAL(10,2) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
     due_date DATE NOT NULL,
     is_reminder_sent TINYINT(1) NOT NULL DEFAULT 0,
     is_paid TINYINT(1) NOT NULL DEFAULT 0,

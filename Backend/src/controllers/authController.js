@@ -56,7 +56,8 @@ async function register(req, res, next) {
 
     let message = "Registration successful. Verification code sent to email.";
     if (emailResult.simulated) {
-      message = "Registration successful. Check console for verification code (SMTP not configured).";
+      message =
+        "Registration successful. Check console for verification code (SMTP not configured).";
     }
 
     res.status(201).json({
@@ -155,7 +156,8 @@ async function resendCode(req, res, next) {
 
     let message = "New verification code sent to email.";
     if (emailResult.simulated) {
-      message = "New verification code generated. Check console for code (SMTP not configured).";
+      message =
+        "New verification code generated. Check console for code (SMTP not configured).";
     }
 
     res.json({ message, simulated: emailResult.simulated });
@@ -184,16 +186,25 @@ async function login(req, res, next) {
       throw new ApiError(403, "Your account is not active");
     }
 
-    // Use plain text comparison for inspector and city_corporation_admin roles
-    let passwordMatch;
-    if (user.role === "inspector" || user.role === "city_corporation_admin") {
-      passwordMatch = password === user.password_hash;
-    } else {
-      passwordMatch = await bcrypt.compare(
-        password || "",
-        user.password_hash || "",
-      );
+    let passwordMatch = false;
+    const incomingPassword = password || "";
+
+    if (user.password_hash) {
+      try {
+        passwordMatch = await bcrypt.compare(
+          incomingPassword,
+          user.password_hash,
+        );
+      } catch (compareErr) {
+        passwordMatch = false;
+      }
     }
+
+    // Backward compatibility for legacy rows that stored plain text passwords.
+    if (!passwordMatch) {
+      passwordMatch = incomingPassword === (user.password_hash || "");
+    }
+
     if (!passwordMatch) {
       throw new ApiError(401, "Invalid email or password");
     }

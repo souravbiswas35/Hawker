@@ -11,7 +11,7 @@ async function getCityCorpDashboard(req, res, next) {
         (SELECT COUNT(*) FROM license_applications WHERE city_corp_review_status = 'rejected') AS rejected_today,
         (SELECT COUNT(*) FROM license_applications WHERE inspection_status = 'passed' AND city_corp_review_status = 'pending') AS awaiting_final_review,
         (SELECT COUNT(*) FROM license_applications WHERE status = 'approved' AND city_corp_review_status = 'approved') AS total_licenses_issued`,
-      []
+      [],
     );
 
     const [pendingReviews] = await pool.query(
@@ -27,7 +27,7 @@ async function getCityCorpDashboard(req, res, next) {
        WHERE la.city_corp_review_status = 'pending' AND la.inspection_status = 'passed'
        ORDER BY la.inspection_conducted_at DESC
        LIMIT 10`,
-      []
+      [],
     );
 
     const [recentActivity] = await pool.query(
@@ -39,7 +39,7 @@ async function getCityCorpDashboard(req, res, next) {
        WHERE la.city_corp_review_status IN ('approved', 'rejected')
        ORDER BY la.city_corp_reviewed_at DESC
        LIMIT 8`,
-      []
+      [],
     );
 
     res.json({
@@ -110,7 +110,7 @@ async function getApplicationDetails(req, res, next) {
        LEFT JOIN inspector_profiles ip ON ip.user_id = la.inspection_assigned_to
        LEFT JOIN city_corp_admin_profiles cc ON cc.user_id = ?
        WHERE la.id = ?`,
-      [req.user.id, applicationId]
+      [req.user.id, applicationId],
     );
 
     if (!application) {
@@ -121,24 +121,29 @@ async function getApplicationDetails(req, res, next) {
     let businessDetails = {};
     if (application.business_details) {
       try {
-        businessDetails = typeof application.business_details === 'string'
-          ? JSON.parse(application.business_details)
-          : application.business_details;
+        businessDetails =
+          typeof application.business_details === "string"
+            ? JSON.parse(application.business_details)
+            : application.business_details;
       } catch (e) {
         businessDetails = {};
       }
     }
 
     application.business_details_parsed = businessDetails;
-    application.business_name = application.business_name || application.profile_business_name || "Not provided";
+    application.business_name =
+      application.business_name ||
+      application.profile_business_name ||
+      "Not provided";
 
     // Get document verification data
     let documentVerification = {};
     if (application.document_verification) {
       try {
-        documentVerification = typeof application.document_verification === 'string'
-          ? JSON.parse(application.document_verification)
-          : application.document_verification;
+        documentVerification =
+          typeof application.document_verification === "string"
+            ? JSON.parse(application.document_verification)
+            : application.document_verification;
       } catch (e) {
         documentVerification = {};
       }
@@ -158,7 +163,7 @@ async function finalReview(req, res, next) {
     const cityCorpAdminId = req.user.id;
     const { status, remarks } = req.body;
 
-    const allowed = ['approved', 'rejected'];
+    const allowed = ["approved", "rejected"];
     if (!allowed.includes(status)) {
       throw new ApiError(400, "Invalid status. Use approved or rejected");
     }
@@ -169,15 +174,18 @@ async function finalReview(req, res, next) {
        FROM license_applications la
        LEFT JOIN license_types lt ON lt.id = la.license_type_id
        WHERE la.id = ?`,
-      [applicationId]
+      [applicationId],
     );
 
     if (!application) {
       throw new ApiError(404, "Application not found");
     }
 
-    if (application.inspection_status !== 'passed') {
-      throw new ApiError(400, "Application must have passed inspection before final review");
+    if (application.inspection_status !== "passed") {
+      throw new ApiError(
+        400,
+        "Application must have passed inspection before final review",
+      );
     }
 
     const connection = await pool.getConnection();
@@ -192,21 +200,23 @@ async function finalReview(req, res, next) {
       };
 
       // If approved, generate license
-      if (status === 'approved') {
-        const ref = application.application_ref.startsWith('LIC-')
+      if (status === "approved") {
+        const ref = application.application_ref.startsWith("LIC-")
           ? application.application_ref
           : `LIC-${application.application_ref}`;
         const licenseNumber = `${ref}-${new Date().getFullYear()}`;
         const issuedAt = new Date();
         const expiresAt = new Date(issuedAt);
-        expiresAt.setDate(expiresAt.getDate() + (application.duration_days || 365));
+        expiresAt.setDate(
+          expiresAt.getDate() + (application.duration_days || 365),
+        );
 
         // Fetch zone name if primary_zone_id is set
         let allocatedZone = application.desired_zone;
         if (application.primary_zone_id && !allocatedZone) {
           const [[zone]] = await connection.query(
             "SELECT name FROM vending_zones WHERE id = ?",
-            [application.primary_zone_id]
+            [application.primary_zone_id],
           );
           if (zone) allocatedZone = zone.name;
         }
@@ -215,21 +225,28 @@ async function finalReview(req, res, next) {
         let goodsAuthorized = application.goods_authorized;
         if (!goodsAuthorized && application.business_details) {
           try {
-            const businessDetails = typeof application.business_details === 'string'
-              ? JSON.parse(application.business_details)
-              : application.business_details;
-            goodsAuthorized = businessDetails.goods_authorized || businessDetails.goods || application.business_category || "General";
+            const businessDetails =
+              typeof application.business_details === "string"
+                ? JSON.parse(application.business_details)
+                : application.business_details;
+            goodsAuthorized =
+              businessDetails.goods_authorized ||
+              businessDetails.goods ||
+              application.business_category ||
+              "General";
           } catch (e) {
             goodsAuthorized = application.business_category || "General";
           }
         }
 
-        updateFields.status = 'approved';
+        updateFields.status = "approved";
         updateFields.license_number = licenseNumber;
         updateFields.issued_at = issuedAt;
         updateFields.expires_at = expiresAt;
-        updateFields.desired_zone = allocatedZone || application.desired_zone || "N/A";
-        updateFields.goods_authorized = goodsAuthorized || application.business_category || "General";
+        updateFields.desired_zone =
+          allocatedZone || application.desired_zone || "N/A";
+        updateFields.goods_authorized =
+          goodsAuthorized || application.business_category || "General";
         updateFields.qr_code_data = JSON.stringify({
           license_number: licenseNumber,
           vendor_name: application.business_name || "N/A",
@@ -239,11 +256,16 @@ async function finalReview(req, res, next) {
         });
       } else {
         // If rejected, update overall status
-        updateFields.status = 'rejected';
+        updateFields.status = "rejected";
       }
 
       // Build update query dynamically
-      const updateFieldsList = ['city_corp_review_status = ?', 'city_corp_review_remarks = ?', 'city_corp_reviewed_by = ?', 'city_corp_reviewed_at = ?'];
+      const updateFieldsList = [
+        "city_corp_review_status = ?",
+        "city_corp_review_remarks = ?",
+        "city_corp_reviewed_by = ?",
+        "city_corp_reviewed_at = ?",
+      ];
       const queryParams = [
         updateFields.city_corp_review_status,
         updateFields.city_corp_review_remarks,
@@ -252,31 +274,31 @@ async function finalReview(req, res, next) {
       ];
 
       if (updateFields.status) {
-        updateFieldsList.push('status = ?');
+        updateFieldsList.push("status = ?");
         queryParams.push(updateFields.status);
       }
       if (updateFields.license_number) {
-        updateFieldsList.push('license_number = ?');
+        updateFieldsList.push("license_number = ?");
         queryParams.push(updateFields.license_number);
       }
       if (updateFields.issued_at) {
-        updateFieldsList.push('issued_at = ?');
+        updateFieldsList.push("issued_at = ?");
         queryParams.push(updateFields.issued_at);
       }
       if (updateFields.expires_at) {
-        updateFieldsList.push('expires_at = ?');
+        updateFieldsList.push("expires_at = ?");
         queryParams.push(updateFields.expires_at);
       }
       if (updateFields.qr_code_data) {
-        updateFieldsList.push('qr_code_data = ?');
+        updateFieldsList.push("qr_code_data = ?");
         queryParams.push(updateFields.qr_code_data);
       }
       if (updateFields.desired_zone) {
-        updateFieldsList.push('desired_zone = ?');
+        updateFieldsList.push("desired_zone = ?");
         queryParams.push(updateFields.desired_zone);
       }
       if (updateFields.goods_authorized) {
-        updateFieldsList.push('goods_authorized = ?');
+        updateFieldsList.push("goods_authorized = ?");
         queryParams.push(updateFields.goods_authorized);
       }
 
@@ -284,25 +306,32 @@ async function finalReview(req, res, next) {
 
       await connection.query(
         `UPDATE license_applications
-         SET ${updateFieldsList.join(', ')}
+         SET ${updateFieldsList.join(", ")}
          WHERE id = ?`,
-        queryParams
+        queryParams,
       );
 
       // Add audit log
       await connection.query(
         `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
          VALUES (?, ?, ?, ?)`,
-        [applicationId, cityCorpAdminId, `city_corp_${status}`, remarks || `City Corporation marked as ${status}`]
+        [
+          applicationId,
+          cityCorpAdminId,
+          status === "approved" ? "approved" : "rejected",
+          remarks || `City Corporation marked as ${status}`,
+        ],
       );
 
       // Create notification for vendor
-      const notificationTitle = status === 'approved'
-        ? `License Approved for ${application.application_ref}`
-        : `Application Rejected for ${application.application_ref}`;
-      const notificationMessage = status === 'approved'
-        ? `Your license application has been approved by the City Corporation. Your digital license is now ready to download.`
-        : `Your license application has been rejected by the City Corporation. ${remarks ? `Reason: ${remarks}` : 'Please contact support for more information.'}`;
+      const notificationTitle =
+        status === "approved"
+          ? `License Approved for ${application.application_ref}`
+          : `Application Rejected for ${application.application_ref}`;
+      const notificationMessage =
+        status === "approved"
+          ? `Your license application has been approved by the City Corporation. Your digital license is now ready to download.`
+          : `Your license application has been rejected by the City Corporation. ${remarks ? `Reason: ${remarks}` : "Please contact support for more information."}`;
 
       await connection.query(
         `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id, admin_remarks)
@@ -312,10 +341,10 @@ async function finalReview(req, res, next) {
           notificationTitle,
           notificationMessage,
           applicationId,
-          status === 'approved' ? 'approve' : 'reject',
+          status === "approved" ? "approve" : "reject",
           applicationId,
-          remarks || null
-        ]
+          remarks || null,
+        ],
       );
 
       await connection.commit();
@@ -341,7 +370,7 @@ async function getCityCorpProfile(req, res, next) {
        FROM city_corp_admin_profiles ccp
        JOIN users u ON u.id = ccp.user_id
        WHERE ccp.user_id = ?`,
-      [cityCorpAdminId]
+      [cityCorpAdminId],
     );
 
     if (!profile) {

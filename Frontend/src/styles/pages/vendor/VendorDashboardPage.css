@@ -120,6 +120,26 @@
   color: var(--text-primary);
 }
 
+.vendor-stat-card {
+  min-height: 170px;
+}
+
+.vendor-zone-stat-card .admin-stat-value {
+  font-size: clamp(1.9rem, 1.8vw, 2.2rem);
+  line-height: 1.05;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1399.98px) {
+  .vendor-zone-stat-card .admin-stat-value {
+    font-size: clamp(1.7rem, 2vw, 2rem);
+  }
+}
+
 .dashboard-map-container {
   width: 100%;
   background: var(--card-bg);

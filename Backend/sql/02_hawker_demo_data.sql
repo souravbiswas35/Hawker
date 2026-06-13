@@ -1,5 +1,7 @@
 -- Hawker Urban Vending System - Demo Data
 -- Run this file after 01_hawker_schema.sql
+-- BEFORE: Should run before any data-dependent files
+-- AFTER: 01_hawker_schema.sql (Required)
 
 USE hawker;
 

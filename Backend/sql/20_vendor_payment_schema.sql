@@ -1,5 +1,7 @@
 -- Vendor Payment & Fee Management Schema
 -- Run this to add payment management tables
+-- BEFORE: 21_create_missing_payment_tables.sql, 22_insert_discount_codes.sql
+-- AFTER: 01_hawker_schema.sql (Required)
 
 USE hawker;
 
@@ -16,11 +18,24 @@ CREATE TABLE IF NOT EXISTS payment_types (
 ) ENGINE = InnoDB;
 
 -- Insert default payment types
-INSERT INTO payment_types (name, description) VALUES
-('License Fee', 'Fee for new license application'),
-('Renewal Fee', 'Fee for license renewal'),
-('Penalty', 'Late payment or violation penalties'),
-('Other', 'Miscellaneous fees and charges');
+INSERT INTO
+    payment_types (name, description)
+VALUES (
+        'License Fee',
+        'Fee for new license application'
+    ),
+    (
+        'Renewal Fee',
+        'Fee for license renewal'
+    ),
+    (
+        'Penalty',
+        'Late payment or violation penalties'
+    ),
+    (
+        'Other',
+        'Miscellaneous fees and charges'
+    );
 
 -- Payment methods (Credit/Debit Card, Net Banking, UPI, Mobile Wallet, Cash at office)
 CREATE TABLE IF NOT EXISTS payment_methods (
@@ -35,18 +50,28 @@ CREATE TABLE IF NOT EXISTS payment_methods (
 ) ENGINE = InnoDB;
 
 -- Insert default payment methods
-INSERT INTO payment_methods (name, display_name) VALUES
-('credit_card', 'Credit/Debit Card'),
-('net_banking', 'Net Banking'),
-('upi', 'UPI'),
-('mobile_wallet', 'Mobile Wallet'),
-('cash_office', 'Cash at Office');
+INSERT INTO
+    payment_methods (name, display_name)
+VALUES (
+        'credit_card',
+        'Credit/Debit Card'
+    ),
+    ('net_banking', 'Net Banking'),
+    ('upi', 'UPI'),
+    (
+        'mobile_wallet',
+        'Mobile Wallet'
+    ),
+    (
+        'cash_office',
+        'Cash at Office'
+    );
 
 -- Discount codes
 CREATE TABLE IF NOT EXISTS discount_codes (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     code VARCHAR(50) NOT NULL,
-    discount_percent DECIMAL(5,2) NOT NULL,
+    discount_percent DECIMAL(5, 2) NOT NULL,
     max_uses INT NOT NULL,
     used_count INT NOT NULL DEFAULT 0,
     valid_from DATETIME NOT NULL,
@@ -66,11 +91,16 @@ CREATE TABLE IF NOT EXISTS vendor_payments (
     payment_type_id BIGINT UNSIGNED NOT NULL,
     payment_method_id BIGINT UNSIGNED NOT NULL,
     transaction_id VARCHAR(100) NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    final_amount DECIMAL(10,2) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    discount_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    final_amount DECIMAL(10, 2) NOT NULL,
     discount_code_id BIGINT UNSIGNED NULL,
-    status ENUM('pending', 'completed', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
+    status ENUM(
+        'pending',
+        'completed',
+        'failed',
+        'refunded'
+    ) NOT NULL DEFAULT 'pending',
     payment_date DATETIME NULL,
     receipt_url VARCHAR(500) NULL,
     notes TEXT NULL,
@@ -93,7 +123,7 @@ CREATE TABLE IF NOT EXISTS vendor_dues (
     user_id BIGINT UNSIGNED NOT NULL,
     due_type VARCHAR(50) NOT NULL,
     description TEXT NULL,
-    amount DECIMAL(10,2) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
     due_date DATE NOT NULL,
     is_paid TINYINT(1) NOT NULL DEFAULT 0,
     payment_id BIGINT UNSIGNED NULL,
@@ -114,7 +144,7 @@ CREATE TABLE IF NOT EXISTS upcoming_payments (
     payment_type_id BIGINT UNSIGNED NOT NULL,
     title VARCHAR(200) NOT NULL,
     description TEXT NULL,
-    amount DECIMAL(10,2) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
     due_date DATE NOT NULL,
     is_reminder_sent TINYINT(1) NOT NULL DEFAULT 0,
     is_paid TINYINT(1) NOT NULL DEFAULT 0,

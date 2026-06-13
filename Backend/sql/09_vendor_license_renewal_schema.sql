@@ -1,5 +1,7 @@
 -- Vendor license and renewal schema extension
 -- Run after 08_final_admin_setup.sql
+-- BEFORE: 18_sync_vendor_profile_data.sql
+-- AFTER: 08_final_admin_setup.sql (Required)
 
 USE hawker;
 

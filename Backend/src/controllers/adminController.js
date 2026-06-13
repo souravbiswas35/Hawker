@@ -54,7 +54,7 @@ async function getDashboard(req, res, next) {
         COALESCE(SUM(CASE WHEN status = 'completed' THEN final_amount ELSE 0 END), 0) as collected_amount,
         COALESCE(SUM(CASE WHEN status = 'pending' THEN final_amount ELSE 0 END), 0) as pending_amount,
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count
-       FROM vendor_payments`
+       FROM vendor_payments`,
     );
 
     // Get recent payments
@@ -68,14 +68,20 @@ async function getDashboard(req, res, next) {
        JOIN users u ON u.id = vp.user_id
        LEFT JOIN vendor_profiles vp2 ON vp2.user_id = vp.user_id
        ORDER BY vp.payment_date DESC
-       LIMIT 8`
+       LIMIT 8`,
     );
 
     res.json({
       stats: counts,
       recentApplications: recentApps,
       recentActivity,
-      paymentStats: paymentStats || { total_payments: 0, total_revenue: 0, collected_amount: 0, pending_amount: 0, pending_count: 0 },
+      paymentStats: paymentStats || {
+        total_payments: 0,
+        total_revenue: 0,
+        collected_amount: 0,
+        pending_amount: 0,
+        pending_count: 0,
+      },
       recentPayments,
     });
   } catch (err) {
@@ -87,7 +93,26 @@ async function listVendors(req, res, next) {
   try {
     const [rows] = await pool.query(
       `SELECT u.id, u.email, u.is_email_verified, u.created_at,
-              vp.first_name, vp.last_name, vp.phone, vp.business_name, vp.vending_zone
+              vp.first_name, vp.last_name, vp.phone, vp.business_name,
+              COALESCE(
+                NULLIF(NULLIF(TRIM(vp.vending_zone), ''), 'To be selected'),
+                (
+                  SELECT COALESCE(
+                    NULLIF(NULLIF(TRIM(la.desired_zone), ''), 'To be selected'),
+                    vz.name
+                  )
+                  FROM license_applications la
+                  LEFT JOIN vending_zones vz ON vz.id = la.primary_zone_id
+                  WHERE la.user_id = u.id
+                    AND la.status = 'approved'
+                    AND COALESCE(
+                      NULLIF(NULLIF(TRIM(la.desired_zone), ''), 'To be selected'),
+                      vz.name
+                    ) IS NOT NULL
+                  ORDER BY COALESCE(la.reviewed_at, la.submitted_at) DESC, la.id DESC
+                  LIMIT 1
+                )
+              ) AS vending_zone
        FROM users u
        LEFT JOIN vendor_profiles vp ON vp.user_id = u.id
        WHERE u.role = 'vendor'
@@ -153,10 +178,20 @@ async function getApplicationDetails(req, res, next) {
     }
 
     // Fill missing fields from vendor profile
-    application.business_name = application.business_name || application.profile_business_name || "Not provided";
-    application.business_category = application.business_category || application.profile_business_type || "General";
+    application.business_name =
+      application.business_name ||
+      application.profile_business_name ||
+      "Not provided";
+    application.business_category =
+      application.business_category ||
+      application.profile_business_type ||
+      "General";
     application.stall_type = application.stall_type || "Standard";
-    application.desired_zone = application.desired_zone || application.profile_vending_zone || application.primary_zone_name || "Not selected";
+    application.desired_zone =
+      application.desired_zone ||
+      application.profile_vending_zone ||
+      application.primary_zone_name ||
+      "Not selected";
 
     res.json({ application });
   } catch (err) {
@@ -183,7 +218,7 @@ async function reviewApplication(req, res, next) {
        FROM license_applications la
        LEFT JOIN license_types lt ON la.license_type_id = lt.id
        WHERE la.id = ?`,
-      [applicationId]
+      [applicationId],
     );
 
     if (!application) {
@@ -199,20 +234,22 @@ async function reviewApplication(req, res, next) {
 
     // Generate license details if approved
     if (status === "approved") {
-      const ref = application.application_ref.startsWith('LIC-')
+      const ref = application.application_ref.startsWith("LIC-")
         ? application.application_ref
         : `LIC-${application.application_ref}`;
       const licenseNumber = `${ref}-${new Date().getFullYear()}`;
       const issuedAt = new Date();
       const expiresAt = new Date(issuedAt);
-      expiresAt.setDate(expiresAt.getDate() + (application.duration_days || 365));
+      expiresAt.setDate(
+        expiresAt.getDate() + (application.duration_days || 365),
+      );
 
       // Fetch zone name if primary_zone_id is set
       let allocatedZone = application.desired_zone;
       if (application.primary_zone_id && !allocatedZone) {
         const [[zone]] = await pool.query(
           "SELECT name FROM vending_zones WHERE id = ?",
-          [application.primary_zone_id]
+          [application.primary_zone_id],
         );
         if (zone) allocatedZone = zone.name;
       }
@@ -221,10 +258,15 @@ async function reviewApplication(req, res, next) {
       let goodsAuthorized = application.goods_authorized;
       if (!goodsAuthorized && application.business_details) {
         try {
-          const businessDetails = typeof application.business_details === 'string'
-            ? JSON.parse(application.business_details)
-            : application.business_details;
-          goodsAuthorized = businessDetails.goods_authorized || businessDetails.goods || application.business_category || "General";
+          const businessDetails =
+            typeof application.business_details === "string"
+              ? JSON.parse(application.business_details)
+              : application.business_details;
+          goodsAuthorized =
+            businessDetails.goods_authorized ||
+            businessDetails.goods ||
+            application.business_category ||
+            "General";
         } catch (e) {
           goodsAuthorized = application.business_category || "General";
         }
@@ -233,8 +275,10 @@ async function reviewApplication(req, res, next) {
       updateFields.license_number = licenseNumber;
       updateFields.issued_at = issuedAt;
       updateFields.expires_at = expiresAt;
-      updateFields.desired_zone = allocatedZone || application.desired_zone || "N/A";
-      updateFields.goods_authorized = goodsAuthorized || application.business_category || "General";
+      updateFields.desired_zone =
+        allocatedZone || application.desired_zone || "N/A";
+      updateFields.goods_authorized =
+        goodsAuthorized || application.business_category || "General";
       updateFields.qr_code_data = JSON.stringify({
         license_number: licenseNumber,
         vendor_name: application.business_name || "N/A",
@@ -245,7 +289,12 @@ async function reviewApplication(req, res, next) {
     }
 
     // Build update query dynamically based on what fields are set
-    const updateFieldsList = ['status = ?', 'admin_remarks = ?', 'reviewed_by = ?', 'reviewed_at = ?'];
+    const updateFieldsList = [
+      "status = ?",
+      "admin_remarks = ?",
+      "reviewed_by = ?",
+      "reviewed_at = ?",
+    ];
     const queryParams = [
       updateFields.status,
       updateFields.admin_remarks,
@@ -254,27 +303,27 @@ async function reviewApplication(req, res, next) {
     ];
 
     if (updateFields.license_number) {
-      updateFieldsList.push('license_number = ?');
+      updateFieldsList.push("license_number = ?");
       queryParams.push(updateFields.license_number);
     }
     if (updateFields.issued_at) {
-      updateFieldsList.push('issued_at = ?');
+      updateFieldsList.push("issued_at = ?");
       queryParams.push(updateFields.issued_at);
     }
     if (updateFields.expires_at) {
-      updateFieldsList.push('expires_at = ?');
+      updateFieldsList.push("expires_at = ?");
       queryParams.push(updateFields.expires_at);
     }
     if (updateFields.qr_code_data) {
-      updateFieldsList.push('qr_code_data = ?');
+      updateFieldsList.push("qr_code_data = ?");
       queryParams.push(updateFields.qr_code_data);
     }
     if (updateFields.desired_zone) {
-      updateFieldsList.push('desired_zone = ?');
+      updateFieldsList.push("desired_zone = ?");
       queryParams.push(updateFields.desired_zone);
     }
     if (updateFields.goods_authorized) {
-      updateFieldsList.push('goods_authorized = ?');
+      updateFieldsList.push("goods_authorized = ?");
       queryParams.push(updateFields.goods_authorized);
     }
 
@@ -282,7 +331,7 @@ async function reviewApplication(req, res, next) {
 
     const [result] = await pool.query(
       `UPDATE license_applications
-       SET ${updateFieldsList.join(', ')}
+       SET ${updateFieldsList.join(", ")}
        WHERE id = ?`,
       queryParams,
     );
@@ -291,43 +340,56 @@ async function reviewApplication(req, res, next) {
       throw new ApiError(404, "Application not found");
     }
 
-    await pool.query(
-      `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
-       VALUES (?, ?, ?, ?)`,
-      [
-        applicationId,
-        req.user.id,
-        status,
-        remarks || `Application marked as ${status}`,
-      ],
-    );
+    try {
+      await pool.query(
+        `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
+         VALUES (?, ?, ?, ?)`,
+        [
+          applicationId,
+          req.user.id,
+          status,
+          remarks || `Application marked as ${status}`,
+        ],
+      );
+    } catch (auditErr) {
+      console.warn(
+        "Failed to write audit log for application review:",
+        auditErr.message,
+      );
+    }
 
     // Create notification for vendor based on admin action
     try {
-      let notificationCategory = 'License updates';
-      let notificationTitle = '';
-      let notificationMessage = '';
-      let actionType = '';
-      let zoneOrArea = updateFields.desired_zone || application.desired_zone || 'N/A';
+      let notificationCategory = "License updates";
+      let notificationTitle = "";
+      let notificationMessage = "";
+      let actionType = "";
+      let zoneOrArea =
+        updateFields.desired_zone || application.desired_zone || "N/A";
 
-      if (status === 'approved') {
-        actionType = 'approve';
+      if (status === "approved") {
+        actionType = "approve";
         notificationTitle = `Application ${application.application_ref} Approved`;
         notificationMessage = `Your license application for ${zoneOrArea} has been approved. Your digital license is now ready to download.`;
-      } else if (status === 'rejected') {
-        actionType = 'reject';
+      } else if (status === "rejected") {
+        actionType = "reject";
         notificationTitle = `Application ${application.application_ref} Rejected`;
-        notificationMessage = `Your license application for ${zoneOrArea} was rejected. ${remarks ? `Reason: ${remarks}` : 'Please contact support for more information.'}`;
-      } else if (status === 'needs-info') {
-        actionType = 'need_info';
+        notificationMessage = `Your license application for ${zoneOrArea} was rejected. ${remarks ? `Reason: ${remarks}` : "Please contact support for more information."}`;
+      } else if (status === "needs-info") {
+        actionType = "need_info";
         notificationTitle = `Application ${application.application_ref} Needs More Information`;
-        notificationMessage = `Your license application for ${zoneOrArea} requires additional information. ${remarks ? `Details: ${remarks}` : 'Please check your application and provide the required documents.'}`;
+        notificationMessage = `Your license application for ${zoneOrArea} requires additional information. ${remarks ? `Details: ${remarks}` : "Please check your application and provide the required documents."}`;
       }
 
-      console.log('Creating notification for user:', application.user_id, 'with action:', actionType);
-      console.log('Notification title:', notificationTitle);
-      console.log('Notification message:', notificationMessage);
-      console.log('Zone/Area:', zoneOrArea);
+      console.log(
+        "Creating notification for user:",
+        application.user_id,
+        "with action:",
+        actionType,
+      );
+      console.log("Notification title:", notificationTitle);
+      console.log("Notification message:", notificationMessage);
+      console.log("Zone/Area:", zoneOrArea);
 
       const [notifResult] = await pool.query(
         `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id, zone_or_area, admin_remarks, action_details)
@@ -350,12 +412,18 @@ async function reviewApplication(req, res, next) {
           }),
         ],
       );
-      console.log('Notification created successfully with ID:', notifResult.insertId);
+      console.log(
+        "Notification created successfully with ID:",
+        notifResult.insertId,
+      );
     } catch (notifErr) {
-      console.error('Failed to create notification (columns may not exist yet):', notifErr);
-      console.error('Error code:', notifErr.code);
-      console.error('Error message:', notifErr.message);
-      console.error('Error stack:', notifErr.stack);
+      console.error(
+        "Failed to create notification (columns may not exist yet):",
+        notifErr,
+      );
+      console.error("Error code:", notifErr.code);
+      console.error("Error message:", notifErr.message);
+      console.error("Error stack:", notifErr.stack);
       // Don't fail the review process if notification creation fails
     }
 
@@ -391,7 +459,8 @@ async function listAllNotifications(req, res, next) {
       conditions.push("vn.is_hidden = 0");
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const [rows] = await pool.query(
       `SELECT vn.id, vn.user_id, vn.category, vn.title, vn.message, vn.link,
@@ -416,16 +485,19 @@ async function createNotification(req, res, next) {
     const { userId, category, title, message, link } = req.body;
 
     if (!userId || !category || !title || !message) {
-      throw new ApiError(400, "userId, category, title, and message are required");
+      throw new ApiError(
+        400,
+        "userId, category, title, and message are required",
+      );
     }
 
     const allowedCategories = [
-      'License updates',
-      'Payment reminders',
-      'Renewal alerts',
-      'Zone changes',
-      'Inspection notices',
-      'System announcements'
+      "License updates",
+      "Payment reminders",
+      "Renewal alerts",
+      "Zone changes",
+      "Inspection notices",
+      "System announcements",
     ];
 
     if (!allowedCategories.includes(category)) {
@@ -473,20 +545,29 @@ async function createSystemNotification(req, res, next) {
       throw new ApiError(400, "userId, type, title, and message are required");
     }
 
-    const actionTypes = ['approve', 'reject', 'need_info', 'system', 'payment', 'renewal', 'zone_change', 'inspection'];
+    const actionTypes = [
+      "approve",
+      "reject",
+      "need_info",
+      "system",
+      "payment",
+      "renewal",
+      "zone_change",
+      "inspection",
+    ];
     if (!actionTypes.includes(type)) {
       throw new ApiError(400, "Invalid notification type");
     }
 
     const categories = {
-      'approve': 'License updates',
-      'reject': 'License updates',
-      'need_info': 'License updates',
-      'system': 'System announcements',
-      'payment': 'Payment reminders',
-      'renewal': 'Renewal alerts',
-      'zone_change': 'Zone changes',
-      'inspection': 'Inspection notices'
+      approve: "License updates",
+      reject: "License updates",
+      need_info: "License updates",
+      system: "System announcements",
+      payment: "Payment reminders",
+      renewal: "Renewal alerts",
+      zone_change: "Zone changes",
+      inspection: "Inspection notices",
     };
 
     const [result] = await pool.query(
@@ -494,7 +575,7 @@ async function createSystemNotification(req, res, next) {
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
-        categories[type] || 'System announcements',
+        categories[type] || "System announcements",
         title,
         message,
         link || null,
@@ -563,7 +644,7 @@ async function getWomenSchemeApplicationDetails(req, res, next) {
        JOIN users u ON u.id = wsa.user_id
        LEFT JOIN vendor_profiles vp ON vp.user_id = wsa.user_id
        WHERE wsa.id = ?`,
-      [id]
+      [id],
     );
 
     if (!application) {
@@ -581,13 +662,13 @@ async function reviewWomenSchemeApplication(req, res, next) {
     const { id } = req.params;
     const { action, remarks } = req.body;
 
-    if (!action || !['approve', 'reject'].includes(action)) {
+    if (!action || !["approve", "reject"].includes(action)) {
       throw new ApiError(400, "Action must be 'approve' or 'reject'");
     }
 
     const [[application]] = await pool.query(
       "SELECT user_id, scheme_id FROM women_scheme_applications WHERE id = ?",
-      [id]
+      [id],
     );
 
     if (!application) {
@@ -598,25 +679,27 @@ async function reviewWomenSchemeApplication(req, res, next) {
       `UPDATE women_scheme_applications
        SET status = ?, remarks = ?, reviewed_at = NOW()
        WHERE id = ?`,
-      [action === 'approve' ? 'approved' : 'rejected', remarks || null, id]
+      [action === "approve" ? "approved" : "rejected", remarks || null, id],
     );
 
     // Create notification for vendor
-    const notificationTitle = action === 'approve' 
-      ? "Scheme Application Approved" 
-      : "Scheme Application Rejected";
-    const notificationMessage = action === 'approve'
-      ? "Your scheme application has been approved. You will receive further instructions."
-      : `Your scheme application has been rejected. Remarks: ${remarks || 'No remarks provided'}`;
+    const notificationTitle =
+      action === "approve"
+        ? "Scheme Application Approved"
+        : "Scheme Application Rejected";
+    const notificationMessage =
+      action === "approve"
+        ? "Your scheme application has been approved. You will receive further instructions."
+        : `Your scheme application has been rejected. Remarks: ${remarks || "No remarks provided"}`;
 
     await pool.query(
       `INSERT INTO vendor_notifications (user_id, category, title, message, link)
        VALUES (?, 'Scheme updates', ?, ?, '/vendor/women-support')`,
-      [application.user_id, notificationTitle, notificationMessage]
+      [application.user_id, notificationTitle, notificationMessage],
     );
 
     res.json({
-      message: `Scheme application ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
+      message: `Scheme application ${action === "approve" ? "approved" : "rejected"} successfully`,
     });
   } catch (err) {
     next(err);
@@ -656,13 +739,16 @@ async function reviewWomenMentorshipApplication(req, res, next) {
     const { id } = req.params;
     const { action, remarks } = req.body;
 
-    if (!action || !['accept', 'reject', 'complete'].includes(action)) {
-      throw new ApiError(400, "Action must be 'accept', 'reject', or 'complete'");
+    if (!action || !["accept", "reject", "complete"].includes(action)) {
+      throw new ApiError(
+        400,
+        "Action must be 'accept', 'reject', or 'complete'",
+      );
     }
 
     const [[application]] = await pool.query(
       "SELECT user_id FROM women_mentor_connections WHERE id = ?",
-      [id]
+      [id],
     );
 
     if (!application) {
@@ -670,54 +756,56 @@ async function reviewWomenMentorshipApplication(req, res, next) {
     }
 
     const statusMap = {
-      'accept': 'accepted',
-      'reject': 'rejected',
-      'complete': 'completed'
+      accept: "accepted",
+      reject: "rejected",
+      complete: "completed",
     };
 
     const updateFields = {
       status: statusMap[action],
-      remarks: remarks || null
+      remarks: remarks || null,
     };
 
-    if (action === 'accept') {
-      updateFields.accepted_at = 'NOW()';
-    } else if (action === 'complete') {
-      updateFields.completed_at = 'NOW()';
+    if (action === "accept") {
+      updateFields.accepted_at = "NOW()";
+    } else if (action === "complete") {
+      updateFields.completed_at = "NOW()";
     }
 
     const setClause = Object.entries(updateFields)
-      .map(([key, value]) => `${key} = ${value === 'NOW()' ? 'NOW()' : '?'}`)
-      .join(', ');
-    
-    const values = Object.values(updateFields).filter(v => v !== 'NOW()');
+      .map(([key, value]) => `${key} = ${value === "NOW()" ? "NOW()" : "?"}`)
+      .join(", ");
+
+    const values = Object.values(updateFields).filter((v) => v !== "NOW()");
     values.push(id);
 
     await pool.query(
       `UPDATE women_mentor_connections SET ${setClause} WHERE id = ?`,
-      values
+      values,
     );
 
     // Create notification for vendor
-    const notificationTitle = action === 'accept'
-      ? "Mentorship Request Accepted"
-      : action === 'reject'
-      ? "Mentorship Request Rejected"
-      : "Mentorship Program Completed";
-    const notificationMessage = action === 'accept'
-      ? "Your mentorship request has been accepted. You will be contacted by your mentor soon."
-      : action === 'reject'
-      ? `Your mentorship request has been rejected. Remarks: ${remarks || 'No remarks provided'}`
-      : "Your mentorship program has been completed successfully.";
+    const notificationTitle =
+      action === "accept"
+        ? "Mentorship Request Accepted"
+        : action === "reject"
+          ? "Mentorship Request Rejected"
+          : "Mentorship Program Completed";
+    const notificationMessage =
+      action === "accept"
+        ? "Your mentorship request has been accepted. You will be contacted by your mentor soon."
+        : action === "reject"
+          ? `Your mentorship request has been rejected. Remarks: ${remarks || "No remarks provided"}`
+          : "Your mentorship program has been completed successfully.";
 
     await pool.query(
       `INSERT INTO vendor_notifications (user_id, category, title, message, link)
        VALUES (?, 'Mentorship updates', ?, ?, '/vendor/women-support')`,
-      [application.user_id, notificationTitle, notificationMessage]
+      [application.user_id, notificationTitle, notificationMessage],
     );
 
     res.json({
-      message: `Mentorship application ${action === 'complete' ? 'marked as completed' : action + 'ed'} successfully`,
+      message: `Mentorship application ${action === "complete" ? "marked as completed" : action + "ed"} successfully`,
     });
   } catch (err) {
     next(err);
@@ -735,7 +823,7 @@ async function getInspectors(req, res, next) {
        FROM inspector_profiles ip
        JOIN users u ON u.id = ip.user_id
        WHERE ip.is_active = 1
-       ORDER BY ip.employee_id`
+       ORDER BY ip.employee_id`,
     );
 
     res.json({ inspectors: rows });
@@ -750,14 +838,14 @@ async function verifyDocuments(req, res, next) {
     const applicationId = Number(req.params.id);
     const { status, remarks } = req.body;
 
-    const allowed = ['approved', 'rejected'];
+    const allowed = ["approved", "rejected"];
     if (!allowed.includes(status)) {
       throw new ApiError(400, "Invalid status. Use approved or rejected");
     }
 
     const [[application]] = await pool.query(
       "SELECT * FROM license_applications WHERE id = ?",
-      [applicationId]
+      [applicationId],
     );
 
     if (!application) {
@@ -771,23 +859,25 @@ async function verifyDocuments(req, res, next) {
            document_verified_at = NOW(),
            document_verification_remarks = ?
        WHERE id = ?`,
-      [status, req.user.id, remarks || null, applicationId]
+      [status, req.user.id, remarks || null, applicationId],
     );
 
     // Add audit log
     await pool.query(
       `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
        VALUES (?, ?, ?, ?)`,
-      [applicationId, req.user.id, `document_${status}`, remarks || `Documents ${status}`]
+      [applicationId, req.user.id, status, remarks || `Documents ${status}`],
     );
 
     // Create notification for vendor
-    const notificationTitle = status === 'approved'
-      ? `Documents Verified for ${application.application_ref}`
-      : `Documents Rejected for ${application.application_ref}`;
-    const notificationMessage = status === 'approved'
-      ? "Your submitted documents have been verified and approved. Your application is now under admin review."
-      : `Your submitted documents have been rejected. ${remarks ? `Reason: ${remarks}` : 'Please contact support for more information.'}`;
+    const notificationTitle =
+      status === "approved"
+        ? `Documents Verified for ${application.application_ref}`
+        : `Documents Rejected for ${application.application_ref}`;
+    const notificationMessage =
+      status === "approved"
+        ? "Your submitted documents have been verified and approved. Your application is now under admin review."
+        : `Your submitted documents have been rejected. ${remarks ? `Reason: ${remarks}` : "Please contact support for more information."}`;
 
     await pool.query(
       `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id, admin_remarks)
@@ -797,10 +887,10 @@ async function verifyDocuments(req, res, next) {
         notificationTitle,
         notificationMessage,
         applicationId,
-        status === 'approved' ? 'document_approved' : 'document_rejected',
+        status === "approved" ? "approve" : "reject",
         applicationId,
-        remarks || null
-      ]
+        remarks || null,
+      ],
     );
 
     res.json({ message: `Documents ${status} successfully` });
@@ -813,23 +903,24 @@ async function verifyDocuments(req, res, next) {
 async function adminReviewWithInspection(req, res, next) {
   try {
     const applicationId = Number(req.params.id);
-    const { status, remarks, inspectorId, inspectionDate, inspectionZone } = req.body;
+    const { status, remarks, inspectorId, inspectionDate, inspectionZone } =
+      req.body;
 
-    const allowed = ['approved', 'rejected'];
+    const allowed = ["approved", "rejected"];
     if (!allowed.includes(status)) {
       throw new ApiError(400, "Invalid status. Use approved or rejected");
     }
 
     const [[application]] = await pool.query(
       "SELECT * FROM license_applications WHERE id = ?",
-      [applicationId]
+      [applicationId],
     );
 
     if (!application) {
       throw new ApiError(404, "Application not found");
     }
 
-    if (application.document_verification_status !== 'approved') {
+    if (application.document_verification_status !== "approved") {
       throw new ApiError(400, "Documents must be verified before admin review");
     }
 
@@ -837,16 +928,19 @@ async function adminReviewWithInspection(req, res, next) {
     await connection.beginTransaction();
 
     try {
-      if (status === 'approved') {
+      if (status === "approved") {
         // Assign to inspector
         if (!inspectorId) {
-          throw new ApiError(400, "Inspector ID is required when approving admin review");
+          throw new ApiError(
+            400,
+            "Inspector ID is required when approving admin review",
+          );
         }
 
         // Verify inspector exists
         const [[inspector]] = await connection.query(
           "SELECT * FROM inspector_profiles WHERE user_id = ? AND is_active = 1",
-          [inspectorId]
+          [inspectorId],
         );
 
         if (!inspector) {
@@ -866,39 +960,52 @@ async function adminReviewWithInspection(req, res, next) {
                inspection_zone = ?,
                inspection_status = 'scheduled'
            WHERE id = ?`,
-          [req.user.id, remarks || null, inspectorId, req.user.id, inspectionDate || null, inspectionZone || application.desired_zone, applicationId]
+          [
+            req.user.id,
+            remarks || null,
+            inspectorId,
+            req.user.id,
+            inspectionDate || null,
+            inspectionZone || application.desired_zone,
+            applicationId,
+          ],
         );
 
         // Add audit log
         await connection.query(
           `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
            VALUES (?, ?, ?, ?)`,
-          [applicationId, req.user.id, 'admin_review_approved', `Admin review approved. Assigned to inspector ${inspector.employee_id}`]
+          [
+            applicationId,
+            req.user.id,
+            "approved",
+            `Admin review approved. Assigned to inspector ${inspector.employee_id}`,
+          ],
         );
 
         // Create notification for inspector
         await connection.query(
           `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id)
-           VALUES (?, 'Inspection notices', ?, ?, '/inspector/inspections', 'inspection_assigned', ?)`,
+           VALUES (?, 'Inspection notices', ?, ?, '/inspector/inspections', 'inspection', ?)`,
           [
             inspectorId,
             `New Inspection Assigned: ${application.application_ref}`,
-            `You have been assigned to conduct a field inspection for application ${application.application_ref}. ${inspectionDate ? `Date: ${inspectionDate}` : ''}`,
-            applicationId
-          ]
+            `You have been assigned to conduct a field inspection for application ${application.application_ref}. ${inspectionDate ? `Date: ${inspectionDate}` : ""}`,
+            applicationId,
+          ],
         );
 
         // Create notification for vendor
         await connection.query(
           `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id)
-           VALUES (?, 'Inspection notices', ?, ?, CONCAT('/vendor/track/', ?), 'inspection_scheduled', ?)`,
+           VALUES (?, 'Inspection notices', ?, ?, CONCAT('/vendor/track/', ?), 'inspection', ?)`,
           [
             application.user_id,
             `Field Inspection Scheduled for ${application.application_ref}`,
-            `Your application has passed admin review. A field inspection has been scheduled. ${inspectionDate ? `Date: ${inspectionDate}` : 'You will be notified of the date soon.'}`,
+            `Your application has passed admin review. A field inspection has been scheduled. ${inspectionDate ? `Date: ${inspectionDate}` : "You will be notified of the date soon."}`,
             applicationId,
-            applicationId
-          ]
+            applicationId,
+          ],
         );
       } else {
         // Reject at admin review
@@ -910,28 +1017,33 @@ async function adminReviewWithInspection(req, res, next) {
                admin_review_remarks = ?,
                status = 'rejected'
            WHERE id = ?`,
-          [req.user.id, remarks || null, applicationId]
+          [req.user.id, remarks || null, applicationId],
         );
 
         // Add audit log
         await connection.query(
           `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
            VALUES (?, ?, ?, ?)`,
-          [applicationId, req.user.id, 'admin_review_rejected', remarks || 'Admin review rejected']
+          [
+            applicationId,
+            req.user.id,
+            "rejected",
+            remarks || "Admin review rejected",
+          ],
         );
 
         // Create notification for vendor
         await connection.query(
           `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id, admin_remarks)
-           VALUES (?, 'License updates', ?, ?, '/vendor/track/' || ?, 'admin_rejected', ?, ?)`,
+           VALUES (?, 'License updates', ?, ?, CONCAT('/vendor/track/', ?), 'reject', ?, ?)`,
           [
             application.user_id,
             `Application Rejected at Admin Review: ${application.application_ref}`,
-            `Your application has been rejected during admin review. ${remarks ? `Reason: ${remarks}` : 'Please contact support for more information.'}`,
+            `Your application has been rejected during admin review. ${remarks ? `Reason: ${remarks}` : "Please contact support for more information."}`,
             applicationId,
             applicationId,
-            remarks || null
-          ]
+            remarks || null,
+          ],
         );
       }
 
@@ -953,15 +1065,24 @@ async function updateZoneRectangle(req, res, next) {
     const { id } = req.params;
     const { zoneRectangle } = req.body;
 
-    if (!zoneRectangle || !zoneRectangle.north || !zoneRectangle.south || !zoneRectangle.east || !zoneRectangle.west) {
-      throw new ApiError(400, "Invalid zone rectangle data. Must include north, south, east, west bounds.");
+    if (
+      !zoneRectangle ||
+      !zoneRectangle.north ||
+      !zoneRectangle.south ||
+      !zoneRectangle.east ||
+      !zoneRectangle.west
+    ) {
+      throw new ApiError(
+        400,
+        "Invalid zone rectangle data. Must include north, south, east, west bounds.",
+      );
     }
 
     const [result] = await pool.query(
       `UPDATE license_applications
        SET zone_rectangle = ?
        WHERE id = ?`,
-      [JSON.stringify(zoneRectangle), id]
+      [JSON.stringify(zoneRectangle), id],
     );
 
     if (result.affectedRows === 0) {
@@ -972,7 +1093,12 @@ async function updateZoneRectangle(req, res, next) {
     await pool.query(
       `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
        VALUES (?, ?, ?, ?)`,
-      [id, req.user.id, 'zone_allocated', `Zone rectangle allocated: ${JSON.stringify(zoneRectangle)}`]
+      [
+        id,
+        req.user.id,
+        "zone_allocated",
+        `Zone rectangle allocated: ${JSON.stringify(zoneRectangle)}`,
+      ],
     );
 
     res.json({ message: "Zone rectangle updated successfully", zoneRectangle });
@@ -987,14 +1113,16 @@ async function getZoneRectangle(req, res, next) {
 
     const [rows] = await pool.query(
       `SELECT zone_rectangle FROM license_applications WHERE id = ?`,
-      [id]
+      [id],
     );
 
     if (rows.length === 0) {
       throw new ApiError(404, "Application not found");
     }
 
-    const zoneRectangle = rows[0].zone_rectangle ? JSON.parse(rows[0].zone_rectangle) : null;
+    const zoneRectangle = rows[0].zone_rectangle
+      ? JSON.parse(rows[0].zone_rectangle)
+      : null;
     res.json({ zoneRectangle });
   } catch (err) {
     next(err);

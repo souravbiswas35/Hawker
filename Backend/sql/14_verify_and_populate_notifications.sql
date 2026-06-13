@@ -1,4 +1,7 @@
 -- Verify vendor_notifications table exists and populate with sample data if needed
+-- BEFORE: 17_update_existing_notifications.sql
+-- AFTER: 09_vendor_notifications_schema.sql, 11_complaint_comments.sql (Required)
+
 USE hawker;
 
 -- Check if table exists, create if not
@@ -28,8 +31,17 @@ CREATE TABLE IF NOT EXISTS vendor_notifications (
 
 -- Insert sample notifications for all vendor users
 -- First, get all vendor users and insert notifications for them
-INSERT IGNORE INTO vendor_notifications (user_id, category, title, message, link, is_read, created_at)
-SELECT 
+INSERT IGNORE INTO
+    vendor_notifications (
+        user_id,
+        category,
+        title,
+        message,
+        link,
+        is_read,
+        created_at
+    )
+SELECT
     id as user_id,
     'System announcements' as category,
     'Welcome to Hawker System' as title,
@@ -37,11 +49,21 @@ SELECT
     '/vendor/dashboard' as link,
     0 as is_read,
     NOW() as created_at
-FROM users 
-WHERE role = 'vendor';
+FROM users
+WHERE
+    role = 'vendor';
 
-INSERT IGNORE INTO vendor_notifications (user_id, category, title, message, link, is_read, created_at)
-SELECT 
+INSERT IGNORE INTO
+    vendor_notifications (
+        user_id,
+        category,
+        title,
+        message,
+        link,
+        is_read,
+        created_at
+    )
+SELECT
     id as user_id,
     'License updates' as category,
     'License Application Status' as title,
@@ -49,11 +71,21 @@ SELECT
     '/vendor/applications' as link,
     0 as is_read,
     NOW() - INTERVAL 1 DAY as created_at
-FROM users 
-WHERE role = 'vendor';
+FROM users
+WHERE
+    role = 'vendor';
 
-INSERT IGNORE INTO vendor_notifications (user_id, category, title, message, link, is_read, created_at)
-SELECT 
+INSERT IGNORE INTO
+    vendor_notifications (
+        user_id,
+        category,
+        title,
+        message,
+        link,
+        is_read,
+        created_at
+    )
+SELECT
     id as user_id,
     'Payment reminders' as category,
     'Payment Confirmation' as title,
@@ -61,11 +93,21 @@ SELECT
     '/vendor/applications' as link,
     1 as is_read,
     NOW() - INTERVAL 2 DAY as created_at
-FROM users 
-WHERE role = 'vendor';
+FROM users
+WHERE
+    role = 'vendor';
 
-INSERT IGNORE INTO vendor_notifications (user_id, category, title, message, link, is_read, created_at)
-SELECT 
+INSERT IGNORE INTO
+    vendor_notifications (
+        user_id,
+        category,
+        title,
+        message,
+        link,
+        is_read,
+        created_at
+    )
+SELECT
     id as user_id,
     'Renewal alerts' as category,
     'License Renewal Reminder' as title,
@@ -73,11 +115,21 @@ SELECT
     '/vendor/license-renewal' as link,
     0 as is_read,
     NOW() - INTERVAL 3 DAY as created_at
-FROM users 
-WHERE role = 'vendor';
+FROM users
+WHERE
+    role = 'vendor';
 
-INSERT IGNORE INTO vendor_notifications (user_id, category, title, message, link, is_read, created_at)
-SELECT 
+INSERT IGNORE INTO
+    vendor_notifications (
+        user_id,
+        category,
+        title,
+        message,
+        link,
+        is_read,
+        created_at
+    )
+SELECT
     id as user_id,
     'Zone changes' as category,
     'Zone Update Notice' as title,
@@ -85,9 +137,19 @@ SELECT
     '/vendor/my-zone' as link,
     0 as is_read,
     NOW() - INTERVAL 4 DAY as created_at
-FROM users 
-WHERE role = 'vendor';
+FROM users
+WHERE
+    role = 'vendor';
 
 -- Verify the data was inserted
 SELECT COUNT(*) as total_notifications FROM vendor_notifications;
-SELECT user_id, category, title, is_read, created_at FROM vendor_notifications ORDER BY created_at DESC LIMIT 10;
+
+SELECT
+    user_id,
+    category,
+    title,
+    is_read,
+    created_at
+FROM vendor_notifications
+ORDER BY created_at DESC
+LIMIT 10;

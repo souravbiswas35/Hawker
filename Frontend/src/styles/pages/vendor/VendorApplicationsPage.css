@@ -1,1 +1,17 @@
 /* Page-specific styles for VendorApplicationsPage */
+
+.app-summary-card {
+  padding: 1rem 1.1rem;
+}
+
+.app-summary-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.app-inline-badge {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+}

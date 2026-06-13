@@ -1,5 +1,7 @@
 -- Admin feature schema extension
 -- Run this after 03_license_application_schema.sql
+-- BEFORE: 08, 10
+-- AFTER: 03_license_application_schema.sql (Required)
 
 USE hawker;
 
@@ -115,7 +117,13 @@ INSERT INTO
         generated_by,
         file_size_kb
     )
-SELECT 'Monthly Vendor Report', 'vendor', 'Jan 2024', 'table', 'ready', (SELECT id FROM users WHERE role = 'admin' LIMIT 1), 2400
+SELECT 'Monthly Vendor Report', 'vendor', 'Jan 2024', 'table', 'ready', (
+        SELECT id
+        FROM users
+        WHERE
+            role = 'admin'
+        LIMIT 1
+    ), 2400
 WHERE
     NOT EXISTS (
         SELECT 1
@@ -132,7 +140,13 @@ INSERT INTO
         generated_by,
         file_size_kb
     )
-SELECT 'Revenue Analysis Q4', 'finance', 'Dec 2023', 'line', 'ready', (SELECT id FROM users WHERE role = 'admin' LIMIT 1), 1800
+SELECT 'Revenue Analysis Q4', 'finance', 'Dec 2023', 'line', 'ready', (
+        SELECT id
+        FROM users
+        WHERE
+            role = 'admin'
+        LIMIT 1
+    ), 1800
 WHERE
     NOT EXISTS (
         SELECT 1
@@ -151,7 +165,13 @@ INSERT INTO
         generated_by,
         file_size_kb
     )
-SELECT 'Zone Occupancy Report', 'compliance', 'Jan 2024', 'pie', 'ready', (SELECT id FROM users WHERE role = 'admin' LIMIT 1), 3100
+SELECT 'Zone Occupancy Report', 'compliance', 'Jan 2024', 'pie', 'ready', (
+        SELECT id
+        FROM users
+        WHERE
+            role = 'admin'
+        LIMIT 1
+    ), 3100
 WHERE
     NOT EXISTS (
         SELECT 1
@@ -170,7 +190,13 @@ INSERT INTO
         status,
         description
     )
-SELECT 'C-21353', (SELECT id FROM users WHERE role = 'vendor' LIMIT 1), 'Zone allocation mismatch', 'Zone Issue', 'high', 'new', 'Requested zone differs from approved allocation.'
+SELECT 'C-21353', (
+        SELECT id
+        FROM users
+        WHERE
+            role = 'vendor'
+        LIMIT 1
+    ), 'Zone allocation mismatch', 'Zone Issue', 'high', 'new', 'Requested zone differs from approved allocation.'
 WHERE
     NOT EXISTS (
         SELECT 1
@@ -189,7 +215,15 @@ INSERT INTO
         status,
         description
     )
-SELECT 'C-21354', (SELECT id FROM users WHERE role = 'vendor' LIMIT 1 OFFSET 1), 'Verbal harassment complaint', 'Harassment', 'high', 'in_progress', 'Vendor reported repeated harassment at market edge.'
+SELECT 'C-21354', (
+        SELECT id
+        FROM users
+        WHERE
+            role = 'vendor'
+        LIMIT 1
+        OFFSET
+            1
+    ), 'Verbal harassment complaint', 'Harassment', 'high', 'in_progress', 'Vendor reported repeated harassment at market edge.'
 WHERE
     NOT EXISTS (
         SELECT 1
@@ -208,7 +242,13 @@ INSERT INTO
         status,
         description
     )
-SELECT 'C-21355', (SELECT id FROM users WHERE role = 'vendor' LIMIT 1), 'Penalty charge dispute', 'Payment Issue', 'medium', 'resolved', 'Penalty was applied despite valid renewal proof.'
+SELECT 'C-21355', (
+        SELECT id
+        FROM users
+        WHERE
+            role = 'vendor'
+        LIMIT 1
+    ), 'Penalty charge dispute', 'Payment Issue', 'medium', 'resolved', 'Penalty was applied despite valid renewal proof.'
 WHERE
     NOT EXISTS (
         SELECT 1
@@ -226,7 +266,13 @@ INSERT INTO
         status,
         notes
     )
-SELECT (SELECT id FROM users WHERE role = 'vendor' LIMIT 1), 'A-45', 'Inspector Raja', NOW() + INTERVAL 2 HOUR, 'scheduled', 'Routine hygiene check'
+SELECT (
+        SELECT id
+        FROM users
+        WHERE
+            role = 'vendor'
+        LIMIT 1
+    ), 'A-45', 'Inspector Raja', NOW() + INTERVAL 2 HOUR, 'scheduled', 'Routine hygiene check'
 WHERE
     NOT EXISTS (
         SELECT 1
@@ -242,7 +288,15 @@ INSERT INTO
         status,
         notes
     )
-SELECT (SELECT id FROM users WHERE role = 'vendor' LIMIT 1 OFFSET 1), 'A-12', 'Inspector Buiyan', NOW() + INTERVAL 4 HOUR, 'in_progress', 'Follow-up compliance visit'
+SELECT (
+        SELECT id
+        FROM users
+        WHERE
+            role = 'vendor'
+        LIMIT 1
+        OFFSET
+            1
+    ), 'A-12', 'Inspector Buiyan', NOW() + INTERVAL 4 HOUR, 'in_progress', 'Follow-up compliance visit'
 WHERE
     NOT EXISTS (
         SELECT 1

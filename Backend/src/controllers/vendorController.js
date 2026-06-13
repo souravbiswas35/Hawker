@@ -57,7 +57,7 @@ async function upsertProfile(req, res, next) {
     if (date_of_birth) {
       try {
         const date = new Date(date_of_birth);
-        formattedDateOfBirth = date.toISOString().split('T')[0];
+        formattedDateOfBirth = date.toISOString().split("T")[0];
       } catch (e) {
         console.error("Error parsing date_of_birth:", e);
       }
@@ -66,7 +66,7 @@ async function upsertProfile(req, res, next) {
     // First, check if profile exists
     const [[existingProfile]] = await pool.query(
       "SELECT id FROM vendor_profiles WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
     console.log("Existing profile:", existingProfile);
@@ -91,25 +91,25 @@ async function upsertProfile(req, res, next) {
       `;
 
       let queryParams = [
-          first_name || null,
-          last_name || null,
-          phone || null,
-          national_id || null,
-          formattedDateOfBirth,
-          address || null,
-          business_name || null,
-          business_type || null,
-          vending_zone || null
+        first_name || null,
+        last_name || null,
+        phone || null,
+        national_id || null,
+        formattedDateOfBirth,
+        address || null,
+        business_name || null,
+        business_type || null,
+        vending_zone || null,
       ];
 
       // Only allow updating gender if it hasn't been set before
       // First, get the current gender from the profile
       const [[currentProfile]] = await pool.query(
         "SELECT gender FROM vendor_profiles WHERE user_id = ?",
-        [userId]
+        [userId],
       );
 
-      if (gender && (!currentProfile.gender || currentProfile.gender === '')) {
+      if (gender && (!currentProfile.gender || currentProfile.gender === "")) {
         updateFields += ", gender = ?";
         queryParams.push(gender);
       }
@@ -118,7 +118,7 @@ async function upsertProfile(req, res, next) {
 
       result = await pool.query(
         `UPDATE vendor_profiles SET ${updateFields} WHERE user_id = ?`,
-        queryParams
+        queryParams,
       );
     } else {
       // Insert new profile
@@ -140,7 +140,7 @@ async function upsertProfile(req, res, next) {
           business_name || null,
           business_type || null,
           vending_zone || null,
-        ]
+        ],
       );
     }
 
@@ -203,7 +203,11 @@ async function uploadProfilePicture(req, res, next) {
     console.log("File:", file.filename);
 
     // Read the file data as buffer
-    const filePath = path.join(__dirname, "../../uploads/profile-pictures", file.filename);
+    const filePath = path.join(
+      __dirname,
+      "../../uploads/profile-pictures",
+      file.filename,
+    );
     const fileData = fs.readFileSync(filePath);
 
     // Delete the file from disk after reading it (since we're storing in database)
@@ -219,7 +223,7 @@ async function uploadProfilePicture(req, res, next) {
     // Check if profile exists, if not create it
     const [[existingProfile]] = await pool.query(
       "SELECT id FROM vendor_profiles WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
     if (existingProfile) {
@@ -269,7 +273,7 @@ async function getDashboard(req, res, next) {
 
     const [applications] = await pool.query(
       `SELECT la.id, la.application_ref, la.desired_zone, la.stall_type, la.status, la.submitted_at, la.reviewed_at,
-              la.payment_status, la.payment_id, la.issued_at, la.expires_at, lt.duration_days
+              la.payment_status, la.payment_id, la.issued_at, la.expires_at, la.business_details, lt.duration_days
        FROM license_applications la
        LEFT JOIN license_types lt ON lt.id = la.license_type_id
        WHERE la.user_id = ?
@@ -285,7 +289,7 @@ async function getDashboard(req, res, next) {
         COALESCE(SUM(CASE WHEN status = 'completed' AND YEAR(payment_date) = YEAR(NOW()) THEN final_amount ELSE 0 END), 0) as paid_this_year
        FROM vendor_payments
        WHERE user_id = ?`,
-      [userId]
+      [userId],
     );
 
     // Get outstanding dues
@@ -295,15 +299,160 @@ async function getDashboard(req, res, next) {
         COALESCE(SUM(amount), 0) as outstanding_amount
        FROM vendor_dues
        WHERE user_id = ? AND is_paid = 0`,
-      [userId]
+      [userId],
     );
 
     res.json({
       profile: profile || null,
       documents: docs,
       applications,
-      payment_summary: paymentSummary || { total_payments: 0, total_paid: 0, paid_this_year: 0 },
-      outstanding_summary: outstandingSummary || { outstanding_count: 0, outstanding_amount: 0 },
+      payment_summary: paymentSummary || {
+        total_payments: 0,
+        total_paid: 0,
+        paid_this_year: 0,
+      },
+      outstanding_summary: outstandingSummary || {
+        outstanding_count: 0,
+        outstanding_amount: 0,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getTotalApplications(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    const [[profile]] = await pool.query(
+      "SELECT vending_zone FROM vendor_profiles WHERE user_id = ?",
+      [userId],
+    );
+
+    const [applications] = await pool.query(
+      `SELECT id, application_ref, desired_zone, stall_type, status, submitted_at, reviewed_at, admin_remarks
+       FROM license_applications
+       WHERE user_id = ?
+       ORDER BY submitted_at DESC`,
+      [userId],
+    );
+
+    const summary = {
+      total: applications.length,
+      draft: applications.filter(
+        (app) => (app.status || "").toLowerCase() === "draft",
+      ).length,
+      approved: applications.filter(
+        (app) => (app.status || "").toLowerCase() === "approved",
+      ).length,
+      rejected: applications.filter(
+        (app) => (app.status || "").toLowerCase() === "rejected",
+      ).length,
+    };
+
+    res.json({
+      summary,
+      current_zone: profile?.vending_zone || null,
+      applications,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteDraftApplication(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const applicationId = Number(req.params.applicationId);
+
+    if (!Number.isFinite(applicationId) || applicationId <= 0) {
+      throw new ApiError(400, "Invalid application id");
+    }
+
+    const [[application]] = await pool.query(
+      `SELECT id, status
+       FROM license_applications
+       WHERE id = ? AND user_id = ?`,
+      [applicationId, userId],
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    if ((application.status || "").toLowerCase() !== "draft") {
+      throw new ApiError(400, "Only draft applications can be deleted");
+    }
+
+    await pool.query("DELETE FROM license_applications WHERE id = ?", [
+      applicationId,
+    ]);
+
+    res.json({ message: "Draft application deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function switchApprovedZone(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const applicationId = Number(req.params.applicationId);
+
+    if (!Number.isFinite(applicationId) || applicationId <= 0) {
+      throw new ApiError(400, "Invalid application id");
+    }
+
+    const [[application]] = await pool.query(
+      `SELECT id, desired_zone, status
+       FROM license_applications
+       WHERE id = ? AND user_id = ?`,
+      [applicationId, userId],
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    if ((application.status || "").toLowerCase() !== "approved") {
+      throw new ApiError(
+        400,
+        "Only approved applications can be used to switch zone",
+      );
+    }
+
+    if (!application.desired_zone) {
+      throw new ApiError(
+        400,
+        "Selected application does not have an assigned zone",
+      );
+    }
+
+    const [updateResult] = await pool.query(
+      "UPDATE vendor_profiles SET vending_zone = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+      [application.desired_zone, userId],
+    );
+
+    if (updateResult.affectedRows === 0) {
+      await pool.query(
+        "INSERT INTO vendor_profiles (user_id, vending_zone) VALUES (?, ?)",
+        [userId, application.desired_zone],
+      );
+    }
+
+    await pool.query(
+      `UPDATE vendor_licenses
+       SET current_zone = ?,
+           source_application_id = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE user_id = ?`,
+      [application.desired_zone, application.id, userId],
+    );
+
+    res.json({
+      message: "Active vending zone switched successfully",
+      active_zone: application.desired_zone,
     });
   } catch (err) {
     next(err);
@@ -346,8 +495,8 @@ async function listNotifications(req, res, next) {
       );
     } catch (err) {
       // Fallback if new columns don't exist yet
-      if (err.code === 'ER_BAD_FIELD_ERROR') {
-        console.log('New notification columns not found, using fallback query');
+      if (err.code === "ER_BAD_FIELD_ERROR") {
+        console.log("New notification columns not found, using fallback query");
         try {
           vendorRows = await pool.query(
             `SELECT id, category, title, message, link, is_read, is_hidden, created_at, updated_at,
@@ -359,8 +508,8 @@ async function listNotifications(req, res, next) {
           );
         } catch (err2) {
           // Final fallback if is_hidden also doesn't exist
-          if (err2.code === 'ER_BAD_FIELD_ERROR') {
-            console.log('is_hidden column not found, using minimal query');
+          if (err2.code === "ER_BAD_FIELD_ERROR") {
+            console.log("is_hidden column not found, using minimal query");
             vendorRows = await pool.query(
               `SELECT id, category, title, message, link, is_read, created_at, updated_at,
                       'vendor' as source
@@ -410,35 +559,41 @@ async function listNotifications(req, res, next) {
          FROM admin_notifications
          WHERE (audience_type = 'all_vendors' OR audience_type = 'specific_vendor')
          ORDER BY created_at DESC
-         LIMIT 50`
+         LIMIT 50`,
       );
     } catch (err) {
-      console.log('Error fetching admin notifications:', err);
+      console.log("Error fetching admin notifications:", err);
     }
 
     // Combine both notification sources
     const allNotifications = [...vendorRows, ...adminRows];
 
     // Ensure all notifications have proper IDs and source fields
-    const validNotifications = allNotifications.filter(note => {
+    const validNotifications = allNotifications.filter((note) => {
       // Filter out notifications without valid IDs
-      if (!note.id || note.id === 'undefined' || note.id === null) {
-        console.log('Filtered out notification with invalid ID:', note);
+      if (!note.id || note.id === "undefined" || note.id === null) {
+        console.log("Filtered out notification with invalid ID:", note);
         return false;
       }
       return true;
     });
 
     // Sort by created_at descending
-    validNotifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    validNotifications.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at),
+    );
 
-    console.log(`Fetched ${validNotifications.length} total notifications for user ${userId} (${vendorRows.length} vendor, ${adminRows.length} admin)`);
+    console.log(
+      `Fetched ${validNotifications.length} total notifications for user ${userId} (${vendorRows.length} vendor, ${adminRows.length} admin)`,
+    );
     res.json({ notifications: validNotifications });
   } catch (err) {
-    console.error('Error fetching notifications:', err);
+    console.error("Error fetching notifications:", err);
     // If table doesn't exist, return empty array instead of error
-    if (err.code === 'ER_NO_SUCH_TABLE') {
-      console.log('vendor_notifications table does not exist, returning empty array');
+    if (err.code === "ER_NO_SUCH_TABLE") {
+      console.log(
+        "vendor_notifications table does not exist, returning empty array",
+      );
       return res.json({ notifications: [] });
     }
     next(err);
@@ -459,10 +614,12 @@ async function getNotificationPreferences(req, res, next) {
         [userId],
       );
     } catch (err) {
-      console.error('Error fetching notification preferences:', err);
+      console.error("Error fetching notification preferences:", err);
       // If table doesn't exist, return default preferences
-      if (err.code === 'ER_NO_SUCH_TABLE') {
-        console.log('vendor_notification_preferences table does not exist, returning defaults');
+      if (err.code === "ER_NO_SUCH_TABLE") {
+        console.log(
+          "vendor_notification_preferences table does not exist, returning defaults",
+        );
         return res.json({
           preferences: {
             email_notifications: true,
@@ -511,7 +668,7 @@ async function getNotificationPreferences(req, res, next) {
       },
     });
   } catch (err) {
-    console.error('Error in getNotificationPreferences:', err);
+    console.error("Error in getNotificationPreferences:", err);
     next(err);
   }
 }
@@ -562,18 +719,23 @@ async function updateNotificationPreferences(req, res, next) {
         ],
       );
     } catch (err) {
-      console.error('Error updating notification preferences:', err);
+      console.error("Error updating notification preferences:", err);
       // If table doesn't exist, return success but log the error
-      if (err.code === 'ER_NO_SUCH_TABLE') {
-        console.log('vendor_notification_preferences table does not exist, preferences not saved');
-        return res.json({ message: "Preferences saved (table will be created on next migration)" });
+      if (err.code === "ER_NO_SUCH_TABLE") {
+        console.log(
+          "vendor_notification_preferences table does not exist, preferences not saved",
+        );
+        return res.json({
+          message:
+            "Preferences saved (table will be created on next migration)",
+        });
       }
       throw err;
     }
 
     res.json({ message: "Notification preferences updated successfully" });
   } catch (err) {
-    console.error('Error in updateNotificationPreferences:', err);
+    console.error("Error in updateNotificationPreferences:", err);
     next(err);
   }
 }
@@ -583,8 +745,10 @@ async function markNotificationRead(req, res, next) {
     const userId = req.user.id;
     const { id } = req.params;
 
-    if (!id || id === 'undefined') {
-      return res.status(400).json({ message: "Valid notification ID is required" });
+    if (!id || id === "undefined") {
+      return res
+        .status(400)
+        .json({ message: "Valid notification ID is required" });
     }
 
     const [result] = await pool.query(
@@ -609,8 +773,10 @@ async function markNotificationUnread(req, res, next) {
     const userId = req.user.id;
     const { id } = req.params;
 
-    if (!id || id === 'undefined') {
-      return res.status(400).json({ message: "Valid notification ID is required" });
+    if (!id || id === "undefined") {
+      return res
+        .status(400)
+        .json({ message: "Valid notification ID is required" });
     }
 
     const [result] = await pool.query(
@@ -657,13 +823,17 @@ async function deleteNotification(req, res, next) {
     const { id } = req.params;
     const { source } = req.query;
 
-    if (!id || id === 'undefined') {
-      return res.status(400).json({ message: "Valid notification ID is required" });
+    if (!id || id === "undefined") {
+      return res
+        .status(400)
+        .json({ message: "Valid notification ID is required" });
     }
 
     // Admin notifications cannot be deleted by vendors
-    if (source === 'admin') {
-      return res.status(403).json({ message: "Admin notifications cannot be deleted" });
+    if (source === "admin") {
+      return res
+        .status(403)
+        .json({ message: "Admin notifications cannot be deleted" });
     }
 
     const [result] = await pool.query(
@@ -685,10 +855,19 @@ async function deleteNotification(req, res, next) {
 async function createComplaint(req, res, next) {
   try {
     const userId = req.user.id;
-    const { subject, category, priority = "medium", description, is_anonymous = false } = req.body;
+    const {
+      subject,
+      category,
+      priority = "medium",
+      description,
+      is_anonymous = false,
+    } = req.body;
 
     if (!subject || !category || !description) {
-      throw new ApiError(400, "Subject, category, and description are required");
+      throw new ApiError(
+        400,
+        "Subject, category, and description are required",
+      );
     }
 
     const categories = [
@@ -713,7 +892,15 @@ async function createComplaint(req, res, next) {
       `INSERT INTO vendor_complaints (
         complaint_ref, user_id, is_anonymous, subject, category, priority, description, status
       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'new')`,
-      [complaintRef, userId, is_anonymous ? 1 : 0, subject, category, priority, description],
+      [
+        complaintRef,
+        userId,
+        is_anonymous ? 1 : 0,
+        subject,
+        category,
+        priority,
+        description,
+      ],
     );
 
     res.status(201).json({
@@ -946,6 +1133,8 @@ async function getMyLicense(req, res, next) {
     );
 
     // Get approved license application with license type name
+    const activeZone = profile?.vending_zone || null;
+
     const [[license]] = await pool.query(
       `SELECT la.id, la.application_ref, la.license_number, la.desired_zone, la.stall_type,
               la.business_category, la.goods_authorized, la.license_category,
@@ -954,9 +1143,10 @@ async function getMyLicense(req, res, next) {
        FROM license_applications la
        LEFT JOIN license_types lt ON la.license_type_id = lt.id
        WHERE la.user_id = ? AND la.status = 'approved'
-       ORDER BY la.reviewed_at DESC
+       ORDER BY CASE WHEN ? IS NOT NULL AND la.desired_zone = ? THEN 0 ELSE 1 END,
+                la.reviewed_at DESC
        LIMIT 1`,
-      [userId],
+      [userId, activeZone, activeZone],
     );
 
     if (!license) {
@@ -969,11 +1159,17 @@ async function getMyLicense(req, res, next) {
     }
 
     // Use desired_zone from license application as the allocated zone
-    license.allocated_zone = license.desired_zone || "Not assigned";
+    license.allocated_zone =
+      activeZone || license.desired_zone || "Not assigned";
 
     // Fill missing goods_authorized from vendor profile
-    if (!license.goods_authorized || license.goods_authorized === "To be selected" || license.goods_authorized === "") {
-      license.goods_authorized = profile?.business_type || license.business_category || "General";
+    if (
+      !license.goods_authorized ||
+      license.goods_authorized === "To be selected" ||
+      license.goods_authorized === ""
+    ) {
+      license.goods_authorized =
+        profile?.business_type || license.business_category || "General";
     }
 
     res.json({
@@ -1001,7 +1197,7 @@ async function changePassword(req, res, next) {
     // Get user's current password hash
     const [[user]] = await pool.query(
       "SELECT password_hash FROM users WHERE id = ?",
-      [userId]
+      [userId],
     );
 
     if (!user) {
@@ -1018,10 +1214,10 @@ async function changePassword(req, res, next) {
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
 
     // Update password
-    await pool.query(
-      "UPDATE users SET password_hash = ? WHERE id = ?",
-      [newPasswordHash, userId]
-    );
+    await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [
+      newPasswordHash,
+      userId,
+    ]);
 
     res.json({ message: "Password changed successfully" });
   } catch (err) {
@@ -1036,7 +1232,7 @@ async function deactivateAccount(req, res, next) {
     // Update user account status to suspended
     await pool.query(
       "UPDATE users SET account_status = 'suspended' WHERE id = ?",
-      [userId]
+      [userId],
     );
 
     res.json({ message: "Account deactivated successfully" });
@@ -1053,13 +1249,20 @@ async function deleteAccount(req, res, next) {
     await pool.query("DELETE FROM vendor_profiles WHERE user_id = ?", [userId]);
 
     // Delete license applications
-    await pool.query("DELETE FROM license_applications WHERE user_id = ?", [userId]);
+    await pool.query("DELETE FROM license_applications WHERE user_id = ?", [
+      userId,
+    ]);
 
     // Delete notifications
-    await pool.query("DELETE FROM vendor_notifications WHERE user_id = ?", [userId]);
+    await pool.query("DELETE FROM vendor_notifications WHERE user_id = ?", [
+      userId,
+    ]);
 
     // Delete notification preferences
-    await pool.query("DELETE FROM vendor_notification_preferences WHERE user_id = ?", [userId]);
+    await pool.query(
+      "DELETE FROM vendor_notification_preferences WHERE user_id = ?",
+      [userId],
+    );
 
     // Delete settings
     await pool.query("DELETE FROM vendor_settings WHERE user_id = ?", [userId]);
@@ -1171,10 +1374,23 @@ async function getActivityLog(req, res, next) {
 
     // Combine and sort by date
     const activities = [
-      ...applications.map(a => ({ ...a, description: `License application ${a.status}` })),
-      ...complaints.map(c => ({ ...c, description: `Complaint ${c.status}` })),
-      ...notifications.map(n => ({ ...n, description: n.status ? 'Notification read' : 'New notification' })),
-    ].sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at));
+      ...applications.map((a) => ({
+        ...a,
+        description: `License application ${a.status}`,
+      })),
+      ...complaints.map((c) => ({
+        ...c,
+        description: `Complaint ${c.status}`,
+      })),
+      ...notifications.map((n) => ({
+        ...n,
+        description: n.status ? "Notification read" : "New notification",
+      })),
+    ].sort(
+      (a, b) =>
+        new Date(b.updated_at || b.created_at) -
+        new Date(a.updated_at || a.created_at),
+    );
 
     res.json({ activities });
   } catch (err) {
@@ -1189,13 +1405,13 @@ async function getVendingZones(req, res, next) {
       `SELECT id, zone_code, name, location, area, total_spots, available_spots,
               latitude, longitude, zone_type, traffic_level
        FROM vending_zones
-       ORDER BY name ASC`
+       ORDER BY name ASC`,
     );
 
     console.log(`Fetched ${rows.length} vending zones`);
     res.json({ zones: rows });
   } catch (err) {
-    console.error('Error fetching vending zones:', err);
+    console.error("Error fetching vending zones:", err);
     next(err);
   }
 }
@@ -1207,24 +1423,27 @@ async function getMyZone(req, res, next) {
     // Get vendor's assigned zone from profile
     const [[profile]] = await pool.query(
       "SELECT vending_zone, assigned_spot_number FROM vendor_profiles WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
     // Get zone rectangle and other info from approved license application
+    const activeZone = profile?.vending_zone || null;
+
     const [[licenseApp]] = await pool.query(
       `SELECT zone_rectangle, desired_zone, primary_zone_id, stall_type, business_category, notes, business_details
        FROM license_applications 
        WHERE user_id = ? AND status = 'approved' 
-       ORDER BY reviewed_at DESC 
+       ORDER BY CASE WHEN ? IS NOT NULL AND desired_zone = ? THEN 0 ELSE 1 END,
+                reviewed_at DESC 
        LIMIT 1`,
-      [userId]
+      [userId, activeZone, activeZone],
     );
 
     let zoneRectangle = null;
     if (licenseApp && licenseApp.zone_rectangle) {
       try {
         // Handle both string and object formats
-        if (typeof licenseApp.zone_rectangle === 'string') {
+        if (typeof licenseApp.zone_rectangle === "string") {
           zoneRectangle = JSON.parse(licenseApp.zone_rectangle);
         } else {
           zoneRectangle = licenseApp.zone_rectangle;
@@ -1240,13 +1459,16 @@ async function getMyZone(req, res, next) {
     if (licenseApp && licenseApp.business_details) {
       try {
         let businessDetails;
-        if (typeof licenseApp.business_details === 'string') {
+        if (typeof licenseApp.business_details === "string") {
           businessDetails = JSON.parse(licenseApp.business_details);
         } else {
           businessDetails = licenseApp.business_details;
         }
-        
-        if (businessDetails.operatingHoursStart && businessDetails.operatingHoursEnd) {
+
+        if (
+          businessDetails.operatingHoursStart &&
+          businessDetails.operatingHoursEnd
+        ) {
           operatingHours = `${businessDetails.operatingHoursStart} - ${businessDetails.operatingHoursEnd}`;
         }
       } catch (e) {
@@ -1266,7 +1488,7 @@ async function getMyZone(req, res, next) {
                   rules_regulations, zone_in_charge_contact, latitude, longitude, zone_type, traffic_level
            FROM vending_zones
            WHERE id = ?`,
-          [licenseApp.primary_zone_id]
+          [licenseApp.primary_zone_id],
         );
         if (zone) {
           zoneDetails = {
@@ -1283,12 +1505,12 @@ async function getMyZone(req, res, next) {
       let zoneName = null;
       let area = null;
       if (licenseApp && licenseApp.desired_zone) {
-        const parts = licenseApp.desired_zone.split(' - ');
+        const parts = licenseApp.desired_zone.split(" - ");
         if (parts.length >= 2) {
           zoneCode = parts[0].trim();
-          zoneName = parts.slice(1).join(' - ').trim();
+          zoneName = parts.slice(1).join(" - ").trim();
           // Get first word after hyphen as area
-          const wordsAfterHyphen = parts.slice(1).join(' ').trim().split(/\s+/);
+          const wordsAfterHyphen = parts.slice(1).join(" ").trim().split(/\s+/);
           area = wordsAfterHyphen[0] || null;
         } else {
           zoneCode = licenseApp.desired_zone;
@@ -1298,8 +1520,16 @@ async function getMyZone(req, res, next) {
 
       return res.json({
         zone: {
-          zone_code: zoneDetails.zone_code || zoneCode || licenseApp?.desired_zone || null,
-          name: zoneDetails.name || zoneName || licenseApp?.desired_zone || "Allocated Zone",
+          zone_code:
+            zoneDetails.zone_code ||
+            zoneCode ||
+            licenseApp?.desired_zone ||
+            null,
+          name:
+            zoneDetails.name ||
+            zoneName ||
+            licenseApp?.desired_zone ||
+            "Allocated Zone",
           location: zoneDetails.location || "Zone allocated via map selection",
           area: zoneDetails.area || area || null,
           dimensions: zoneDetails.dimensions || licenseApp?.stall_type || null,
@@ -1309,7 +1539,8 @@ async function getMyZone(req, res, next) {
           has_water: zoneDetails.has_water || false,
           has_shade: zoneDetails.has_shade || false,
           nearby_landmarks: zoneDetails.nearby_landmarks || null,
-          operating_hours: operatingHours || zoneDetails.operating_hours || null,
+          operating_hours:
+            operatingHours || zoneDetails.operating_hours || null,
           rules_regulations: zoneDetails.rules_regulations || null,
           zone_in_charge_contact: zoneDetails.zone_in_charge_contact || null,
           latitude: zoneDetails.latitude || null,
@@ -1325,8 +1556,19 @@ async function getMyZone(req, res, next) {
 
     // If no zone assigned at all, throw error
     if (!profile || !profile.vending_zone) {
-      throw new ApiError(404, "No zone assigned to your profile. Please contact admin.");
+      throw new ApiError(
+        404,
+        "No zone assigned to your profile. Please contact admin.",
+      );
     }
+
+    const rawActiveZone = String(profile.vending_zone || "").trim();
+    const activeZoneParts = rawActiveZone.split(" - ");
+    const activeZoneCode = activeZoneParts[0]?.trim() || rawActiveZone;
+    const activeZoneName =
+      activeZoneParts.length > 1
+        ? activeZoneParts.slice(1).join(" - ").trim()
+        : rawActiveZone;
 
     // Get zone details
     const [[zone]] = await pool.query(
@@ -1334,8 +1576,9 @@ async function getMyZone(req, res, next) {
               has_electricity, has_water, has_shade, nearby_landmarks, operating_hours,
               rules_regulations, zone_in_charge_contact, latitude, longitude, zone_type, traffic_level
        FROM vending_zones
-       WHERE name = ? OR zone_code = ?`,
-      [profile.vending_zone, profile.vending_zone]
+       WHERE name = ? OR zone_code = ? OR name = ? OR zone_code = ?
+       LIMIT 1`,
+      [rawActiveZone, rawActiveZone, activeZoneName, activeZoneCode],
     );
 
     if (!zone) {
@@ -1349,7 +1592,7 @@ async function getMyZone(req, res, next) {
        JOIN users u ON u.id = vp.user_id
        WHERE vp.vending_zone = ? AND vp.user_id != ?
        LIMIT 10`,
-      [profile.vending_zone, userId]
+      [profile.vending_zone, userId],
     );
 
     res.json({
@@ -1372,16 +1615,24 @@ async function getMyZone(req, res, next) {
 async function updateMyZone(req, res, next) {
   try {
     const userId = req.user.id;
-    const { operating_hours, rules_regulations, zone_in_charge_contact, nearby_landmarks } = req.body;
+    const {
+      operating_hours,
+      rules_regulations,
+      zone_in_charge_contact,
+      nearby_landmarks,
+    } = req.body;
 
     // Get vendor's assigned zone from profile
     const [[profile]] = await pool.query(
       "SELECT vending_zone FROM vendor_profiles WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
     if (!profile || !profile.vending_zone) {
-      throw new ApiError(404, "No zone assigned to your profile. Please contact admin.");
+      throw new ApiError(
+        404,
+        "No zone assigned to your profile. Please contact admin.",
+      );
     }
 
     // Update zone details
@@ -1400,7 +1651,7 @@ async function updateMyZone(req, res, next) {
         nearby_landmarks || null,
         profile.vending_zone,
         profile.vending_zone,
-      ]
+      ],
     );
 
     res.json({ message: "Zone details updated successfully" });
@@ -1423,7 +1674,7 @@ async function getProfilePicture(req, res, next) {
       throw new ApiError(404, "Profile picture not found");
     }
 
-    res.set('Content-Type', profile.profile_picture_mime_type);
+    res.set("Content-Type", profile.profile_picture_mime_type);
     res.send(profile.profile_picture_data);
   } catch (err) {
     next(err);
@@ -1445,8 +1696,8 @@ async function getSettings(req, res, next) {
     if (!settings) {
       // Return default settings if none exist
       return res.json({
-        theme: 'light',
-        language: 'english',
+        theme: "light",
+        language: "english",
         high_contrast_mode: 0,
         large_text: 0,
         screen_reader_support: 0,
@@ -1514,8 +1765,8 @@ async function updateSettings(req, res, next) {
          marketing_communications = VALUES(marketing_communications)`,
       [
         userId,
-        theme || 'light',
-        language || 'english',
+        theme || "light",
+        language || "english",
         high_contrast_mode ? 1 : 0,
         large_text ? 1 : 0,
         screen_reader_support ? 1 : 0,
@@ -1541,20 +1792,22 @@ async function checkWomenSupportAccess(req, res, next) {
 
     const [[profile]] = await pool.query(
       "SELECT gender FROM vendor_profiles WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
     if (!profile || !profile.gender) {
       return res.json({
         canAccess: false,
-        message: "Gender information not found in your profile. Please complete your profile first."
+        message:
+          "Gender information not found in your profile. Please complete your profile first.",
       });
     }
 
-    if (profile.gender.toLowerCase() !== 'female') {
+    if (profile.gender.toLowerCase() !== "female") {
       return res.json({
         canAccess: false,
-        message: "This feature is not applicable for you, please contact the authority."
+        message:
+          "This feature is not applicable for you, please contact the authority.",
       });
     }
 
@@ -1571,11 +1824,14 @@ async function getWomenSupportData(req, res, next) {
     // Check gender first
     const [[profile]] = await pool.query(
       "SELECT gender FROM vendor_profiles WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
-    if (!profile || profile.gender.toLowerCase() !== 'female') {
-      throw new ApiError(403, "This feature is not applicable for you, please contact the authority.");
+    if (!profile || profile.gender.toLowerCase() !== "female") {
+      throw new ApiError(
+        403,
+        "This feature is not applicable for you, please contact the authority.",
+      );
     }
 
     // Get schemes and subsidies
@@ -1583,7 +1839,7 @@ async function getWomenSupportData(req, res, next) {
       `SELECT id, name, description, amount, eligibility_criteria, application_link, deadline, status
        FROM women_schemes_subsidies
        WHERE status = 'active'
-       ORDER BY created_at DESC`
+       ORDER BY created_at DESC`,
     );
 
     // Get mentors
@@ -1591,7 +1847,7 @@ async function getWomenSupportData(req, res, next) {
       `SELECT id, name, expertise, experience_years, bio, contact_email, contact_phone, profile_picture_url, available
        FROM women_mentors
        WHERE available = TRUE
-       ORDER BY experience_years DESC`
+       ORDER BY experience_years DESC`,
     );
 
     // Get success stories
@@ -1599,26 +1855,26 @@ async function getWomenSupportData(req, res, next) {
       `SELECT id, vendor_name, business_category, earnings_monthly, story_title, full_story, business_journey, is_approved
        FROM women_success_stories
        WHERE is_approved = 1
-       ORDER BY created_at DESC`
+       ORDER BY created_at DESC`,
     );
 
     // Get community posts count
     const [[communityCount]] = await pool.query(
-      "SELECT COUNT(*) as count FROM women_community_posts"
+      "SELECT COUNT(*) as count FROM women_community_posts",
     );
 
     // Get safety guides
     const [safetyGuides] = await pool.query(
       `SELECT id, title, description, guide_content, pdf_url
        FROM women_safety_guides
-       ORDER BY created_at DESC`
+       ORDER BY created_at DESC`,
     );
 
     // Get emergency contacts
     const [emergencyContacts] = await pool.query(
       `SELECT id, contact_type, contact_name, phone_number, description, available_24_7
        FROM women_emergency_contacts
-       ORDER BY available_24_7 DESC, contact_type ASC`
+       ORDER BY available_24_7 DESC, contact_type ASC`,
     );
 
     res.json({
@@ -1650,17 +1906,20 @@ async function applyForWomenScheme(req, res, next) {
     // Check gender first
     const [[profile]] = await pool.query(
       "SELECT gender FROM vendor_profiles WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
-    if (!profile || profile.gender.toLowerCase() !== 'female') {
-      throw new ApiError(403, "This feature is not applicable for you, please contact the authority.");
+    if (!profile || profile.gender.toLowerCase() !== "female") {
+      throw new ApiError(
+        403,
+        "This feature is not applicable for you, please contact the authority.",
+      );
     }
 
     // Check if already applied
     const [[existing]] = await pool.query(
       "SELECT id FROM women_scheme_applications WHERE user_id = ? AND scheme_id = ?",
-      [userId, schemeId]
+      [userId, schemeId],
     );
 
     if (existing) {
@@ -1684,7 +1943,7 @@ async function applyForWomenScheme(req, res, next) {
         employees_count || null,
         funding_purpose || null,
         additional_notes || null,
-      ]
+      ],
     );
 
     res.status(201).json({
@@ -1705,27 +1964,33 @@ async function connectWithMentor(req, res, next) {
     // Check gender first
     const [[profile]] = await pool.query(
       "SELECT gender FROM vendor_profiles WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
-    if (!profile || profile.gender.toLowerCase() !== 'female') {
-      throw new ApiError(403, "This feature is not applicable for you, please contact the authority.");
+    if (!profile || profile.gender.toLowerCase() !== "female") {
+      throw new ApiError(
+        403,
+        "This feature is not applicable for you, please contact the authority.",
+      );
     }
 
     // Check if already connected
     const [[existing]] = await pool.query(
       "SELECT id FROM women_mentor_connections WHERE user_id = ? AND mentor_id = ?",
-      [userId, mentorId]
+      [userId, mentorId],
     );
 
     if (existing) {
-      throw new ApiError(400, "You have already requested to connect with this mentor");
+      throw new ApiError(
+        400,
+        "You have already requested to connect with this mentor",
+      );
     }
 
     const [result] = await pool.query(
       `INSERT INTO women_mentor_connections (user_id, mentor_id, status)
        VALUES (?, ?, 'requested')`,
-      [userId, mentorId]
+      [userId, mentorId],
     );
 
     res.status(201).json({
@@ -1742,6 +2007,9 @@ module.exports = {
   uploadDocuments,
   uploadProfilePicture,
   getDashboard,
+  getTotalApplications,
+  deleteDraftApplication,
+  switchApprovedZone,
   listNotifications,
   getNotificationPreferences,
   updateNotificationPreferences,

@@ -34,23 +34,71 @@ function getNotificationColor(message) {
   const lowerMessage = message?.toLowerCase() || "";
 
   if (lowerMessage.includes("approved")) {
-    return { bg: "bg-success bg-opacity-10", text: "text-success", border: "border-success", icon: <FiCheck size={18} /> };
+    return {
+      bg: "bg-success bg-opacity-10",
+      text: "text-success",
+      border: "border-success",
+      icon: <FiCheck size={18} />,
+    };
   }
 
   if (lowerMessage.includes("rejected")) {
-    return { bg: "bg-danger bg-opacity-10", text: "text-danger", border: "border-danger", icon: <FiX size={18} /> };
+    return {
+      bg: "bg-danger bg-opacity-10",
+      text: "text-danger",
+      border: "border-danger",
+      icon: <FiX size={18} />,
+    };
   }
 
   if (lowerMessage.includes("pending")) {
-    return { bg: "bg-warning bg-opacity-10", text: "text-warning", border: "border-warning", icon: <FiClock size={18} /> };
+    return {
+      bg: "bg-warning bg-opacity-10",
+      text: "text-warning",
+      border: "border-warning",
+      icon: <FiClock size={18} />,
+    };
   }
 
   if (lowerMessage.includes("uploaded")) {
-    return { bg: "bg-info bg-opacity-10", text: "text-info", border: "border-info", icon: <FiFileText size={18} /> };
+    return {
+      bg: "bg-info bg-opacity-10",
+      text: "text-info",
+      border: "border-info",
+      icon: <FiFileText size={18} />,
+    };
   }
 
   // Default
-  return { bg: "bg-secondary bg-opacity-10", text: "text-secondary", border: "border-secondary", icon: <FiBell size={18} /> };
+  return {
+    bg: "bg-secondary bg-opacity-10",
+    text: "text-secondary",
+    border: "border-secondary",
+    icon: <FiBell size={18} />,
+  };
+}
+
+function getOperatingHoursFromApplication(application) {
+  if (!application || !application.business_details) return null;
+
+  try {
+    const details =
+      typeof application.business_details === "string"
+        ? JSON.parse(application.business_details)
+        : application.business_details;
+
+    if (!details || typeof details !== "object") return null;
+
+    if (details.operating_hours) return details.operating_hours;
+    if (details.operatingHours) return details.operatingHours;
+    if (details.operatingHoursStart && details.operatingHoursEnd) {
+      return `${details.operatingHoursStart} - ${details.operatingHoursEnd}`;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export default function VendorDashboardPage() {
@@ -66,15 +114,52 @@ export default function VendorDashboardPage() {
   const [showNotifications, setShowNotifications] = useState(true);
   const [hiddenNotifications, setHiddenNotifications] = useState([]);
 
-  // Get the assigned zone from the most recent approved application, or the most recent application
+  // Prefer the actively switched profile zone over historical approved applications.
   const assignedZone = useMemo(() => {
-    const approvedApp = data.applications.find(app => app.status?.toLowerCase() === 'approved');
+    if (data.profile?.vending_zone) return data.profile.vending_zone;
+
+    const approvedApp = data.applications.find(
+      (app) => app.status?.toLowerCase() === "approved",
+    );
     if (approvedApp?.desired_zone) return approvedApp.desired_zone;
     if (data.applications.length > 0 && data.applications[0]?.desired_zone) {
       return data.applications[0].desired_zone;
     }
     return data.profile?.vending_zone || "Not assigned";
   }, [data.applications, data.profile]);
+
+  const hasApprovedApplication = useMemo(
+    () =>
+      data.applications.some((app) => app.status?.toLowerCase() === "approved"),
+    [data.applications],
+  );
+
+  const approvedApplication = useMemo(
+    () =>
+      data.applications.find(
+        (app) =>
+          app.status?.toLowerCase() === "approved" &&
+          data.profile?.vending_zone &&
+          app.desired_zone === data.profile.vending_zone,
+      ) ||
+      data.applications.find(
+        (app) => app.status?.toLowerCase() === "approved",
+      ) ||
+      null,
+    [data.applications, data.profile],
+  );
+
+  const dashboardZoneValue = hasApprovedApplication ? assignedZone : "-";
+  const approvedApplicationHours = useMemo(
+    () => getOperatingHoursFromApplication(approvedApplication),
+    [approvedApplication],
+  );
+
+  const dashboardHoursValue =
+    hasApprovedApplication &&
+    (approvedApplicationHours || zoneData?.operating_hours)
+      ? approvedApplicationHours || zoneData?.operating_hours
+      : "-";
 
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications);
@@ -89,13 +174,13 @@ export default function VendorDashboardPage() {
       try {
         const res = await api.get("/vendor/dashboard");
         setData(res.data);
-        
+
         // Load zone data if vendor has a zone assigned
         if (res.data.profile?.vending_zone) {
           try {
             const zonesRes = await api.get("/vendor/zones");
             const zone = zonesRes.data.zones?.find(
-              z => z.name === res.data.profile.vending_zone
+              (z) => z.name === res.data.profile.vending_zone,
             );
             if (zone) {
               setZoneData(zone);
@@ -104,7 +189,6 @@ export default function VendorDashboardPage() {
             console.error("Failed to load zone data:", err);
           }
         }
-
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load dashboard");
       } finally {
@@ -143,15 +227,19 @@ export default function VendorDashboardPage() {
     if (!approvedApp?.issued_at) return null;
 
     const issuedAt = new Date(approvedApp.issued_at);
-    const expiresAt = approvedApp.expires_at ? new Date(approvedApp.expires_at) : null;
+    const expiresAt = approvedApp.expires_at
+      ? new Date(approvedApp.expires_at)
+      : null;
 
     // If expires_at is not set, calculate it from duration_days
-    const nextRenewal = expiresAt || (() => {
-      const renewalDate = new Date(issuedAt);
-      const durationDays = approvedApp.duration_days || 365;
-      renewalDate.setDate(renewalDate.getDate() + durationDays);
-      return renewalDate;
-    })();
+    const nextRenewal =
+      expiresAt ||
+      (() => {
+        const renewalDate = new Date(issuedAt);
+        const durationDays = approvedApp.duration_days || 365;
+        renewalDate.setDate(renewalDate.getDate() + durationDays);
+        return renewalDate;
+      })();
 
     const now = new Date();
     const diffDays = Math.ceil((nextRenewal - now) / (1000 * 60 * 60 * 24));
@@ -184,17 +272,18 @@ export default function VendorDashboardPage() {
       })),
     ];
 
-    console.log('Total items before filtering:', items.length);
-    console.log('Applications:', data.applications.length);
-    console.log('Documents:', data.documents.length);
+    console.log("Total items before filtering:", items.length);
+    console.log("Applications:", data.applications.length);
+    console.log("Documents:", data.documents.length);
 
     return items
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 5);
   }, [data.applications, data.documents]);
 
-  const visibleNotifications = notifications.filter(n => !hiddenNotifications.includes(n.id));
-
+  const visibleNotifications = notifications.filter(
+    (n) => !hiddenNotifications.includes(n.id),
+  );
 
   const reminders = [];
   if (
@@ -253,7 +342,9 @@ export default function VendorDashboardPage() {
                           <FiShield className="text-success fs-4" />
                         </div>
                         <div className="flex-grow-1">
-                          <div className="text-muted small text-truncate">License Status</div>
+                          <div className="text-muted small text-truncate">
+                            License Status
+                          </div>
                           <div className="fw-bold text-capitalize text-truncate">
                             {licenseStatus}
                           </div>
@@ -266,8 +357,12 @@ export default function VendorDashboardPage() {
                           <FiClock className="text-warning fs-4" />
                         </div>
                         <div className="flex-grow-1">
-                          <div className="text-muted small text-truncate">Profile Complete</div>
-                          <div className="fw-bold text-truncate">{profileCompletion}%</div>
+                          <div className="text-muted small text-truncate">
+                            Profile Complete
+                          </div>
+                          <div className="fw-bold text-truncate">
+                            {profileCompletion}%
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -277,8 +372,12 @@ export default function VendorDashboardPage() {
                           <FiBell className="text-primary fs-4" />
                         </div>
                         <div className="flex-grow-1">
-                          <div className="text-muted small text-truncate">Documents</div>
-                          <div className="fw-bold text-truncate">{data.documents.length}</div>
+                          <div className="text-muted small text-truncate">
+                            Documents
+                          </div>
+                          <div className="fw-bold text-truncate">
+                            {data.documents.length}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -291,14 +390,13 @@ export default function VendorDashboardPage() {
                   </Link>
                 </div>
               </div>
-             
             </div>
           </div>
 
           {/* Modern Stats Cards */}
           <div className="row g-3 mb-4">
-            <div className="col-md-6 col-xl-3">
-              <div className="admin-stat-card mint">
+            <div className="col-md-6 col-xl-3 d-flex">
+              <div className="admin-stat-card vendor-stat-card mint w-100">
                 <div className="d-flex justify-content-between align-items-start">
                   <FiShield size={28} className="text-dark" />
                   <span className="admin-stat-badge mint">Active</span>
@@ -311,12 +409,16 @@ export default function VendorDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="col-md-6 col-xl-3">
-              <div className="admin-stat-card yellow">
+            <div className="col-md-6 col-xl-3 d-flex">
+              <div className="admin-stat-card vendor-stat-card yellow w-100">
                 <div className="d-flex justify-content-between align-items-start">
                   <FiClock size={28} className="text-dark" />
                   <span className="admin-stat-badge yellow">
-                    {renewalInfo && renewalInfo.daysLeft !== null && renewalInfo.daysLeft <= 15 ? 'Due Soon' : 'Days'}
+                    {renewalInfo &&
+                    renewalInfo.daysLeft !== null &&
+                    renewalInfo.daysLeft <= 15
+                      ? "Due Soon"
+                      : "Days"}
                   </span>
                 </div>
                 <div className="admin-stat-value text-dark">
@@ -329,11 +431,13 @@ export default function VendorDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="col-md-6 col-xl-3">
-              <div className="admin-stat-card coral">
+            <div className="col-md-6 col-xl-3 d-flex">
+              <div className="admin-stat-card vendor-stat-card coral w-100">
                 <div className="d-flex justify-content-between align-items-start">
                   <FiFileText size={28} className="text-dark" />
-                  <span className="admin-stat-badge coral">{data.applications.length}</span>
+                  <span className="admin-stat-badge coral">
+                    {data.applications.length}
+                  </span>
                 </div>
                 <div className="admin-stat-value text-dark">
                   {data.applications.length}
@@ -343,18 +447,16 @@ export default function VendorDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="col-md-6 col-xl-3">
-              <div className="admin-stat-card apple">
+            <div className="col-md-6 col-xl-3 d-flex">
+              <div className="admin-stat-card vendor-stat-card vendor-zone-stat-card apple w-100">
                 <div className="d-flex justify-content-between align-items-start">
                   <FiMapPin size={28} className="text-dark" />
                   <span className="admin-stat-badge apple">Zone</span>
                 </div>
                 <div className="admin-stat-value text-dark">
-                  {assignedZone}
+                  {dashboardZoneValue}
                 </div>
-                <div className="admin-stat-label text-dark">
-                  Assigned zone
-                </div>
+                <div className="admin-stat-label text-dark">Assigned zone</div>
               </div>
             </div>
           </div>
@@ -434,9 +536,17 @@ export default function VendorDashboardPage() {
                       <button
                         className="btn btn-sm btn-link text-muted p-0"
                         onClick={toggleNotifications}
-                        title={showNotifications ? "Hide notifications" : "Show notifications"}
+                        title={
+                          showNotifications
+                            ? "Hide notifications"
+                            : "Show notifications"
+                        }
                       >
-                        {showNotifications ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                        {showNotifications ? (
+                          <FiEyeOff size={18} />
+                        ) : (
+                          <FiEye size={18} />
+                        )}
                       </button>
                       <span className="badge rounded-pill bg-secondary">
                         {visibleNotifications.length}
@@ -449,23 +559,36 @@ export default function VendorDashboardPage() {
                       {visibleNotifications.map((note) => {
                         const colors = getNotificationColor(note.message);
                         return (
-                          <div key={note.id} className={`card notification-card mb-3`}>
+                          <div
+                            key={note.id}
+                            className={`card notification-card mb-3`}
+                          >
                             <div className="card-body">
                               <div className="d-flex justify-content-between align-items-start mb-2">
                                 <div className="d-flex align-items-center gap-2">
-                                  <span className={`fs-5 ${colors.text}`}>{colors.icon}</span>
-                                  <h6 className={`mb-0 ${colors.text}`}>{note.title}</h6>
+                                  <span className={`fs-5 ${colors.text}`}>
+                                    {colors.icon}
+                                  </span>
+                                  <h6 className={`mb-0 ${colors.text}`}>
+                                    {note.title}
+                                  </h6>
                                 </div>
                                 <button
                                   className="btn btn-sm btn-link text-muted p-0"
-                                  onClick={() => handleHideNotification(note.id)}
+                                  onClick={() =>
+                                    handleHideNotification(note.id)
+                                  }
                                   title="Hide notification"
                                 >
                                   <FiX size={16} />
                                 </button>
                               </div>
-                              <p className="mb-2 text-muted small">{note.message}</p>
-                              <small className={`text-muted ${colors.text} fw-semibold`}>
+                              <p className="mb-2 text-muted small">
+                                {note.message}
+                              </p>
+                              <small
+                                className={`text-muted ${colors.text} fw-semibold`}
+                              >
                                 {formatDateLabel(note.date)}
                               </small>
                             </div>
@@ -481,7 +604,10 @@ export default function VendorDashboardPage() {
                     </div>
                   ) : (
                     <div className="text-center text-muted py-4">
-                      <p>Notifications are hidden. Click the eye icon to show them.</p>
+                      <p>
+                        Notifications are hidden. Click the eye icon to show
+                        them.
+                      </p>
                     </div>
                   )}
 
@@ -501,9 +627,7 @@ export default function VendorDashboardPage() {
                   <div className="dashboard-map-details mb-3">
                     <div>
                       <span className="text-muted d-block">Zone</span>
-                      <strong>
-                        {assignedZone}
-                      </strong>
+                      <strong>{dashboardZoneValue}</strong>
                     </div>
                     <div>
                       <span className="text-muted d-block">Home Address</span>
@@ -513,7 +637,7 @@ export default function VendorDashboardPage() {
                     </div>
                     <div>
                       <span className="text-muted d-block">Hours</span>
-                      <strong>10 AM to 7:30 PM</strong>
+                      <strong>{dashboardHoursValue}</strong>
                     </div>
                   </div>
                   <Link className="btn btn-success" to="/zones">
@@ -526,7 +650,7 @@ export default function VendorDashboardPage() {
                       <div className="map-header">
                         <h6 className="mb-1">Your Assigned Zone</h6>
                         <p className="text-muted small mb-0">
-                          {assignedZone}
+                          {dashboardZoneValue}
                         </p>
                       </div>
                       <div className="map-preview">

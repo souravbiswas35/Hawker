@@ -43,12 +43,12 @@ export default function VendorMyLicensePage() {
       try {
         const res = await api.get("/vendor/my-license");
         setData(res.data);
-        
+
         // Load profile picture from database if available
         if (res.data.profile?.profile_picture_url) {
           try {
             const imgRes = await api.get("/vendor/profile-picture", {
-              responseType: 'blob'
+              responseType: "blob",
             });
             const imageUrl = URL.createObjectURL(imgRes.data);
             setProfilePictureUrl(imageUrl);
@@ -96,7 +96,13 @@ export default function VendorMyLicensePage() {
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "normal");
     const vendorInfo = [
-      { label: "Name", value: `${data.profile.first_name || ""} ${data.profile.last_name || ""}`.trim() || data.profile.business_name || "N/A" },
+      {
+        label: "Name",
+        value:
+          `${data.profile.first_name || ""} ${data.profile.last_name || ""}`.trim() ||
+          data.profile.business_name ||
+          "N/A",
+      },
       { label: "Business Name", value: data.profile.business_name || "N/A" },
       { label: "Phone", value: data.profile.phone || "N/A" },
       { label: "Address", value: data.profile.address || "N/A" },
@@ -122,11 +128,34 @@ export default function VendorMyLicensePage() {
     pdf.setFont("helvetica", "normal");
     const licenseInfo = [
       { label: "License Number", value: data.license.license_number || "N/A" },
-      { label: "Application Reference", value: data.license.application_ref || "N/A" },
-      { label: "License Type", value: data.license.license_type_name || data.license.stall_type || data.license.license_category || "N/A" },
+      {
+        label: "Application Reference",
+        value: data.license.application_ref || "N/A",
+      },
+      {
+        label: "License Type",
+        value:
+          data.license.license_type_name ||
+          data.license.stall_type ||
+          data.license.license_category ||
+          "N/A",
+      },
       { label: "Category", value: data.license.license_category || "General" },
-      { label: "Allocated Zone", value: data.license.desired_zone || data.profile.vending_zone || "N/A" },
-      { label: "Goods Authorized", value: data.license.goods_authorized || data.license.business_category || "N/A" },
+      {
+        label: "Allocated Zone",
+        value:
+          data.license.allocated_zone ||
+          data.license.desired_zone ||
+          data.profile.vending_zone ||
+          "N/A",
+      },
+      {
+        label: "Goods Authorized",
+        value:
+          data.license.goods_authorized ||
+          data.license.business_category ||
+          "N/A",
+      },
       { label: "Issued Date", value: formatDate(data.license.issued_at) },
       { label: "Expiry Date", value: formatDate(data.license.expires_at) },
       { label: "Status", value: "Active" },
@@ -147,7 +176,11 @@ export default function VendorMyLicensePage() {
     pdf.setFont("helvetica", "italic");
     pdf.setTextColor(100, 100, 100);
     pdf.text("Issued by: Hawker Management Authority", 20, yPosition);
-    pdf.text(`This document is valid until ${formatDate(data.license.expires_at)}`, 20, yPosition + 6);
+    pdf.text(
+      `This document is valid until ${formatDate(data.license.expires_at)}`,
+      20,
+      yPosition + 6,
+    );
 
     pdf.save(`vendor-license-${data.license.license_number || "license"}.pdf`);
   };
@@ -178,18 +211,21 @@ export default function VendorMyLicensePage() {
 
   const handleCopyToClipboard = () => {
     const text = `License Number: ${data?.license?.license_number}\nVendor: ${data?.profile?.first_name} ${data?.profile?.last_name}\nValid until: ${formatDate(data?.license?.expires_at)}`;
-    
-    navigator.clipboard.writeText(text).then(() => {
-      alert("License details copied to clipboard!");
-    }).catch(() => {
-      alert("Failed to copy license details");
-    });
+
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        alert("License details copied to clipboard!");
+      })
+      .catch(() => {
+        alert("Failed to copy license details");
+      });
   };
 
   const handleReportLost = () => {
     const licenseNumber = data?.license?.license_number;
     const message = `Report Lost/Damaged License\n\nLicense Number: ${licenseNumber}\n\nPlease contact the Hawker Management Authority immediately to report your lost or damaged license.\n\nContact: support@hawker.gov.bd\nPhone: +880 1XXX-XXXXXX`;
-    
+
     if (confirm(message)) {
       // Navigate to complaints page or show a form
       window.location.href = "/vendor/complaints";
@@ -238,7 +274,11 @@ export default function VendorMyLicensePage() {
       <div className="license-page-container">
         {/* Digital License Card */}
         <div className="license-card-wrapper">
-          <div className="digital-license-card" id="license-card" ref={licenseCardRef}>
+          <div
+            className="digital-license-card"
+            id="license-card"
+            ref={licenseCardRef}
+          >
             {/* Card Header */}
             <div className="license-card-header">
               <div className="license-card-title">
@@ -258,32 +298,43 @@ export default function VendorMyLicensePage() {
                       alt="Vendor Photo"
                       className="vendor-photo"
                       onLoad={(e) => {
-                        console.log('Profile picture loaded successfully');
-                        e.target.style.display = 'block';
+                        console.log("Profile picture loaded successfully");
+                        e.target.style.display = "block";
                         const placeholder = e.target.nextElementSibling;
-                        if (placeholder) placeholder.style.display = 'none';
+                        if (placeholder) placeholder.style.display = "none";
                       }}
                       onError={(e) => {
-                        console.error('Profile picture failed to load:', profilePictureUrl);
-                        e.target.style.display = 'none';
+                        console.error(
+                          "Profile picture failed to load:",
+                          profilePictureUrl,
+                        );
+                        e.target.style.display = "none";
                         const placeholder = e.target.nextElementSibling;
-                        if (placeholder) placeholder.style.display = 'flex';
+                        if (placeholder) placeholder.style.display = "flex";
                       }}
-                      style={{ display: 'none' }}
+                      style={{ display: "none" }}
                     />
-                    <div className="vendor-photo-placeholder" style={{ display: 'flex' }}>
+                    <div
+                      className="vendor-photo-placeholder"
+                      style={{ display: "flex" }}
+                    >
                       <FiCreditCard size={32} />
                     </div>
                   </>
                 ) : (
-                  <div className="vendor-photo-placeholder" style={{ display: 'flex' }}>
+                  <div
+                    className="vendor-photo-placeholder"
+                    style={{ display: "flex" }}
+                  >
                     <FiCreditCard size={32} />
                   </div>
                 )}
               </div>
               <div className="vendor-info">
                 <h4 className="vendor-name">{vendorName}</h4>
-                <p className="vendor-business">{profile?.business_name || ""}</p>
+                <p className="vendor-business">
+                  {profile?.business_name || ""}
+                </p>
               </div>
             </div>
 
@@ -303,7 +354,8 @@ export default function VendorMyLicensePage() {
                   <FiCalendar /> Validity Period
                 </div>
                 <div className="detail-value">
-                  {formatDate(license?.issued_at)} - {formatDate(license?.expires_at)}
+                  {formatDate(license?.issued_at)} -{" "}
+                  {formatDate(license?.expires_at)}
                 </div>
               </div>
 
@@ -312,7 +364,10 @@ export default function VendorMyLicensePage() {
                   <FiMapPin /> Allocated Zone
                 </div>
                 <div className="detail-value">
-                  {license?.allocated_zone || license?.desired_zone || profile?.vending_zone || "N/A"}
+                  {license?.allocated_zone ||
+                    license?.desired_zone ||
+                    profile?.vending_zone ||
+                    "N/A"}
                 </div>
               </div>
 
@@ -321,7 +376,9 @@ export default function VendorMyLicensePage() {
                   <FiPackage /> Goods Authorized
                 </div>
                 <div className="detail-value">
-                  {license?.goods_authorized || license?.business_category || "N/A"}
+                  {license?.goods_authorized ||
+                    license?.business_category ||
+                    "N/A"}
                 </div>
               </div>
 
@@ -330,7 +387,10 @@ export default function VendorMyLicensePage() {
                   <FiShield /> License Type
                 </div>
                 <div className="detail-value">
-                  {license?.license_type_name || license?.stall_type || license?.license_category || "N/A"}
+                  {license?.license_type_name ||
+                    license?.stall_type ||
+                    license?.license_category ||
+                    "N/A"}
                 </div>
               </div>
 
@@ -349,7 +409,7 @@ export default function VendorMyLicensePage() {
               <div className="qr-code-wrapper">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-                    `LICENSE:${license?.license_number || "PENDING"}|VENDOR:${vendorName}|BUSINESS:${profile?.business_name || "N/A"}|ZONE:${license?.desired_zone || profile?.vending_zone || "N/A"}|VALID:${formatDate(license?.expires_at)}|ISSUED:Hawker Management Authority`
+                    `LICENSE:${license?.license_number || "PENDING"}|VENDOR:${vendorName}|BUSINESS:${profile?.business_name || "N/A"}|ZONE:${license?.allocated_zone || license?.desired_zone || profile?.vending_zone || "N/A"}|VALID:${formatDate(license?.expires_at)}|ISSUED:Hawker Management Authority`,
                   )}`}
                   alt="License QR Code"
                   className="qr-code-image"
@@ -357,7 +417,9 @@ export default function VendorMyLicensePage() {
               </div>
               <div className="qr-info">
                 <p className="qr-label">Scan to Verify</p>
-                <p className="qr-sublabel">Scan QR code to view complete vendor license information</p>
+                <p className="qr-sublabel">
+                  Scan QR code to view complete vendor license information
+                </p>
               </div>
             </div>
 
@@ -374,7 +436,10 @@ export default function VendorMyLicensePage() {
 
         {/* Action Buttons */}
         <div className="license-actions">
-          <button className="action-btn download-btn" onClick={handleDownloadPDF}>
+          <button
+            className="action-btn download-btn"
+            onClick={handleDownloadPDF}
+          >
             <FiDownload />
             <span>Download as PDF</span>
           </button>
@@ -402,15 +467,21 @@ export default function VendorMyLicensePage() {
             </div>
             <div className="info-item">
               <span className="info-label">Issued Date</span>
-              <span className="info-value">{formatDate(license?.issued_at)}</span>
+              <span className="info-value">
+                {formatDate(license?.issued_at)}
+              </span>
             </div>
             <div className="info-item">
               <span className="info-label">Expiry Date</span>
-              <span className="info-value">{formatDate(license?.expires_at)}</span>
+              <span className="info-value">
+                {formatDate(license?.expires_at)}
+              </span>
             </div>
             <div className="info-item">
               <span className="info-label">Application Ref</span>
-              <span className="info-value">{license?.application_ref || "N/A"}</span>
+              <span className="info-value">
+                {license?.application_ref || "N/A"}
+              </span>
             </div>
           </div>
         </div>
@@ -429,11 +500,20 @@ export default function VendorMyLicensePage() {
 
       {/* Details Modal */}
       {showDetailsModal && (
-        <div className="license-details-modal-overlay" onClick={() => setShowDetailsModal(false)}>
-          <div className="license-details-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="license-details-modal-overlay"
+          onClick={() => setShowDetailsModal(false)}
+        >
+          <div
+            className="license-details-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h4>Complete License Information</h4>
-              <button className="close-btn" onClick={() => setShowDetailsModal(false)}>
+              <button
+                className="close-btn"
+                onClick={() => setShowDetailsModal(false)}
+              >
                 <FiX />
               </button>
             </div>
@@ -451,19 +531,27 @@ export default function VendorMyLicensePage() {
                   </li>
                   <li>
                     <span className="detail-label">Business Name:</span>
-                    <span className="detail-value">{profile?.business_name || "N/A"}</span>
+                    <span className="detail-value">
+                      {profile?.business_name || "N/A"}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Phone:</span>
-                    <span className="detail-value">{profile?.phone || "N/A"}</span>
+                    <span className="detail-value">
+                      {profile?.phone || "N/A"}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Address:</span>
-                    <span className="detail-value">{profile?.address || "N/A"}</span>
+                    <span className="detail-value">
+                      {profile?.address || "N/A"}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Business Type:</span>
-                    <span className="detail-value">{profile?.business_type || "N/A"}</span>
+                    <span className="detail-value">
+                      {profile?.business_type || "N/A"}
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -479,31 +567,50 @@ export default function VendorMyLicensePage() {
                   </li>
                   <li>
                     <span className="detail-label">Application Reference:</span>
-                    <span className="detail-value">{license?.application_ref || "N/A"}</span>
+                    <span className="detail-value">
+                      {license?.application_ref || "N/A"}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">License Type:</span>
-                    <span className="detail-value">{license?.license_type_name || license?.stall_type || license?.license_category || "N/A"}</span>
+                    <span className="detail-value">
+                      {license?.license_type_name ||
+                        license?.stall_type ||
+                        license?.license_category ||
+                        "N/A"}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Category:</span>
-                    <span className="detail-value">{license?.license_category || "General"}</span>
+                    <span className="detail-value">
+                      {license?.license_category || "General"}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Allocated Zone:</span>
-                    <span className="detail-value">{license?.desired_zone || profile?.vending_zone || "N/A"}</span>
+                    <span className="detail-value">
+                      {license?.desired_zone || profile?.vending_zone || "N/A"}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Goods Authorized:</span>
-                    <span className="detail-value">{license?.goods_authorized || license?.business_category || "N/A"}</span>
+                    <span className="detail-value">
+                      {license?.goods_authorized ||
+                        license?.business_category ||
+                        "N/A"}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Issued Date:</span>
-                    <span className="detail-value">{formatDate(license?.issued_at)}</span>
+                    <span className="detail-value">
+                      {formatDate(license?.issued_at)}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Expiry Date:</span>
-                    <span className="detail-value">{formatDate(license?.expires_at)}</span>
+                    <span className="detail-value">
+                      {formatDate(license?.expires_at)}
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Status:</span>
@@ -517,11 +624,15 @@ export default function VendorMyLicensePage() {
                 <ul className="details-list">
                   <li>
                     <span className="detail-label">Issued By:</span>
-                    <span className="detail-value">Hawker Management Authority</span>
+                    <span className="detail-value">
+                      Hawker Management Authority
+                    </span>
                   </li>
                   <li>
                     <span className="detail-label">Valid Until:</span>
-                    <span className="detail-value">{formatDate(license?.expires_at)}</span>
+                    <span className="detail-value">
+                      {formatDate(license?.expires_at)}
+                    </span>
                   </li>
                 </ul>
               </div>
