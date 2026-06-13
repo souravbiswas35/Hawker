@@ -109,8 +109,39 @@ export default function TrackLicenseApplicationPage() {
     }
   }, [applicationId]);
 
-  const getCurrentStageIndex = (status) => {
-    return applicationStages.findIndex((stage) => stage.id === status);
+  const getCurrentStageIndex = (application) => {
+    // Determine current stage based on multi-step approval workflow
+    if (application.status === 'rejected') {
+      return applicationStages.findIndex((stage) => stage.id === 'rejected');
+    }
+    if (application.status === 'approved' || application.license_number) {
+      return applicationStages.findIndex((stage) => stage.id === 'final_approval');
+    }
+    if (application.city_corp_review_status === 'approved') {
+      return applicationStages.findIndex((stage) => stage.id === 'final_approval');
+    }
+    if (application.inspection_status === 'passed') {
+      return applicationStages.findIndex((stage) => stage.id === 'inspection_conducted');
+    }
+    if (application.inspection_status === 'conducted') {
+      return applicationStages.findIndex((stage) => stage.id === 'inspection_conducted');
+    }
+    if (application.inspection_status === 'scheduled') {
+      return applicationStages.findIndex((stage) => stage.id === 'field_inspection_scheduled');
+    }
+    if (application.admin_review_status === 'approved') {
+      return applicationStages.findIndex((stage) => stage.id === 'field_inspection_scheduled');
+    }
+    if (application.admin_review_status === 'rejected') {
+      return applicationStages.findIndex((stage) => stage.id === 'rejected');
+    }
+    if (application.document_verification_status === 'approved') {
+      return applicationStages.findIndex((stage) => stage.id === 'admin_review');
+    }
+    if (application.document_verification_status === 'rejected') {
+      return applicationStages.findIndex((stage) => stage.id === 'rejected');
+    }
+    return applicationStages.findIndex((stage) => stage.id === 'document_verification');
   };
 
   const getStatusColor = (status) => {
@@ -207,7 +238,7 @@ export default function TrackLicenseApplicationPage() {
     );
   }
 
-  const currentStageIndex = getCurrentStageIndex(application.status);
+  const currentStageIndex = getCurrentStageIndex(application);
 
   return (
     <VendorLayout>
@@ -392,46 +423,134 @@ export default function TrackLicenseApplicationPage() {
       </div>
 
       {/* Inspector Details */}
-      {application.inspector && (
+      {application.inspection_status === 'scheduled' && (
         <div className="card border-0 shadow-sm app-surface-card mb-4">
           <div className="card-body p-4">
             <h5 className="mb-3">Upcoming Field Inspection</h5>
-            <div className="d-flex justify-content-between align-items-center">
-              <div className="d-flex align-items-center">
-                <div className="inspector-avatar me-3">
-                  <FiUser className="fs-2 text-primary" />
+            <div className="row g-3">
+              <div className="col-md-6">
+                <div className="mb-2">
+                  <label className="text-muted small">Inspection Date</label>
+                  <div className="fw-bold">
+                    <FiCalendar className="me-2" />
+                    {application.inspection_date ? formatDate(application.inspection_date) : "To be scheduled"}
+                  </div>
                 </div>
-                <div>
-                  <h6 className="mb-1">{application.inspector.name}</h6>
-                  <div className="text-muted small">
-                    Inspector ID: {application.inspector.id}
+                <div className="mb-2">
+                  <label className="text-muted small">Inspection Zone</label>
+                  <div className="fw-bold">
+                    <FiMapPin className="me-2" />
+                    {application.inspection_zone || application.desired_zone || "Not specified"}
                   </div>
                 </div>
               </div>
-              <div className="d-flex gap-2">
-                <button className="btn btn-outline-primary btn-sm">
-                  <FiMessageSquare className="me-1" />
-                  Contact Inspector
-                </button>
-                <button className="btn btn-outline-secondary btn-sm">
-                  <FiMessageSquare className="me-1" />
-                  Send Message
-                </button>
+              <div className="col-md-6">
+                <div className="mb-2">
+                  <label className="text-muted small">Inspector Assigned</label>
+                  <div className="fw-bold">
+                    <FiUser className="me-2" />
+                    {application.inspection_assigned_to ? "Assigned" : "Not assigned yet"}
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <label className="text-muted small">Status</label>
+                  <div className="fw-bold text-warning">
+                    <FiClock className="me-2" />
+                    Scheduled
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Admin Comments */}
-      {application.admin_comments && (
+      {/* Inspection Results */}
+      {application.inspection_status === 'conducted' && (
         <div className="card border-0 shadow-sm app-surface-card mb-4">
           <div className="card-body p-4">
-            <h5 className="mb-3">Admin Comments</h5>
+            <h5 className="mb-3">Inspection Conducted</h5>
             <div className="alert alert-info">
               <FiAlertCircle className="me-2" />
-              {application.admin_comments}
+              Your field inspection has been conducted. The results are being reviewed by the City Corporation.
             </div>
+            {application.inspection_remarks && (
+              <div className="mt-3">
+                <label className="text-muted small">Inspector Remarks:</label>
+                <div className="fw-bold">{application.inspection_remarks}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Inspection Passed */}
+      {application.inspection_status === 'passed' && (
+        <div className="card border-0 shadow-sm app-surface-card mb-4">
+          <div className="card-body p-4">
+            <h5 className="mb-3">Inspection Passed</h5>
+            <div className="alert alert-success">
+              <FiCheckCircle className="me-2" />
+              Congratulations! Your field inspection has been passed. Your application is now with the City Corporation for final approval.
+            </div>
+            {application.inspection_remarks && (
+              <div className="mt-3">
+                <label className="text-muted small">Inspector Remarks:</label>
+                <div className="fw-bold">{application.inspection_remarks}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Inspection Failed */}
+      {application.inspection_status === 'failed' && (
+        <div className="card border-0 shadow-sm app-surface-card mb-4">
+          <div className="card-body p-4">
+            <h5 className="mb-3">Inspection Failed</h5>
+            <div className="alert alert-danger">
+              <FiXCircle className="me-2" />
+              Your field inspection has been failed. Please review the inspector's remarks below.
+            </div>
+            {application.inspection_remarks && (
+              <div className="mt-3">
+                <label className="text-muted small">Inspector Remarks:</label>
+                <div className="fw-bold">{application.inspection_remarks}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Admin Comments */}
+      {(application.document_verification_remarks || application.admin_review_remarks || application.city_corp_review_remarks) && (
+        <div className="card border-0 shadow-sm app-surface-card mb-4">
+          <div className="card-body p-4">
+            <h5 className="mb-3">Review Remarks</h5>
+            {application.document_verification_remarks && (
+              <div className="mb-3">
+                <label className="text-muted small">Document Verification Remarks:</label>
+                <div className="alert alert-info">
+                  {application.document_verification_remarks}
+                </div>
+              </div>
+            )}
+            {application.admin_review_remarks && (
+              <div className="mb-3">
+                <label className="text-muted small">Admin Review Remarks:</label>
+                <div className="alert alert-info">
+                  {application.admin_review_remarks}
+                </div>
+              </div>
+            )}
+            {application.city_corp_review_remarks && (
+              <div className="mb-3">
+                <label className="text-muted small">City Corporation Review Remarks:</label>
+                <div className="alert alert-info">
+                  {application.city_corp_review_remarks}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

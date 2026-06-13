@@ -8,6 +8,8 @@ const paymentRoutes = require("./paymentRoutes");
 const feedbackRoutes = require("./feedbackRoutes");
 const announcementRoutes = require("./announcementRoutes");
 const womenSupportRoutes = require("./womenSupportRoutes");
+const inspectorRoutes = require("./inspectorRoutes");
+const cityCorpRoutes = require("./cityCorpRoutes");
 
 const router = express.Router();
 
@@ -24,5 +26,7 @@ router.use("/payments", paymentRoutes);
 router.use("/feedback", feedbackRoutes);
 router.use("/announcements", announcementRoutes);
 router.use("/women-support", womenSupportRoutes);
+router.use("/inspector", inspectorRoutes);
+router.use("/city-corp", cityCorpRoutes);
 
 module.exports = router;

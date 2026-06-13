@@ -66,6 +66,16 @@ export default function VendorDashboardPage() {
   const [showNotifications, setShowNotifications] = useState(true);
   const [hiddenNotifications, setHiddenNotifications] = useState([]);
 
+  // Get the assigned zone from the most recent approved application, or the most recent application
+  const assignedZone = useMemo(() => {
+    const approvedApp = data.applications.find(app => app.status?.toLowerCase() === 'approved');
+    if (approvedApp?.desired_zone) return approvedApp.desired_zone;
+    if (data.applications.length > 0 && data.applications[0]?.desired_zone) {
+      return data.applications[0].desired_zone;
+    }
+    return data.profile?.vending_zone || "Not assigned";
+  }, [data.applications, data.profile]);
+
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications);
   };
@@ -130,11 +140,18 @@ export default function VendorDashboardPage() {
     const approvedApp = data.applications.find(
       (app) => app.status?.toLowerCase() === "approved",
     );
-    if (!approvedApp?.reviewed_at) return null;
+    if (!approvedApp?.issued_at) return null;
 
-    const reviewedAt = new Date(approvedApp.reviewed_at);
-    const nextRenewal = new Date(reviewedAt);
-    nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
+    const issuedAt = new Date(approvedApp.issued_at);
+    const expiresAt = approvedApp.expires_at ? new Date(approvedApp.expires_at) : null;
+
+    // If expires_at is not set, calculate it from duration_days
+    const nextRenewal = expiresAt || (() => {
+      const renewalDate = new Date(issuedAt);
+      const durationDays = approvedApp.duration_days || 365;
+      renewalDate.setDate(renewalDate.getDate() + durationDays);
+      return renewalDate;
+    })();
 
     const now = new Date();
     const diffDays = Math.ceil((nextRenewal - now) / (1000 * 60 * 60 * 24));
@@ -274,32 +291,7 @@ export default function VendorDashboardPage() {
                   </Link>
                 </div>
               </div>
-              <div className="col-lg-4">
-                <div className="p-4">
-                  {renewalInfo &&
-                    renewalInfo.daysLeft !== null &&
-                    renewalInfo.daysLeft <= 30 && (
-                      <div className="alert alert-warning border-0 rounded-3 shadow-sm">
-                        <div className="d-flex align-items-center mb-2">
-                          <FiClock className="me-2" />
-                          <strong>License Renewal</strong>
-                        </div>
-                        <div className="small">
-                          Due in {renewalInfo.daysLeft} days (
-                          {renewalInfo.label})
-                        </div>
-                        {renewalInfo.daysLeft <= 15 && (
-                          <Link
-                            className="btn btn-sm btn-warning mt-2 w-100"
-                            to="/vendor/renew-license"
-                          >
-                            Renew Now
-                          </Link>
-                        )}
-                      </div>
-                    )}
-                </div>
-              </div>
+             
             </div>
           </div>
 
@@ -358,7 +350,7 @@ export default function VendorDashboardPage() {
                   <span className="admin-stat-badge apple">Zone</span>
                 </div>
                 <div className="admin-stat-value text-dark">
-                  {data.profile?.vending_zone || "Not Set"}
+                  {assignedZone}
                 </div>
                 <div className="admin-stat-label text-dark">
                   Assigned zone
@@ -510,7 +502,7 @@ export default function VendorDashboardPage() {
                     <div>
                       <span className="text-muted d-block">Zone</span>
                       <strong>
-                        {data.profile?.vending_zone || "Not assigned"}
+                        {assignedZone}
                       </strong>
                     </div>
                     <div>
@@ -534,7 +526,7 @@ export default function VendorDashboardPage() {
                       <div className="map-header">
                         <h6 className="mb-1">Your Assigned Zone</h6>
                         <p className="text-muted small mb-0">
-                          {data.profile?.vending_zone || "Not assigned"}
+                          {assignedZone}
                         </p>
                       </div>
                       <div className="map-preview">

@@ -106,7 +106,9 @@ async function listApplications(req, res, next) {
 
     let query = `SELECT la.id, la.application_ref, la.status, la.desired_zone, la.stall_type,
                         la.business_category, la.admin_remarks, la.submitted_at, la.reviewed_at,
-                        u.email, vp.business_name
+                        la.document_verification_status, la.admin_review_status, la.inspection_status,
+                        la.city_corp_review_status, la.inspection_assigned_to, la.inspection_date,
+                        u.email, vp.first_name, vp.last_name, vp.business_name
                  FROM license_applications la
                  JOIN users u ON u.id = la.user_id
                  LEFT JOIN vendor_profiles vp ON vp.user_id = la.user_id`;
@@ -722,6 +724,230 @@ async function reviewWomenMentorshipApplication(req, res, next) {
   }
 }
 
+// Multi-step approval workflow functions
+
+// Get available inspectors
+async function getInspectors(req, res, next) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT ip.id, ip.user_id, ip.employee_id, ip.phone, ip.assigned_zones, ip.is_active,
+              u.email
+       FROM inspector_profiles ip
+       JOIN users u ON u.id = ip.user_id
+       WHERE ip.is_active = 1
+       ORDER BY ip.employee_id`
+    );
+
+    res.json({ inspectors: rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Document verification step
+async function verifyDocuments(req, res, next) {
+  try {
+    const applicationId = Number(req.params.id);
+    const { status, remarks } = req.body;
+
+    const allowed = ['approved', 'rejected'];
+    if (!allowed.includes(status)) {
+      throw new ApiError(400, "Invalid status. Use approved or rejected");
+    }
+
+    const [[application]] = await pool.query(
+      "SELECT * FROM license_applications WHERE id = ?",
+      [applicationId]
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    await pool.query(
+      `UPDATE license_applications
+       SET document_verification_status = ?,
+           document_verified_by = ?,
+           document_verified_at = NOW(),
+           document_verification_remarks = ?
+       WHERE id = ?`,
+      [status, req.user.id, remarks || null, applicationId]
+    );
+
+    // Add audit log
+    await pool.query(
+      `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
+       VALUES (?, ?, ?, ?)`,
+      [applicationId, req.user.id, `document_${status}`, remarks || `Documents ${status}`]
+    );
+
+    // Create notification for vendor
+    const notificationTitle = status === 'approved'
+      ? `Documents Verified for ${application.application_ref}`
+      : `Documents Rejected for ${application.application_ref}`;
+    const notificationMessage = status === 'approved'
+      ? "Your submitted documents have been verified and approved. Your application is now under admin review."
+      : `Your submitted documents have been rejected. ${remarks ? `Reason: ${remarks}` : 'Please contact support for more information.'}`;
+
+    await pool.query(
+      `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id, admin_remarks)
+       VALUES (?, 'License updates', ?, ?, CONCAT('/vendor/track/', ?), ?, ?, ?)`,
+      [
+        application.user_id,
+        notificationTitle,
+        notificationMessage,
+        applicationId,
+        status === 'approved' ? 'document_approved' : 'document_rejected',
+        applicationId,
+        remarks || null
+      ]
+    );
+
+    res.json({ message: `Documents ${status} successfully` });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Admin review step with inspector assignment
+async function adminReviewWithInspection(req, res, next) {
+  try {
+    const applicationId = Number(req.params.id);
+    const { status, remarks, inspectorId, inspectionDate, inspectionZone } = req.body;
+
+    const allowed = ['approved', 'rejected'];
+    if (!allowed.includes(status)) {
+      throw new ApiError(400, "Invalid status. Use approved or rejected");
+    }
+
+    const [[application]] = await pool.query(
+      "SELECT * FROM license_applications WHERE id = ?",
+      [applicationId]
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    if (application.document_verification_status !== 'approved') {
+      throw new ApiError(400, "Documents must be verified before admin review");
+    }
+
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      if (status === 'approved') {
+        // Assign to inspector
+        if (!inspectorId) {
+          throw new ApiError(400, "Inspector ID is required when approving admin review");
+        }
+
+        // Verify inspector exists
+        const [[inspector]] = await connection.query(
+          "SELECT * FROM inspector_profiles WHERE user_id = ? AND is_active = 1",
+          [inspectorId]
+        );
+
+        if (!inspector) {
+          throw new ApiError(404, "Inspector not found or not active");
+        }
+
+        await connection.query(
+          `UPDATE license_applications
+           SET admin_review_status = 'approved',
+               admin_reviewed_by = ?,
+               admin_reviewed_at = NOW(),
+               admin_review_remarks = ?,
+               inspection_assigned_to = ?,
+               inspection_assigned_by = ?,
+               inspection_assigned_at = NOW(),
+               inspection_date = ?,
+               inspection_zone = ?,
+               inspection_status = 'scheduled'
+           WHERE id = ?`,
+          [req.user.id, remarks || null, inspectorId, req.user.id, inspectionDate || null, inspectionZone || application.desired_zone, applicationId]
+        );
+
+        // Add audit log
+        await connection.query(
+          `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
+           VALUES (?, ?, ?, ?)`,
+          [applicationId, req.user.id, 'admin_review_approved', `Admin review approved. Assigned to inspector ${inspector.employee_id}`]
+        );
+
+        // Create notification for inspector
+        await connection.query(
+          `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id)
+           VALUES (?, 'Inspection notices', ?, ?, '/inspector/inspections', 'inspection_assigned', ?)`,
+          [
+            inspectorId,
+            `New Inspection Assigned: ${application.application_ref}`,
+            `You have been assigned to conduct a field inspection for application ${application.application_ref}. ${inspectionDate ? `Date: ${inspectionDate}` : ''}`,
+            applicationId
+          ]
+        );
+
+        // Create notification for vendor
+        await connection.query(
+          `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id)
+           VALUES (?, 'Inspection notices', ?, ?, CONCAT('/vendor/track/', ?), 'inspection_scheduled', ?)`,
+          [
+            application.user_id,
+            `Field Inspection Scheduled for ${application.application_ref}`,
+            `Your application has passed admin review. A field inspection has been scheduled. ${inspectionDate ? `Date: ${inspectionDate}` : 'You will be notified of the date soon.'}`,
+            applicationId,
+            applicationId
+          ]
+        );
+      } else {
+        // Reject at admin review
+        await connection.query(
+          `UPDATE license_applications
+           SET admin_review_status = 'rejected',
+               admin_reviewed_by = ?,
+               admin_reviewed_at = NOW(),
+               admin_review_remarks = ?,
+               status = 'rejected'
+           WHERE id = ?`,
+          [req.user.id, remarks || null, applicationId]
+        );
+
+        // Add audit log
+        await connection.query(
+          `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
+           VALUES (?, ?, ?, ?)`,
+          [applicationId, req.user.id, 'admin_review_rejected', remarks || 'Admin review rejected']
+        );
+
+        // Create notification for vendor
+        await connection.query(
+          `INSERT INTO vendor_notifications (user_id, category, title, message, link, action_type, related_application_id, admin_remarks)
+           VALUES (?, 'License updates', ?, ?, '/vendor/track/' || ?, 'admin_rejected', ?, ?)`,
+          [
+            application.user_id,
+            `Application Rejected at Admin Review: ${application.application_ref}`,
+            `Your application has been rejected during admin review. ${remarks ? `Reason: ${remarks}` : 'Please contact support for more information.'}`,
+            applicationId,
+            applicationId,
+            remarks || null
+          ]
+        );
+      }
+
+      await connection.commit();
+      res.json({ message: `Admin review ${status} successfully` });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getDashboard,
   listVendors,
@@ -737,4 +963,7 @@ module.exports = {
   reviewWomenSchemeApplication,
   getWomenMentorshipApplications,
   reviewWomenMentorshipApplication,
+  getInspectors,
+  verifyDocuments,
+  adminReviewWithInspection,
 };

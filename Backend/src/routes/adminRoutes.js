@@ -14,6 +14,9 @@ const {
   reviewWomenSchemeApplication,
   getWomenMentorshipApplications,
   reviewWomenMentorshipApplication,
+  getInspectors,
+  verifyDocuments,
+  adminReviewWithInspection,
 } = require("../controllers/adminController");
 const inspectionController = require("../controllers/inspectionController");
 const {
@@ -42,6 +45,11 @@ router.get("/vendors", listVendors);
 router.get("/applications", listApplications);
 router.get("/applications/:id", getApplicationDetails);
 router.patch("/applications/:id/review", reviewApplication);
+
+// Multi-step approval workflow routes
+router.get("/inspectors", getInspectors);
+router.post("/applications/:id/verify-documents", verifyDocuments);
+router.post("/applications/:id/admin-review", adminReviewWithInspection);
 
 router.get("/reports/overview", getReportsOverview);
 router.get("/reports/data", getReportData);
