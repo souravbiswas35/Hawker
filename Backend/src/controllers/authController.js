@@ -184,10 +184,16 @@ async function login(req, res, next) {
       throw new ApiError(403, "Your account is not active");
     }
 
-    const passwordMatch = await bcrypt.compare(
-      password || "",
-      user.password_hash || "",
-    );
+    // Use plain text comparison for inspector and city_corporation_admin roles
+    let passwordMatch;
+    if (user.role === "inspector" || user.role === "city_corporation_admin") {
+      passwordMatch = password === user.password_hash;
+    } else {
+      passwordMatch = await bcrypt.compare(
+        password || "",
+        user.password_hash || "",
+      );
+    }
     if (!passwordMatch) {
       throw new ApiError(401, "Invalid email or password");
     }
