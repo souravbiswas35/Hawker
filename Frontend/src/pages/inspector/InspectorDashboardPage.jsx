@@ -8,10 +8,12 @@ import {
   FiMapPin,
   FiEye,
   FiFileText,
+  FiX,
 } from "react-icons/fi";
 import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import PageTitle from "../../components/common/PageTitle";
+import ZoneDisplayMap from "../../components/maps/ZoneDisplayMap";
 import "../../styles/pages/admin/AdminApplicationsPage.css";
 
 export default function InspectorDashboardPage() {
@@ -21,6 +23,9 @@ export default function InspectorDashboardPage() {
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showZoneMap, setShowZoneMap] = useState(false);
+  const [selectedZoneBounds, setSelectedZoneBounds] = useState(null);
+  const [selectedVendorName, setSelectedVendorName] = useState("");
 
   useEffect(() => {
     loadDashboard();
@@ -57,6 +62,14 @@ export default function InspectorDashboardPage() {
   const formatDate = (dateString) => {
     if (!dateString) return "Not available";
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const handleViewZone = (inspection) => {
+    if (inspection.zone_rectangle) {
+      setSelectedZoneBounds(inspection.zone_rectangle);
+      setSelectedVendorName(inspection.business_name || inspection.first_name + " " + inspection.last_name);
+      setShowZoneMap(true);
+    }
   };
 
   if (loading) {
@@ -214,12 +227,23 @@ export default function InspectorDashboardPage() {
                         </span>
                       </td>
                       <td>
-                        <button
-                          className="btn btn-outline-primary btn-sm"
-                          onClick={() => navigate(`/inspector/inspections/${inspection.id}`)}
-                        >
-                          <FiEye className="me-1" /> Conduct
-                        </button>
+                        <div className="btn-group btn-group-sm">
+                          {inspection.zone_rectangle && (
+                            <button
+                              className="btn btn-outline-info"
+                              onClick={() => handleViewZone(inspection)}
+                              title="View allocated zone on map"
+                            >
+                              <FiMapPin className="me-1" /> Zone
+                            </button>
+                          )}
+                          <button
+                            className="btn btn-outline-primary"
+                            onClick={() => navigate(`/inspector/inspections/${inspection.id}`)}
+                          >
+                            <FiEye className="me-1" /> Conduct
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -297,6 +321,54 @@ export default function InspectorDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Zone Map Modal */}
+      {showZoneMap && selectedZoneBounds && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowZoneMap(false);
+            }
+          }}
+        >
+          <div className="modal-dialog modal-lg modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <FiMapPin className="me-2" />
+                  Allocated Zone - {selectedVendorName}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowZoneMap(false)}
+                  aria-label="Close"
+                />
+              </div>
+              <div className="modal-body">
+                <ZoneDisplayMap 
+                  zoneBounds={selectedZoneBounds}
+                  height="400px"
+                  width="100%"
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowZoneMap(false)}
+                >
+                  <FiX className="me-2" />
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

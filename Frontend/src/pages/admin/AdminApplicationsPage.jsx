@@ -14,6 +14,7 @@ import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import PageTitle from "../../components/common/PageTitle";
 import AdminLayout from "../../components/layout/AdminLayout";
+import ZoneSelectionMap from "../../components/maps/ZoneSelectionMap";
 import "../../styles/pages/admin/AdminApplicationsPage.css";
 
 export default function AdminApplicationsPage() {
@@ -27,6 +28,9 @@ export default function AdminApplicationsPage() {
   const [reviewStep, setReviewStep] = useState(null); // 'document' or 'admin'
   const [inspectors, setInspectors] = useState([]);
   const [inspectionData, setInspectionData] = useState({ inspectorId: "", inspectionDate: "", inspectionZone: "" });
+  const [showZoneMap, setShowZoneMap] = useState(false);
+  const [zoneRectangle, setZoneRectangle] = useState(null);
+  const [savingZone, setSavingZone] = useState(false);
 
   // Predefined remarks based on status
   const statusRemarks = {
@@ -168,6 +172,41 @@ export default function AdminApplicationsPage() {
     setReviewData({ status: "", remarks: "" });
     setReviewStep(null);
     setInspectionData({ inspectorId: "", inspectionDate: "", inspectionZone: "" });
+  };
+
+  const openZoneMap = async () => {
+    if (!selectedApplication) return;
+    
+    try {
+      const { data } = await api.get(`/admin/applications/${selectedApplication.id}/zone-rectangle`);
+      setZoneRectangle(data.zoneRectangle);
+      setShowZoneMap(true);
+    } catch (err) {
+      console.error("Error loading zone rectangle:", err);
+      setZoneRectangle(null);
+      setShowZoneMap(true);
+    }
+  };
+
+  const handleZoneSave = async (bounds) => {
+    if (!selectedApplication) return;
+    
+    setSavingZone(true);
+    setError("");
+    try {
+      await api.put(`/admin/applications/${selectedApplication.id}/zone-rectangle`, {
+        zoneRectangle: bounds,
+      });
+      setZoneRectangle(bounds);
+      setShowZoneMap(false);
+      // Refresh application details to show updated zone
+      const { data } = await api.get(`/admin/applications/${selectedApplication.id}`);
+      setSelectedApplication(data.application);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save zone rectangle");
+    } finally {
+      setSavingZone(false);
+    }
   };
 
   const handleReviewSubmit = (e) => {
@@ -458,10 +497,28 @@ export default function AdminApplicationsPage() {
                     </div>
                     <div className="mb-3" id="zone-selection-section">
                       <label className="text-muted small">Primary Zone</label>
-                      <div className="fw-bold">
-                        {selectedApplication.primary_zone_name ||
-                          "Not specified"}
+                      <div className="d-flex align-items-center justify-content-between">
+                        <div className="fw-bold">
+                          {selectedApplication.primary_zone_name ||
+                            "Not specified"}
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={openZoneMap}
+                        >
+                          <FiMapPin className="me-1" />
+                          Select Zone on Map
+                        </button>
                       </div>
+                      {selectedApplication.zone_rectangle && (
+                        <div className="mt-2 p-2 bg-light rounded">
+                          <small className="text-muted">Allocated Zone:</small>
+                          <div className="small text-success">
+                            ✓ Zone allocated on map
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="mb-3">
                       <label className="text-muted small">Alternate Zone</label>
@@ -752,6 +809,14 @@ export default function AdminApplicationsPage() {
           </div>
         </div>
       )}
+
+      {/* Zone Selection Map Modal */}
+      <ZoneSelectionMap
+        isOpen={showZoneMap}
+        onClose={() => setShowZoneMap(false)}
+        onSave={handleZoneSave}
+        initialBounds={zoneRectangle}
+      />
     </AdminLayout>
   );
 }

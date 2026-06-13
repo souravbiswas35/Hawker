@@ -948,6 +948,59 @@ async function adminReviewWithInspection(req, res, next) {
   }
 }
 
+async function updateZoneRectangle(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { zoneRectangle } = req.body;
+
+    if (!zoneRectangle || !zoneRectangle.north || !zoneRectangle.south || !zoneRectangle.east || !zoneRectangle.west) {
+      throw new ApiError(400, "Invalid zone rectangle data. Must include north, south, east, west bounds.");
+    }
+
+    const [result] = await pool.query(
+      `UPDATE license_applications
+       SET zone_rectangle = ?
+       WHERE id = ?`,
+      [JSON.stringify(zoneRectangle), id]
+    );
+
+    if (result.affectedRows === 0) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    // Add audit log
+    await pool.query(
+      `INSERT INTO application_audit_logs (application_id, action_by, action_type, comments)
+       VALUES (?, ?, ?, ?)`,
+      [id, req.user.id, 'zone_allocated', `Zone rectangle allocated: ${JSON.stringify(zoneRectangle)}`]
+    );
+
+    res.json({ message: "Zone rectangle updated successfully", zoneRectangle });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getZoneRectangle(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await pool.query(
+      `SELECT zone_rectangle FROM license_applications WHERE id = ?`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    const zoneRectangle = rows[0].zone_rectangle ? JSON.parse(rows[0].zone_rectangle) : null;
+    res.json({ zoneRectangle });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getDashboard,
   listVendors,
@@ -966,4 +1019,6 @@ module.exports = {
   getInspectors,
   verifyDocuments,
   adminReviewWithInspection,
+  updateZoneRectangle,
+  getZoneRectangle,
 };

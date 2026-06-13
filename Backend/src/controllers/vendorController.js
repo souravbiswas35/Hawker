@@ -1210,6 +1210,120 @@ async function getMyZone(req, res, next) {
       [userId]
     );
 
+    // Get zone rectangle and other info from approved license application
+    const [[licenseApp]] = await pool.query(
+      `SELECT zone_rectangle, desired_zone, primary_zone_id, stall_type, business_category, notes, business_details
+       FROM license_applications 
+       WHERE user_id = ? AND status = 'approved' 
+       ORDER BY reviewed_at DESC 
+       LIMIT 1`,
+      [userId]
+    );
+
+    let zoneRectangle = null;
+    if (licenseApp && licenseApp.zone_rectangle) {
+      try {
+        // Handle both string and object formats
+        if (typeof licenseApp.zone_rectangle === 'string') {
+          zoneRectangle = JSON.parse(licenseApp.zone_rectangle);
+        } else {
+          zoneRectangle = licenseApp.zone_rectangle;
+        }
+      } catch (e) {
+        console.error("Error parsing zone_rectangle:", e);
+        zoneRectangle = null;
+      }
+    }
+
+    // Parse business_details to extract operating hours
+    let operatingHours = null;
+    if (licenseApp && licenseApp.business_details) {
+      try {
+        let businessDetails;
+        if (typeof licenseApp.business_details === 'string') {
+          businessDetails = JSON.parse(licenseApp.business_details);
+        } else {
+          businessDetails = licenseApp.business_details;
+        }
+        
+        if (businessDetails.operatingHoursStart && businessDetails.operatingHoursEnd) {
+          operatingHours = `${businessDetails.operatingHoursStart} - ${businessDetails.operatingHoursEnd}`;
+        }
+      } catch (e) {
+        console.error("Error parsing business_details:", e);
+        operatingHours = null;
+      }
+    }
+
+    // If vendor has a zone_rectangle but no traditional zone, return info from license application
+    if (zoneRectangle && (!profile || !profile.vending_zone)) {
+      // Try to get zone details from vending_zones using primary_zone_id
+      let zoneDetails = {};
+      if (licenseApp && licenseApp.primary_zone_id) {
+        const [[zone]] = await pool.query(
+          `SELECT id, zone_code, name, location, area, dimensions, total_spots, available_spots,
+                  has_electricity, has_water, has_shade, nearby_landmarks, operating_hours,
+                  rules_regulations, zone_in_charge_contact, latitude, longitude, zone_type, traffic_level
+           FROM vending_zones
+           WHERE id = ?`,
+          [licenseApp.primary_zone_id]
+        );
+        if (zone) {
+          zoneDetails = {
+            ...zone,
+            has_electricity: Boolean(zone.has_electricity),
+            has_water: Boolean(zone.has_water),
+            has_shade: Boolean(zone.has_shade),
+          };
+        }
+      }
+
+      // Parse desired_zone to extract zone code and name
+      let zoneCode = null;
+      let zoneName = null;
+      let area = null;
+      if (licenseApp && licenseApp.desired_zone) {
+        const parts = licenseApp.desired_zone.split(' - ');
+        if (parts.length >= 2) {
+          zoneCode = parts[0].trim();
+          zoneName = parts.slice(1).join(' - ').trim();
+          // Get first word after hyphen as area
+          const wordsAfterHyphen = parts.slice(1).join(' ').trim().split(/\s+/);
+          area = wordsAfterHyphen[0] || null;
+        } else {
+          zoneCode = licenseApp.desired_zone;
+          zoneName = licenseApp.desired_zone;
+        }
+      }
+
+      return res.json({
+        zone: {
+          zone_code: zoneDetails.zone_code || zoneCode || licenseApp?.desired_zone || null,
+          name: zoneDetails.name || zoneName || licenseApp?.desired_zone || "Allocated Zone",
+          location: zoneDetails.location || "Zone allocated via map selection",
+          area: zoneDetails.area || area || null,
+          dimensions: zoneDetails.dimensions || licenseApp?.stall_type || null,
+          total_spots: zoneDetails.total_spots || 0,
+          available_spots: zoneDetails.available_spots || 0,
+          has_electricity: zoneDetails.has_electricity || false,
+          has_water: zoneDetails.has_water || false,
+          has_shade: zoneDetails.has_shade || false,
+          nearby_landmarks: zoneDetails.nearby_landmarks || null,
+          operating_hours: operatingHours || zoneDetails.operating_hours || null,
+          rules_regulations: zoneDetails.rules_regulations || null,
+          zone_in_charge_contact: zoneDetails.zone_in_charge_contact || null,
+          latitude: zoneDetails.latitude || null,
+          longitude: zoneDetails.longitude || null,
+          zone_type: zoneDetails.zone_type || licenseApp?.stall_type || null,
+          traffic_level: zoneDetails.traffic_level || null,
+        },
+        assigned_spot: "Not assigned",
+        other_vendors: [],
+        zone_rectangle: zoneRectangle,
+      });
+    }
+
+    // If no zone assigned at all, throw error
     if (!profile || !profile.vending_zone) {
       throw new ApiError(404, "No zone assigned to your profile. Please contact admin.");
     }
@@ -1244,9 +1358,11 @@ async function getMyZone(req, res, next) {
         has_electricity: Boolean(zone.has_electricity),
         has_water: Boolean(zone.has_water),
         has_shade: Boolean(zone.has_shade),
+        operating_hours: operatingHours || zone.operating_hours || null,
       },
       assigned_spot: profile.assigned_spot_number || "Not assigned",
       other_vendors: otherVendors,
+      zone_rectangle: zoneRectangle,
     });
   } catch (err) {
     next(err);

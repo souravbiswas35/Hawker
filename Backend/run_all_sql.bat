@@ -9,7 +9,7 @@ echo.
 
 REM Set your MySQL credentials here
 SET MYSQL_USER=root
-SET MYSQL_PASSWORD=your_password
+SET MYSQL_PASSWORD=root123
 SET MYSQL_HOST=localhost
 SET MYSQL_DATABASE=hawker
 

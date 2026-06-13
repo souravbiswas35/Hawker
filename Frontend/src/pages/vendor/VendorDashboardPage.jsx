@@ -133,7 +133,7 @@ export default function VendorDashboardPage() {
     const statuses = data.applications.map((app) => app.status?.toLowerCase());
     if (statuses.includes("approved")) return "Active";
     if (statuses.includes("pending")) return "Pending";
-    return "Expired";
+    return "Inactive";
   }, [data.applications]);
 
   const renewalInfo = useMemo(() => {
@@ -506,7 +506,7 @@ export default function VendorDashboardPage() {
                       </strong>
                     </div>
                     <div>
-                      <span className="text-muted d-block">Location</span>
+                      <span className="text-muted d-block">Home Address</span>
                       <strong>
                         {data.profile?.address || "Mirpur 10, Dhaka"}
                       </strong>

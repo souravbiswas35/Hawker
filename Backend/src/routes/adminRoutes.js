@@ -17,6 +17,8 @@ const {
   getInspectors,
   verifyDocuments,
   adminReviewWithInspection,
+  updateZoneRectangle,
+  getZoneRectangle,
 } = require("../controllers/adminController");
 const inspectionController = require("../controllers/inspectionController");
 const {
@@ -50,6 +52,10 @@ router.patch("/applications/:id/review", reviewApplication);
 router.get("/inspectors", getInspectors);
 router.post("/applications/:id/verify-documents", verifyDocuments);
 router.post("/applications/:id/admin-review", adminReviewWithInspection);
+
+// Zone rectangle routes
+router.put("/applications/:id/zone-rectangle", updateZoneRectangle);
+router.get("/applications/:id/zone-rectangle", getZoneRectangle);
 
 router.get("/reports/overview", getReportsOverview);
 router.get("/reports/data", getReportData);

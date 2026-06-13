@@ -8,6 +8,7 @@ import api from "../../api/client";
 import LoadingState from "../../components/common/LoadingState";
 import PageTitle from "../../components/common/PageTitle";
 import VendorLayout from "../../components/layout/VendorLayout";
+import ZoneDisplayMap from "../../components/maps/ZoneDisplayMap";
 import "../../styles/pages/vendor/VendorMyZonePage.css";
 
 // Fix for default marker icon in Leaflet - use custom icon to avoid CDN blocking
@@ -171,7 +172,20 @@ export default function VendorMyZonePage() {
               <h6 className="mb-3">Location</h6>
               <p className="text-muted mb-3">{zone?.location || "N/A"}</p>
 
-              {zone?.latitude && zone?.longitude && (
+              {/* Display allocated zone rectangle if available */}
+              {zoneData?.zone_rectangle && (
+                <div className="mb-3">
+                  <h6 className="mb-3">Allocated Zone on Map</h6>
+                  <ZoneDisplayMap 
+                    zoneBounds={zoneData.zone_rectangle}
+                    height="300px"
+                    width="100%"
+                  />
+                </div>
+              )}
+
+              {/* Fallback to Leaflet map if zone coordinates are available but no rectangle */}
+              {!zoneData?.zone_rectangle && zone?.latitude && zone?.longitude && (
                 <div className="mb-3">
                   <MapContainer
                     center={[zone.latitude, zone.longitude]}

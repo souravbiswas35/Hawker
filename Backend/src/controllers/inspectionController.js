@@ -149,17 +149,31 @@ async function getTodaySchedule(req, res, next) {
     const today = new Date().toISOString().split('T')[0];
 
     const [schedule] = await pool.query(
-      `SELECT i.*, ins.name as inspector_name, vp.business_name, vp.first_name, vp.last_name, vz.name as zone_name
+      `SELECT i.*, ins.name as inspector_name, vp.business_name, vp.first_name, vp.last_name, vz.name as zone_name,
+              la.zone_rectangle
        FROM inspections i
        LEFT JOIN inspectors ins ON i.inspector_id = ins.id
        LEFT JOIN vendor_profiles vp ON i.user_id = vp.user_id
        LEFT JOIN vending_zones vz ON vp.vending_zone = vz.name
+       LEFT JOIN license_applications la ON la.user_id = i.user_id AND la.status = 'approved'
        WHERE DATE(i.scheduled_date) = ?
        ORDER BY i.scheduled_date ASC`,
       [today],
     );
 
-    res.json({ schedule });
+    // Parse zone_rectangle JSON for each schedule item
+    const scheduleWithRectangles = schedule.map(item => {
+      if (item.zone_rectangle) {
+        try {
+          item.zone_rectangle = JSON.parse(item.zone_rectangle);
+        } catch (e) {
+          item.zone_rectangle = null;
+        }
+      }
+      return item;
+    });
+
+    res.json({ schedule: scheduleWithRectangles });
   } catch (err) {
     // Handle case where tables don't exist yet
     if (err.code === 'ER_NO_SUCH_TABLE') {
