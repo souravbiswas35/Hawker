@@ -24,7 +24,6 @@ const initialForm = {
   address: "",
   businessName: "",
   businessType: "",
-  vendingZone: "",
 };
 
 export default function VendorProfilePage() {
@@ -44,7 +43,6 @@ export default function VendorProfilePage() {
 
   useEffect(() => {
     loadProfileData();
-    loadZones();
   }, []);
 
   const loadProfileData = async () => {
@@ -84,7 +82,6 @@ export default function VendorProfilePage() {
           address: data.profile.address || "",
           businessName: data.profile.business_name || "",
           businessType: data.profile.business_type || "",
-          vendingZone: data.profile.vending_zone || "",
         });
         setDisplayDateOfBirth(displayDate);
 
@@ -313,7 +310,6 @@ export default function VendorProfilePage() {
         address: form.address,
         business_name: form.businessName,
         business_type: form.businessType,
-        vending_zone: form.vendingZone,
       });
       setMessage(data.message || "Profile updated successfully!");
     } catch (err) {
@@ -649,26 +645,6 @@ export default function VendorProfilePage() {
                     <option value="service">Services</option>
                     <option value="other">Other</option>
                   </select>
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-500">Vending Zone *</label>
-                  <select
-                    className="form-control"
-                    name="vendingZone"
-                    value={form.vendingZone}
-                    onChange={onChange}
-                    disabled={loadingZones}
-                  >
-                    <option value="">Select your vending zone</option>
-                    {zones.map((zone) => (
-                      <option key={zone.id} value={zone.name}>
-                        {zone.name} ({zone.location}) - {zone.available_spots} spots available
-                      </option>
-                    ))}
-                  </select>
-                  {loadingZones && (
-                    <small className="text-muted">Loading zones...</small>
-                  )}
                 </div>
               </div>
               <div className="d-flex gap-2">

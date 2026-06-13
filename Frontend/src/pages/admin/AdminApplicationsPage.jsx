@@ -24,6 +24,9 @@ export default function AdminApplicationsPage() {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewData, setReviewData] = useState({ status: "", remarks: "" });
+  const [reviewStep, setReviewStep] = useState(null); // 'document' or 'admin'
+  const [inspectors, setInspectors] = useState([]);
+  const [inspectionData, setInspectionData] = useState({ inspectorId: "", inspectionDate: "", inspectionZone: "" });
 
   // Predefined remarks based on status
   const statusRemarks = {
@@ -43,8 +46,18 @@ export default function AdminApplicationsPage() {
     }
   }
 
+  async function fetchInspectors() {
+    try {
+      const { data } = await api.get("/admin/inspectors");
+      setInspectors(data.inspectors || []);
+    } catch (err) {
+      console.error("Failed to load inspectors:", err);
+    }
+  }
+
   useEffect(() => {
     fetchApplications();
+    fetchInspectors();
   }, []);
 
   const updateStatus = async (id, status, remarks) => {
@@ -66,18 +79,80 @@ export default function AdminApplicationsPage() {
     }
   };
 
-  const openReviewModal = async (application) => {
+  const verifyDocuments = async (id, status, remarks) => {
+    setSavingId(id);
+    setError("");
     try {
-      console.log("Opening review modal for application:", application);
+      await api.post(`/admin/applications/${id}/verify-documents`, {
+        status,
+        remarks: remarks || `Documents ${status}`,
+      });
+      await fetchApplications();
+      setShowReviewModal(false);
+      setSelectedApplication(null);
+      setReviewData({ status: "", remarks: "" });
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to verify documents");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const adminReviewWithInspection = async (id, status, remarks, inspectorId, inspectionDate, inspectionZone) => {
+    setSavingId(id);
+    setError("");
+    try {
+      await api.post(`/admin/applications/${id}/admin-review`, {
+        status,
+        remarks,
+        inspectorId,
+        inspectionDate,
+        inspectionZone,
+      });
+      await fetchApplications();
+      setShowReviewModal(false);
+      setSelectedApplication(null);
+      setReviewData({ status: "", remarks: "" });
+      setInspectionData({ inspectorId: "", inspectionDate: "", inspectionZone: "" });
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to complete admin review");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const openReviewModal = async (application, step) => {
+    try {
+      console.log("Opening review modal for application:", application, "step:", step);
       // Fetch detailed application data
       const { data } = await api.get(`/admin/applications/${application.id}`);
       console.log("Application details response:", data);
       setSelectedApplication(data.application);
-      const initialStatus = data.application.status || "";
-      setReviewData({
-        status: initialStatus,
-        remarks: data.application.admin_remarks || (initialStatus ? statusRemarks[initialStatus] : ""),
-      });
+      setReviewStep(step);
+
+      if (step === 'document') {
+        setReviewData({
+          status: data.application.document_verification_status || "",
+          remarks: data.application.document_verification_remarks || "",
+        });
+      } else if (step === 'admin') {
+        setReviewData({
+          status: data.application.admin_review_status || "",
+          remarks: data.application.admin_review_remarks || "",
+        });
+        setInspectionData({
+          inspectorId: data.application.inspection_assigned_to || "",
+          inspectionDate: data.application.inspection_date || "",
+          inspectionZone: data.application.inspection_zone || data.application.desired_zone || "",
+        });
+      } else {
+        // Legacy single-step review
+        const initialStatus = data.application.status || "";
+        setReviewData({
+          status: initialStatus,
+          remarks: data.application.admin_remarks || (initialStatus ? statusRemarks[initialStatus] : ""),
+        });
+      }
       setShowReviewModal(true);
     } catch (err) {
       console.error("Error loading application details:", err);
@@ -91,12 +166,29 @@ export default function AdminApplicationsPage() {
     setShowReviewModal(false);
     setSelectedApplication(null);
     setReviewData({ status: "", remarks: "" });
+    setReviewStep(null);
+    setInspectionData({ inspectorId: "", inspectionDate: "", inspectionZone: "" });
   };
 
   const handleReviewSubmit = (e) => {
     e.preventDefault();
     if (!selectedApplication) return;
-    updateStatus(selectedApplication.id, reviewData.status, reviewData.remarks);
+
+    if (reviewStep === 'document') {
+      verifyDocuments(selectedApplication.id, reviewData.status, reviewData.remarks);
+    } else if (reviewStep === 'admin') {
+      adminReviewWithInspection(
+        selectedApplication.id,
+        reviewData.status,
+        reviewData.remarks,
+        inspectionData.inspectorId,
+        inspectionData.inspectionDate,
+        inspectionData.inspectionZone
+      );
+    } else {
+      // Legacy single-step review
+      updateStatus(selectedApplication.id, reviewData.status, reviewData.remarks);
+    }
   };
 
   const handleStatusChange = (e) => {
@@ -118,6 +210,34 @@ export default function AdminApplicationsPage() {
         return "warning";
       case "needs-info":
         return "info";
+      case "pending":
+        return "warning";
+      default:
+        return "secondary";
+    }
+  };
+
+  const getDocumentStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "approved":
+        return "success";
+      case "rejected":
+        return "danger";
+      case "pending":
+        return "warning";
+      default:
+        return "secondary";
+    }
+  };
+
+  const getAdminReviewStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "approved":
+        return "success";
+      case "rejected":
+        return "danger";
+      case "pending":
+        return "warning";
       default:
         return "secondary";
     }
@@ -152,7 +272,9 @@ export default function AdminApplicationsPage() {
                     <th>Vendor Details</th>
                     <th>Business Info</th>
                     <th>Zone & Stall</th>
-                    <th>Status</th>
+                    <th>Document Status</th>
+                    <th>Admin Review</th>
+                    <th>Inspection</th>
                     <th>Submitted</th>
                     <th>Actions</th>
                   </tr>
@@ -195,9 +317,23 @@ export default function AdminApplicationsPage() {
                       </td>
                       <td>
                         <span
-                          className={`badge bg-${getStatusColor(app.status)} text-white`}
+                          className={`badge bg-${getDocumentStatusColor(app.document_verification_status)} text-white`}
                         >
-                          {app.status?.replace("-", " ")}
+                          {app.document_verification_status || "Pending"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`badge bg-${getAdminReviewStatusColor(app.admin_review_status)} text-white`}
+                        >
+                          {app.admin_review_status || "Pending"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`badge bg-${getStatusColor(app.inspection_status)} text-white`}
+                        >
+                          {app.inspection_status || "Pending"}
                         </span>
                       </td>
                       <td>
@@ -208,15 +344,30 @@ export default function AdminApplicationsPage() {
                       </td>
                       <td>
                         <div className="btn-group btn-group-sm">
+                          {(!app.document_verification_status || app.document_verification_status === 'pending') && (
+                            <button
+                              className="btn btn-outline-success"
+                              onClick={() => openReviewModal(app, 'document')}
+                              type="button"
+                            >
+                              <FiCheck className="me-1" /> Verify Docs
+                            </button>
+                          )}
+                          {app.document_verification_status === 'approved' && (!app.admin_review_status || app.admin_review_status === 'pending') && (
+                            <button
+                              className="btn btn-outline-primary"
+                              onClick={() => openReviewModal(app, 'admin')}
+                              type="button"
+                            >
+                              <FiEye className="me-1" /> Admin Review
+                            </button>
+                          )}
                           <button
-                            className="btn btn-outline-primary"
-                            onClick={() => {
-                              console.log("Review button clicked for app:", app);
-                              openReviewModal(app);
-                            }}
+                            className="btn btn-outline-secondary"
+                            onClick={() => openReviewModal(app)}
                             type="button"
                           >
-                            <FiEye className="me-1" /> Review
+                            <FiEye className="me-1" /> View
                           </button>
                         </div>
                       </td>
@@ -224,7 +375,7 @@ export default function AdminApplicationsPage() {
                   ))}
                   {applications.length === 0 && (
                     <tr>
-                      <td colSpan="7" className="text-center text-muted py-4">
+                      <td colSpan={9} className="text-center text-muted py-4">
                         No applications found
                       </td>
                     </tr>
@@ -253,7 +404,7 @@ export default function AdminApplicationsPage() {
               <div className="modal-header">
                 <h5 className="modal-title">
                   <FiEye className="me-2" />
-                  Review Application {selectedApplication.application_ref}
+                  {reviewStep === 'document' ? 'Verify Documents' : reviewStep === 'admin' ? 'Admin Review & Assign Inspector' : 'Review Application'} - {selectedApplication.application_ref}
                 </h5>
                 <button
                   type="button"
@@ -344,7 +495,7 @@ export default function AdminApplicationsPage() {
                     <div className="mb-3" id="documents-section">
                       <label className="text-muted small">Document Verification</label>
                       <div className="fw-bold">
-                        {selectedApplication.document_verification ? "Verified" : "Pending"}
+                        {selectedApplication.document_verification_status || "Pending"}
                       </div>
                     </div>
                   </div>
@@ -415,7 +566,7 @@ export default function AdminApplicationsPage() {
                         style={{ cursor: "pointer" }}
                       >
                         <div
-                          className={`mb-2 ${selectedApplication.document_verification ? "text-success" : "text-muted"}`}
+                          className={`mb-2 ${selectedApplication.document_verification_status === 'approved' ? "text-success" : "text-muted"}`}
                         >
                           <FiFile className="fs-4" />
                         </div>
@@ -425,37 +576,147 @@ export default function AdminApplicationsPage() {
                   </div>
                 </div>
 
-                <form onSubmit={handleReviewSubmit}>
-                  <div className="mb-3">
-                    <label className="form-label">Review Status</label>
-                    <select
-                      className="form-select"
-                      value={reviewData.status}
-                      onChange={handleStatusChange}
-                      required
-                    >
-                      <option value="">Select Status</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="needs-info">Needs More Information</option>
-                    </select>
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label">Remarks</label>
-                    <textarea
-                      className="form-control"
-                      rows="3"
-                      value={reviewData.remarks}
-                      onChange={(e) =>
-                        setReviewData((prev) => ({
-                          ...prev,
-                          remarks: e.target.value,
-                        }))
-                      }
-                      placeholder="Provide detailed feedback to the vendor..."
-                    />
-                  </div>
-                </form>
+                {/* Multi-step review form */}
+                {reviewStep === 'document' && (
+                  <form onSubmit={handleReviewSubmit} className="mt-4">
+                    <h6 className="mb-3">Document Verification</h6>
+                    <div className="mb-3">
+                      <label className="form-label">Verification Status</label>
+                      <select
+                        className="form-select"
+                        value={reviewData.status}
+                        onChange={(e) => setReviewData(prev => ({ ...prev, status: e.target.value }))}
+                        required
+                      >
+                        <option value="">Select Status</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Remarks</label>
+                      <textarea
+                        className="form-control"
+                        rows="3"
+                        value={reviewData.remarks}
+                        onChange={(e) =>
+                          setReviewData((prev) => ({
+                            ...prev,
+                            remarks: e.target.value,
+                          }))
+                        }
+                        placeholder="Provide feedback on document verification..."
+                      />
+                    </div>
+                  </form>
+                )}
+
+                {reviewStep === 'admin' && (
+                  <form onSubmit={handleReviewSubmit} className="mt-4">
+                    <h6 className="mb-3">Admin Review & Inspector Assignment</h6>
+                    <div className="mb-3">
+                      <label className="form-label">Review Status</label>
+                      <select
+                        className="form-select"
+                        value={reviewData.status}
+                        onChange={(e) => setReviewData(prev => ({ ...prev, status: e.target.value }))}
+                        required
+                      >
+                        <option value="">Select Status</option>
+                        <option value="approved">Approved - Assign to Inspector</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                    {reviewData.status === 'approved' && (
+                      <>
+                        <div className="mb-3">
+                          <label className="form-label">Assign Inspector</label>
+                          <select
+                            className="form-select"
+                            value={inspectionData.inspectorId}
+                            onChange={(e) => setInspectionData(prev => ({ ...prev, inspectorId: e.target.value }))}
+                            required
+                          >
+                            <option value="">Select Inspector</option>
+                            {inspectors.map(inspector => (
+                              <option key={inspector.user_id} value={inspector.user_id}>
+                                {inspector.employee_id} - {inspector.email}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="mb-3">
+                          <label className="form-label">Inspection Date</label>
+                          <input
+                            type="date"
+                            className="form-control"
+                            value={inspectionData.inspectionDate}
+                            onChange={(e) => setInspectionData(prev => ({ ...prev, inspectionDate: e.target.value }))}
+                          />
+                        </div>
+                        <div className="mb-3">
+                          <label className="form-label">Inspection Zone</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={inspectionData.inspectionZone}
+                            onChange={(e) => setInspectionData(prev => ({ ...prev, inspectionZone: e.target.value }))}
+                            placeholder="Enter inspection zone"
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div className="mb-3">
+                      <label className="form-label">Remarks</label>
+                      <textarea
+                        className="form-control"
+                        rows="3"
+                        value={reviewData.remarks}
+                        onChange={(e) =>
+                          setReviewData((prev) => ({
+                            ...prev,
+                            remarks: e.target.value,
+                          }))
+                        }
+                        placeholder="Provide feedback on admin review..."
+                      />
+                    </div>
+                  </form>
+                )}
+
+                {!reviewStep && (
+                  <form onSubmit={handleReviewSubmit} className="mt-4">
+                    <div className="mb-3">
+                      <label className="form-label">Review Status</label>
+                      <select
+                        className="form-select"
+                        value={reviewData.status}
+                        onChange={handleStatusChange}
+                        required
+                      >
+                        <option value="">Select Status</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="needs-info">Needs More Information</option>
+                      </select>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Remarks</label>
+                      <textarea
+                        className="form-control"
+                        rows="3"
+                        value={reviewData.remarks}
+                        onChange={(e) =>
+                          setReviewData((prev) => ({
+                            ...prev,
+                            remarks: e.target.value,
+                          }))
+                        }
+                        placeholder="Provide detailed feedback to the vendor..."
+                      />
+                    </div>
+                  </form>
+                )}
               </div>
               <div className="modal-footer">
                 <button
@@ -470,7 +731,8 @@ export default function AdminApplicationsPage() {
                   className="btn btn-primary"
                   onClick={handleReviewSubmit}
                   disabled={
-                    savingId === selectedApplication.id || !reviewData.status
+                    savingId === selectedApplication.id || !reviewData.status ||
+                    (reviewStep === 'admin' && reviewData.status === 'approved' && !inspectionData.inspectorId)
                   }
                 >
                   {savingId === selectedApplication.id ? (
@@ -481,7 +743,7 @@ export default function AdminApplicationsPage() {
                   ) : (
                     <>
                       <FiCheck className="me-2" />
-                      Submit Review
+                      {reviewStep === 'document' ? 'Submit Verification' : reviewStep === 'admin' ? 'Submit Review & Assign' : 'Submit Review'}
                     </>
                   )}
                 </button>

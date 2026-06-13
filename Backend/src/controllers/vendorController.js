@@ -268,10 +268,12 @@ async function getDashboard(req, res, next) {
     );
 
     const [applications] = await pool.query(
-      `SELECT id, application_ref, desired_zone, stall_type, status, submitted_at, reviewed_at, payment_status, payment_id
-       FROM license_applications
-       WHERE user_id = ?
-       ORDER BY submitted_at DESC`,
+      `SELECT la.id, la.application_ref, la.desired_zone, la.stall_type, la.status, la.submitted_at, la.reviewed_at,
+              la.payment_status, la.payment_id, la.issued_at, la.expires_at, lt.duration_days
+       FROM license_applications la
+       LEFT JOIN license_types lt ON lt.id = la.license_type_id
+       WHERE la.user_id = ?
+       ORDER BY la.submitted_at DESC`,
       [userId],
     );
 
@@ -966,8 +968,8 @@ async function getMyLicense(req, res, next) {
       });
     }
 
-    // Use vendor profile zone for allocated zone display
-    license.allocated_zone = profile?.vending_zone || license.desired_zone || "Not assigned";
+    // Use desired_zone from license application as the allocated zone
+    license.allocated_zone = license.desired_zone || "Not assigned";
 
     // Fill missing goods_authorized from vendor profile
     if (!license.goods_authorized || license.goods_authorized === "To be selected" || license.goods_authorized === "") {

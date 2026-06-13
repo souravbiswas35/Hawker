@@ -27,7 +27,10 @@ export default function LoginPage() {
 
       const redirectPath =
         location.state?.from?.pathname ||
-        (data.user.role === "admin" ? "/admin/dashboard" : "/vendor/dashboard");
+        (data.user.role === "admin" ? "/admin/dashboard" :
+         data.user.role === "inspector" ? "/inspector/dashboard" :
+         data.user.role === "city_corporation_admin" ? "/city-corp/dashboard" :
+         "/vendor/dashboard");
       navigate(redirectPath, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");

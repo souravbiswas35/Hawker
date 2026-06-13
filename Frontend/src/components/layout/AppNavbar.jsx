@@ -44,6 +44,10 @@ export default function AppNavbar() {
 
   const isVendor = isAuthenticated && user?.role === "vendor";
 
+  const isInspector = isAuthenticated && user?.role === "inspector";
+
+  const isCityCorpAdmin = isAuthenticated && user?.role === "city_corporation_admin";
+
   const showPublicLinks = !isAuthenticated;
 
   const brandLink = isAdmin
@@ -54,7 +58,15 @@ export default function AppNavbar() {
 
       ? "/vendor/dashboard"
 
-      : "/";
+      : isInspector
+
+        ? "/inspector/dashboard"
+
+        : isCityCorpAdmin
+
+          ? "/city-corp/dashboard"
+
+          : "/";
 
   const [profilePictureUrl, setProfilePictureUrl] = useState(null);
 
@@ -396,6 +408,70 @@ export default function AppNavbar() {
 
 
 
+            {isInspector && (
+
+              <>
+
+                <li className="nav-item">
+
+                  <NavLink className="nav-link" to="/inspector/dashboard">
+
+                    <FiLayout />
+
+                    Dashboard
+
+                  </NavLink>
+
+                </li>
+
+                <li className="nav-item">
+
+                  <NavLink className="nav-link" to="/inspector/inspections">
+
+                    Inspections
+
+                  </NavLink>
+
+                </li>
+
+              </>
+
+            )}
+
+
+
+            {isCityCorpAdmin && (
+
+              <>
+
+                <li className="nav-item">
+
+                  <NavLink className="nav-link" to="/city-corp/dashboard">
+
+                    <FiLayout />
+
+                    Dashboard
+
+                  </NavLink>
+
+                </li>
+
+                <li className="nav-item">
+
+                  <NavLink className="nav-link" to="/city-corp/applications">
+
+                    Applications
+
+                  </NavLink>
+
+                </li>
+
+              </>
+
+            )}
+
+
+
             {isAuthenticated && (
 
               <li className="nav-item d-flex align-items-center gap-2 ms-lg-3">
@@ -406,9 +482,19 @@ export default function AppNavbar() {
 
                   style={{ cursor: "pointer" }}
 
-                  onClick={() => navigate(isAdmin ? "/admin/dashboard" : "/vendor/profile")}
+                  onClick={() => navigate(
+                    isAdmin ? "/admin/dashboard" :
+                    isInspector ? "/inspector/dashboard" :
+                    isCityCorpAdmin ? "/city-corp/dashboard" :
+                    "/vendor/profile"
+                  )}
 
-                  title={isAdmin ? "Admin" : "Vendor"}
+                  title={
+                    isAdmin ? "Admin" :
+                    isInspector ? "Inspector" :
+                    isCityCorpAdmin ? "City Corporation Admin" :
+                    "Vendor"
+                  }
 
                   onMouseEnter={(e) => {
 
@@ -488,8 +574,10 @@ export default function AppNavbar() {
 
                   >
 
-                    {isAdmin ? "Admin" : "Vendor"}
-
+                    {isAdmin ? "Admin" :
+                     isInspector ? "Inspector" :
+                     isCityCorpAdmin ? "City Corp" :
+                     "Vendor"}
                   </span>
 
                 </div>

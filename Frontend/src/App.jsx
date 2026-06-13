@@ -52,6 +52,12 @@ import AdminAnnouncementsPage from "./pages/admin/AdminAnnouncementsPage";
 import AdminAddAnnouncement from "./pages/admin/AdminAddAnnouncement";
 import AdminSuccessStoriesPage from "./pages/admin/AdminSuccessStoriesPage";
 import AdminCommunityPostsPage from "./pages/admin/AdminCommunityPostsPage";
+import InspectorDashboardPage from "./pages/inspector/InspectorDashboardPage";
+import InspectorInspectionsPage from "./pages/inspector/InspectorInspectionsPage";
+import InspectorInspectionDetailPage from "./pages/inspector/InspectorInspectionDetailPage";
+import CityCorpDashboardPage from "./pages/cityCorp/CityCorpDashboardPage";
+import CityCorpApplicationsPage from "./pages/cityCorp/CityCorpApplicationsPage";
+import CityCorpApplicationDetailPage from "./pages/cityCorp/CityCorpApplicationDetailPage";
 
 function PageTransition({ children }) {
   const location = useLocation();
@@ -408,6 +414,56 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminCommunityPostsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/inspector/dashboard"
+            element={
+              <ProtectedRoute roles={["inspector"]}>
+                <InspectorDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inspector/inspections"
+            element={
+              <ProtectedRoute roles={["inspector"]}>
+                <InspectorInspectionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inspector/inspections/:id"
+            element={
+              <ProtectedRoute roles={["inspector"]}>
+                <InspectorInspectionDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/city-corp/dashboard"
+            element={
+              <ProtectedRoute roles={["city_corporation_admin"]}>
+                <CityCorpDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/city-corp/applications"
+            element={
+              <ProtectedRoute roles={["city_corporation_admin"]}>
+                <CityCorpApplicationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/city-corp/applications/:id"
+            element={
+              <ProtectedRoute roles={["city_corporation_admin"]}>
+                <CityCorpApplicationDetailPage />
               </ProtectedRoute>
             }
           />
