@@ -41,28 +41,52 @@ export default function Step4DocumentVerification({ onSubmit, data, loading, onV
     setUploading(prev => ({ ...prev, [documentType]: true }));
 
     try {
-      // For license application, store file metadata only (not full base64 data)
-      const fileData = {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified,
-        uploadedAt: new Date().toISOString()
-      };
+      // Check if applicationId is available
+      if (!data.applicationId) {
+        throw new Error("Application ID not found. Please start the application from the beginning.");
+      }
 
-      setDocuments(prev => ({
-        ...prev,
-        [documentType]: {
-          ...prev[documentType],
-          file: fileData,
-          uploaded: true,
-          uploadedAt: new Date().toISOString()
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('documentType', documentType);
+
+      console.log("Uploading document for application:", data.applicationId, "Type:", documentType, "File:", file.name);
+
+      // Upload file to server
+      const { data: responseData } = await api.post(`/license/applications/${data.applicationId}/documents`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
         }
-      }));
+      });
 
-      setExistingDocs(prev => [...prev, documentType]);
+      console.log("Upload successful:", responseData);
+
+      // Update documents state with server response
+      setDocuments(prev => {
+        const updated = {
+          ...prev,
+          [documentType]: {
+            fileName: responseData.fileName,
+            storedName: responseData.storedName,
+            mimeType: file.type,
+            fileSize: file.size,
+            uploadedAt: new Date().toISOString(),
+            uploaded: true
+          }
+        };
+        console.log("Updated documents state:", updated);
+        return updated;
+      });
+
+      setExistingDocs(prev => {
+        const updated = [...prev, documentType];
+        console.log("Updated existing docs:", updated);
+        return updated;
+      });
     } catch (err) {
       console.error("Upload failed:", err);
+      alert(`Failed to upload document: ${err.response?.data?.message || err.message || "Unknown error"}`);
     } finally {
       setUploading(prev => ({ ...prev, [documentType]: false }));
     }
@@ -78,16 +102,17 @@ export default function Step4DocumentVerification({ onSubmit, data, loading, onV
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Check if all required documents are uploaded
     const requiredDocs = requiredDocuments.filter(doc => doc.required);
     const missingDocs = requiredDocs.filter(doc => !documents[doc.id]?.uploaded);
-    
+
     if (missingDocs.length > 0) {
       alert(`Please upload all required documents: ${missingDocs.map(doc => doc.name).join(', ')}`);
       return;
     }
 
+    console.log("Submitting document verification:", documents);
     onSubmit({ documentVerification: documents });
   };
 

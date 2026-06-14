@@ -10,7 +10,8 @@ const {
   updateApplicationStep,
   getApplication,
   getUserApplications,
-  uploadApplicationDocument
+  uploadApplicationDocument,
+  getApplicationDocument
 } = require("../controllers/licenseApplicationController");
 const { requireAuth } = require("../middleware/auth");
 
@@ -45,6 +46,12 @@ const upload = multer({
 // Get license types and zones (public routes)
 router.get("/license-types", getLicenseTypes);
 router.get("/vending-zones", getVendingZones);
+
+// Get document (public route for viewing)
+router.get(
+  "/applications/:applicationId/documents/:documentType",
+  getApplicationDocument
+);
 
 // Protected routes
 router.use(requireAuth);

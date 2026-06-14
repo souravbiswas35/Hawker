@@ -637,6 +637,67 @@ export default function AdminApplicationsPage() {
                 {reviewStep === 'document' && (
                   <form onSubmit={handleReviewSubmit} className="mt-4">
                     <h6 className="mb-3">Document Verification</h6>
+
+                    {/* Display uploaded documents */}
+                    {selectedApplication.document_verification && (
+                      <div className="mb-4">
+                        <label className="form-label">Uploaded Documents</label>
+                        <div className="card bg-light">
+                          <div className="card-body">
+                            {(() => {
+                              try {
+                                console.log("Document verification data:", selectedApplication.document_verification);
+                                const docVerification = typeof selectedApplication.document_verification === 'string'
+                                  ? JSON.parse(selectedApplication.document_verification)
+                                  : selectedApplication.document_verification;
+                                
+                                console.log("Parsed doc verification:", docVerification);
+                                const documentTypes = Object.keys(docVerification);
+                                console.log("Document types:", documentTypes);
+                                
+                                if (documentTypes.length === 0) {
+                                  return <p className="text-muted mb-0">No documents uploaded</p>;
+                                }
+
+                                return documentTypes.map(docType => {
+                                  const doc = docVerification[docType];
+                                  console.log(`Document ${docType}:`, doc);
+                                  if (!doc || !doc.uploaded) return null;
+                                  
+                                  const docNames = {
+                                    national_id: 'National ID',
+                                    address_proof: 'Address Proof',
+                                    business_registration: 'Business Registration',
+                                    health_certificate: 'Health Certificate',
+                                    photo: 'Recent Photograph'
+                                  };
+
+                                  return (
+                                    <div key={docType} className="d-flex align-items-center justify-content-between mb-2 p-2 border rounded">
+                                      <div>
+                                        <div className="fw-bold">{docNames[docType] || docType}</div>
+                                        <small className="text-muted">{doc.fileName || 'Unknown file'}</small>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-primary"
+                                        onClick={() => window.open(`http://localhost:8080/api/license/applications/${selectedApplication.id}/documents/${docType}`, '_blank')}
+                                      >
+                                        <FiEye className="me-1" /> View
+                                      </button>
+                                    </div>
+                                  );
+                                });
+                              } catch (e) {
+                                console.error("Error loading documents:", e);
+                                return <p className="text-muted mb-0">Error loading documents: {e.message}</p>;
+                              }
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="mb-3">
                       <label className="form-label">Verification Status</label>
                       <select

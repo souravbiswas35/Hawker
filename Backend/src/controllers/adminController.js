@@ -112,7 +112,15 @@ async function listVendors(req, res, next) {
                   ORDER BY COALESCE(la.reviewed_at, la.submitted_at) DESC, la.id DESC
                   LIMIT 1
                 )
-              ) AS vending_zone
+              ) AS vending_zone,
+              (
+                SELECT la.primary_zone_id
+                FROM license_applications la
+                WHERE la.user_id = u.id
+                  AND la.status = 'approved'
+                ORDER BY COALESCE(la.reviewed_at, la.submitted_at) DESC, la.id DESC
+                LIMIT 1
+              ) AS primary_zone_id
        FROM users u
        LEFT JOIN vendor_profiles vp ON vp.user_id = u.id
        WHERE u.role = 'vendor'

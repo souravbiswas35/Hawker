@@ -22,20 +22,42 @@ export default function AdminInspectionsPage() {
     notes: "",
   });
 
+  const handleVendorChange = (e) => {
+    const vendorId = e.target.value;
+    setForm((p) => ({ ...p, vendorUserId: vendorId }));
+
+    // Auto-fill zone based on selected vendor's primary_zone_id
+    const selectedVendor = vendors.find((v) => v.id === Number(vendorId));
+    if (selectedVendor && selectedVendor.primary_zone_id) {
+      // Find zone by ID from zones list
+      const zone = zones.find((z) => z.id === selectedVendor.primary_zone_id);
+      if (zone) {
+        setForm((p) => ({ ...p, zoneCode: zone.name }));
+      } else {
+        setForm((p) => ({ ...p, zoneCode: "" }));
+      }
+    } else if (selectedVendor && selectedVendor.vending_zone) {
+      // Fallback to vending_zone if primary_zone_id is not available
+      setForm((p) => ({ ...p, zoneCode: selectedVendor.vending_zone }));
+    } else {
+      setForm((p) => ({ ...p, zoneCode: "" }));
+    }
+  };
+
   async function load() {
     try {
       const { data: metrics } = await api.get("/admin/inspections/dashboard-metrics");
       setData(metrics);
-      
+
       const { data: scheduleData } = await api.get("/admin/inspections/today-schedule");
       setSchedule(scheduleData.schedule || []);
-      
+
       const { data: vendorsData } = await api.get("/admin/vendors");
       setVendors(vendorsData.vendors || []);
-      
+
       const { data: zonesData } = await api.get("/admin/zones-management");
       setZones(zonesData.zones || []);
-      
+
       const { data: inspectorsData } = await api.get("/admin/inspections/inspectors");
       setInspectors(inspectorsData.inspectors || []);
     } catch (err) {
@@ -126,9 +148,7 @@ export default function AdminInspectionsPage() {
                 <select
                   className="form-control"
                   value={form.vendorUserId}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, vendorUserId: e.target.value }))
-                  }
+                  onChange={handleVendorChange}
                   required
                 >
                   <option value="">Select Vendor</option>
@@ -168,7 +188,7 @@ export default function AdminInspectionsPage() {
                   <option value="">Select Inspector</option>
                   {inspectors.map((i) => (
                     <option key={i.id} value={i.id}>
-                      {i.name} ({i.inspector_rank})
+                      {i.email} ({i.employee_id})
                     </option>
                   ))}
                 </select>
