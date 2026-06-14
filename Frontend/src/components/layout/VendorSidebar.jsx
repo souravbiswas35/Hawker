@@ -41,7 +41,7 @@ const navigationCategories = [
       { title: "Apply License", path: "/vendor/apply" },
       { title: "My License", path: "/vendor/my-license" },
       { title: "Renew License", path: "/vendor/renew-license" },
-      // { title: "Track My Application", path: "/vendor/applications" },
+       { title: "Track My Application", path: "/vendor/applications" },
     ],
   },
   {

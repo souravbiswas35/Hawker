@@ -146,19 +146,18 @@ async function getCalendarEvents(req, res, next) {
 
 async function getTodaySchedule(req, res, next) {
   try {
-    const today = new Date().toISOString().split('T')[0];
-
     const [schedule] = await pool.query(
-      `SELECT i.*, ins.name as inspector_name, vp.business_name, vp.first_name, vp.last_name, vz.name as zone_name,
+      `SELECT i.*, ip.employee_id as inspector_name, u.email as inspector_email, vp.business_name, vp.first_name, vp.last_name, vz.name as zone_name,
               la.zone_rectangle
        FROM inspections i
-       LEFT JOIN inspectors ins ON i.inspector_id = ins.id
+       LEFT JOIN inspector_profiles ip ON ip.user_id = i.inspector_id
+       LEFT JOIN users u ON u.id = i.inspector_id
        LEFT JOIN vendor_profiles vp ON i.user_id = vp.user_id
        LEFT JOIN vending_zones vz ON vp.vending_zone = vz.name
        LEFT JOIN license_applications la ON la.user_id = i.user_id AND la.status = 'approved'
-       WHERE DATE(i.scheduled_date) = ?
+       WHERE i.status = 'scheduled'
        ORDER BY i.scheduled_date ASC`,
-      [today],
+      [],
     );
 
     // Parse zone_rectangle JSON for each schedule item
@@ -188,10 +187,20 @@ async function scheduleInspection(req, res, next) {
   try {
     const { vendorId, inspectorId, scheduledDate, templateId, type } = req.body;
 
+    // Get inspector user_id from inspector_profiles
+    const [[inspector]] = await pool.query(
+      "SELECT user_id FROM inspector_profiles WHERE id = ?",
+      [inspectorId]
+    );
+
+    if (!inspector) {
+      return res.status(404).json({ message: "Inspector not found" });
+    }
+
     const [result] = await pool.query(
       `INSERT INTO inspections (user_id, inspector_id, scheduled_date, template_id, type, status)
        VALUES (?, ?, ?, ?, ?, 'scheduled')`,
-      [vendorId, inspectorId, scheduledDate, templateId || null, type || 'routine'],
+      [vendorId, inspector.user_id, scheduledDate, templateId || null, type || 'routine'],
     );
 
     res.json({ message: "Inspection scheduled successfully", id: result.insertId });
@@ -303,7 +312,14 @@ async function getInspectionTemplates(req, res, next) {
 
 async function getInspectors(req, res, next) {
   try {
-    const [inspectors] = await pool.query("SELECT * FROM inspectors ORDER BY name ASC");
+    const [inspectors] = await pool.query(
+      `SELECT ip.id, ip.user_id, ip.employee_id, ip.phone, ip.assigned_zones, ip.is_active,
+              u.email
+       FROM inspector_profiles ip
+       JOIN users u ON u.id = ip.user_id
+       WHERE ip.is_active = 1
+       ORDER BY ip.employee_id ASC`
+    );
     res.json({ inspectors });
   } catch (err) {
     // Handle case where tables don't exist yet

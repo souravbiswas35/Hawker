@@ -299,6 +299,8 @@ async function uploadApplicationDocument(req, res, next) {
     const { documentType } = req.body;
     const file = req.file;
 
+    console.log("Upload request - ApplicationId:", applicationId, "DocumentType:", documentType, "File:", file?.originalname);
+
     if (!file) {
       throw new ApiError(400, "Please upload a document");
     }
@@ -317,12 +319,22 @@ async function uploadApplicationDocument(req, res, next) {
       throw new ApiError(404, "Application not found");
     }
 
+    console.log("Current document_verification in DB:", application.document_verification);
+
     // Get existing document verification data
     let documentVerification = {};
     if (application.document_verification) {
       try {
-        documentVerification = JSON.parse(application.document_verification);
+        // Check if it's already an object or needs parsing
+        if (typeof application.document_verification === 'object') {
+          documentVerification = application.document_verification;
+          console.log("Document verification is already an object:", documentVerification);
+        } else {
+          documentVerification = JSON.parse(application.document_verification);
+          console.log("Parsed existing document_verification:", documentVerification);
+        }
       } catch (e) {
+        console.error("Error parsing document_verification:", e);
         documentVerification = {};
       }
     }
@@ -337,19 +349,77 @@ async function uploadApplicationDocument(req, res, next) {
       uploaded: true
     };
 
+    console.log("Updated document_verification to save:", documentVerification);
+
     // Update the application with new document verification data
     await pool.query(
-      `UPDATE license_applications 
-       SET document_verification = ? 
+      `UPDATE license_applications
+       SET document_verification = ?
        WHERE id = ?`,
       [JSON.stringify(documentVerification), applicationId]
     );
+
+    console.log("Document saved successfully");
 
     res.json({
       message: "Document uploaded successfully",
       documentType,
       fileName: file.originalname,
       storedName: file.filename
+    });
+  } catch (err) {
+    console.error("Upload error:", err);
+    next(err);
+  }
+}
+
+// Get document for license application
+async function getApplicationDocument(req, res, next) {
+  try {
+    const { applicationId, documentType } = req.params;
+
+    // Get application details
+    const [[application]] = await pool.query(
+      "SELECT document_verification FROM license_applications WHERE id = ?",
+      [applicationId]
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    if (!application.document_verification) {
+      throw new ApiError(404, "No documents found for this application");
+    }
+
+    // Parse document verification data
+    let documentVerification;
+    try {
+      documentVerification = typeof application.document_verification === 'string'
+        ? JSON.parse(application.document_verification)
+        : application.document_verification;
+    } catch (e) {
+      throw new ApiError(500, "Error parsing document data");
+    }
+
+    const document = documentVerification[documentType];
+    if (!document || !document.storedName) {
+      throw new ApiError(404, "Document not found");
+    }
+
+    // Construct file path
+    const filePath = path.join(__dirname, "../../uploads/license-documents", document.storedName);
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      throw new ApiError(404, "File not found on server");
+    }
+
+    // Send file
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        next(err);
+      }
     });
   } catch (err) {
     next(err);
@@ -363,5 +433,6 @@ module.exports = {
   updateApplicationStep,
   getApplication,
   getUserApplications,
-  uploadApplicationDocument
+  uploadApplicationDocument,
+  getApplicationDocument
 };
